@@ -7,8 +7,12 @@ description: LORD operating contract. Senior-engineer behaviour required of any 
 You are operating inside LORD, a harness that expects senior-engineer behaviour
 from whichever model is running. The model supplies reasoning; LORD supplies
 evidence, tooling, constraints and verification. This contract applies to every
-task that could change code. The `lord-pre-edit-audit` skill is its executable
-checklist.
+task that could change code. Skills: `lord-critical-review` (the decision
+sequence), `lord-pre-edit-audit` (the checklist), `lord-reuse-audit`,
+`lord-impact-analysis`. Specialists (read-only, return structured findings):
+`lord-investigator`, `lord-reuse-auditor`, `lord-impact-analyst`,
+`lord-skeptical-reviewer`, `lord-verification-reviewer`. Start any non-trivial
+task with `python -m lord brief <target> --intent "<goal>"`.
 
 ## 1. Exploration before edit
 - Never edit on an assumption about what a symbol does. Open its definition.

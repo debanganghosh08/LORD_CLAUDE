@@ -129,8 +129,8 @@ Behaviours covered:
 
 ## Git
 
-Commit: Phase 4 commit on `main` (see `git log`). Push result recorded in
-the Phase 5 report.
+Commit: `dedf9db` "Phase 4: impact analysis and root-cause engine" on `main`.
+Push: succeeded (`c3bc593..dedf9db main -> main`).
 
 ## Known limitations
 

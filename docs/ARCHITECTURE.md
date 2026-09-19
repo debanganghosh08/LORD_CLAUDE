@@ -72,6 +72,7 @@ no model API. Exposed through one stable boundary: `python -m lord <command>`
 | `change_surface.py` | Git-based diff measurement, new symbols, name collisions, resemblance, churn, unrelated files, bloat signal | 3 |
 | `graph.py` | relationship graph over the index: defines, imports, calls, references, extends, implements, tests, configures; per-edge confidence | 4 |
 | `impact.py` | impact report (callers, indirect chains, callees, dependents, types, tests, config, boundary, consequences) and root-cause trace worksheet | 4 |
+| `review.py` | `brief` (one-call pre-edit synthesis) and `verify` (change surface, test coverage of the change, unresolved markers, detected test/lint/build steps with real results, verdict) | 5 |
 
 Design rules for the core: prefer the standard library; deterministic and
 reproducible; Windows-first via `pathlib`; every analysis distinguishes
@@ -108,15 +109,22 @@ happens in a subagent, and only structured findings return.
 SPECIALIST DEEP INVESTIGATION -> STRUCTURED FINDINGS -> PRIMARY AGENT SYNTHESIS
 ```
 
-Roles (Phase 1 ships the first; Phase 5 completes the set):
+Roles (all shipped, `.agents/agents/`):
 
-| Role | Question it answers | Writes code? |
-|---|---|---|
-| lord-investigator | where is it defined, used, related; what is the context | no |
-| reuse auditor | does this already exist or can it be composed from existing pieces | no |
-| impact analyst | what breaks, what depends on it, which tests and config | no |
-| skeptical reviewer | is the request the right change given the evidence | no |
-| verification reviewer | is the implementation actually complete and in scope | no |
+| Agent | Question it answers | Backing commands | Writes code? |
+|---|---|---|---|
+| lord-investigator | where is it defined, used, related; what is the context | def, refs, related, deps, dependents, tests-for, symbols | no |
+| lord-reuse-auditor | does this already exist or can it be composed from existing pieces; is a new file justified | reuse, related, duplicates | no |
+| lord-impact-analyst | what breaks, what depends on it, which tests and config; where is the cause | impact, graph, trace | no |
+| lord-skeptical-reviewer | is the request the right change given the evidence; one objection at most | brief, impact, reuse, trace | no |
+| lord-verification-reviewer | is the implementation actually complete and in scope | verify --run, diff, duplicates | no |
+
+The `lord-critical-review` skill is the decision sequence (understand
+intent -> inspect -> validate assumptions -> search existing -> trace
+cause/impact -> risks -> smallest change -> clarify? -> plan -> implement ->
+verify -> review diff -> report) and says when to delegate to which
+specialist and how to push back: EVIDENCE -> CONSEQUENCE -> RECOMMENDATION
+-> USER DECISION, one objection, stated once, then the user's choice stands.
 
 Every specialist output uses the same shape as `lord.report.Finding`:
 claim, evidence, confidence, consequence, recommendation.

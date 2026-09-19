@@ -54,6 +54,8 @@ COMMANDS: tuple[tuple[str, str, str | None], ...] = (
     ("impact", "what happens if this symbol or file changes: callers, dependents, types, tests, config, boundary, consequences", "target"),
     ("trace", "root-cause worksheet: candidate causes downstream and callers upstream of an observed symptom", "target"),
     ("graph", "inspect one node's edges in the relationship graph", "target"),
+    ("brief", "one-call pre-edit synthesis: definition, callers, dependents, tests, config, consequences, reuse decision", "target"),
+    ("verify", "completion check: change surface, tests covering the change, unresolved markers, project test/lint/build steps", None),
 )
 
 
@@ -85,6 +87,16 @@ def build_parser() -> argparse.ArgumentParser:
             p.add_argument("--depth", type=int, default=2 if name == "impact" else 3, help="traversal depth")
         if name == "trace":
             p.add_argument("--observed", default="", help="the symptom as observed (input, expected vs actual)")
+        if name == "brief":
+            p.add_argument("--intent", default="", help="what the task wants to achieve, in words")
+            p.add_argument("--name", action="append", default=[], help="proposed new symbol name (repeatable)")
+            p.add_argument("--depth", type=int, default=2)
+        if name == "verify":
+            p.add_argument("--run", action="store_true", help="execute the detected test/lint/build steps")
+            p.add_argument("--scope", action="append", default=[], help="path or term the task is about (repeatable)")
+            p.add_argument("--base", default=None, help="compare against this ref")
+            p.add_argument("--staged", action="store_true", help="verify the staged set only")
+            p.add_argument("--timeout", type=int, default=600, help="seconds per step")
     return parser
 
 
@@ -150,6 +162,14 @@ def run(args: argparse.Namespace, root: Path) -> Report:
         from lord.impact import trace_report
 
         return trace_report(index, root, args.target, depth=args.depth, observed=args.observed)
+    if args.command == "brief":
+        from lord.review import brief
+
+        return brief(config, index, args.target, intent=args.intent, names=args.name, depth=args.depth)
+    if args.command == "verify":
+        from lord.review import verify
+
+        return verify(config, index, scope=tuple(args.scope), run=args.run, base=args.base, staged=args.staged, timeout=args.timeout)
     if args.command == "graph":
         from lord.graph import build_graph, file_node, neighborhood, sym_node
         from lord.impact import resolve_target

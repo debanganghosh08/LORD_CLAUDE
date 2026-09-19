@@ -65,6 +65,8 @@ python -m lord diff --scope <path|term>  # change surface + bloat signal (never 
 python -m lord impact validate_email     # callers, dependents, subtypes, tests, config, boundary, consequences
 python -m lord trace UserService.create --observed "..."   # root-cause worksheet: candidate causes + upstream
 python -m lord graph pkg/users.py        # inspect one node's edges
+python -m lord brief validate_email --intent "..."   # one-call pre-edit synthesis
+python -m lord verify --run --scope <path>            # completion check with real test results
 python -m lord --help                    # all commands; add --json for machine output
 python -m pytest                         # run the LORD test suite (needs pytest)
 ```
@@ -74,8 +76,11 @@ Every result carries a confidence: `confirmed` (parsed source), `inferred`
 language). LORD never turns "could not analyse" into "nothing found".
 
 Inside Antigravity, opening this workspace activates
-`.agents/rules/lord-operating-contract.md` (always on), the
-`lord-pre-edit-audit` skill and the `lord-investigator` subagent.
+`.agents/rules/lord-operating-contract.md` (always on), the skills
+`lord-critical-review`, `lord-pre-edit-audit`, `lord-reuse-audit` and
+`lord-impact-analysis`, and five read-only specialist subagents:
+`lord-investigator`, `lord-reuse-auditor`, `lord-impact-analyst`,
+`lord-skeptical-reviewer`, `lord-verification-reviewer`.
 
 ## Repository layout
 

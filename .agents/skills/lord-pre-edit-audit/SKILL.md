@@ -28,7 +28,14 @@ roots, excluded directories. Fix or report any error before editing.
 One sentence: the outcome actually wanted, not the literal words.
 
 ## 2. Search, do not assume
-For every symbol you expect to touch:
+Start with one call that synthesises definition, callers, dependents, tests,
+configuration, consequences and the reuse decision for the intent:
+
+```
+python -m lord brief <symbol|file> --intent "<goal>" [--name <ProposedName>]
+```
+
+Then go deeper on every symbol you expect to touch:
 
 ```
 python -m lord def <name>          # where it is defined (confirmed for Python, inferred for JS/TS)
