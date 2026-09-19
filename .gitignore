@@ -1,0 +1,81 @@
+# ---------------------------------------------------------------------------
+# LORD .gitignore
+#
+# Policy: protect secrets and machine-local runtime state WITHOUT hiding LORD
+# product source. `.agents/` (rules, skills, agents, hooks.json, plugins) is
+# product source and is intentionally tracked.
+# ---------------------------------------------------------------------------
+
+# --- Secrets and credentials (never commit) --------------------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt.key
+*_rsa
+*_ed25519
+id_rsa*
+id_ed25519*
+credentials.json
+oauth_creds.json
+google_accounts.json
+token.json
+tokens.json
+*.token
+secrets/
+.secrets/
+
+# --- LORD runtime / derived state (reproducible, machine-specific) ----------
+# `.lord/` holds the repository index, caches and transient session state.
+# It is rebuilt by `python -m lord index` and must never be source of truth.
+.lord/
+
+# --- Provider / IDE local runtime state (not LORD source) -------------------
+.claude/
+.gemini/
+.antigravity/
+.cursor/
+.codex/
+.idea/
+.vscode/
+*.code-workspace
+.history/
+*.swp
+*.swo
+*~
+
+# --- Python ------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+env/
+
+# --- Node (if a future adapter needs it) -------------------------------------
+node_modules/
+npm-debug.log*
+yarn-error.log*
+.npm/
+
+# --- Logs, temp, OS artifacts ------------------------------------------------
+*.log
+logs/
+tmp/
+temp/
+*.tmp
+.DS_Store
+Thumbs.db
+desktop.ini
