@@ -162,8 +162,8 @@ demotion); the generated-marker probe matched LORD's own marker list.
 
 ## Git
 
-Commit: Phase 2 commit on `main` (see `git log`).
-Push: see the Phase 3 report or `git log origin/main`.
+Commit: `fd0373c` "Phase 2: repository forensics and code intelligence" on `main`.
+Push: succeeded (`80e60af..fd0373c main -> main`).
 
 ## Known limitations
 

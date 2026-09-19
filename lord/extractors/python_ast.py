@@ -181,9 +181,11 @@ class _Visitor(ast.NodeVisitor):
 
     # -- uses ------------------------------------------------------------------
     def visit_Call(self, node: ast.Call) -> None:
-        name = node.func.id if isinstance(node.func, ast.Name) else node.func.attr if isinstance(node.func, ast.Attribute) else ""
-        if name:
-            self.out.calls.append(Ref(name=name, line=node.lineno, scope=self._scope_name()))
+        if isinstance(node.func, ast.Name):
+            self.out.calls.append(Ref(name=node.func.id, line=node.lineno, scope=self._scope_name()))
+        elif isinstance(node.func, ast.Attribute):
+            receiver = self._dotted(node.func.value) or "<expr>"
+            self.out.calls.append(Ref(name=node.func.attr, line=node.lineno, scope=self._scope_name(), receiver=receiver))
         self.generic_visit(node)
 
     def visit_Name(self, node: ast.Name) -> None:
@@ -191,7 +193,8 @@ class _Visitor(ast.NodeVisitor):
             self.out.references.append(Ref(name=node.id, line=node.lineno, scope=self._scope_name()))
 
     def visit_Attribute(self, node: ast.Attribute) -> None:
-        self.out.references.append(Ref(name=node.attr, line=node.lineno, scope=self._scope_name()))
+        receiver = self._dotted(node.value) or "<expr>"
+        self.out.references.append(Ref(name=node.attr, line=node.lineno, scope=self._scope_name(), receiver=receiver))
         self.generic_visit(node)
 
 

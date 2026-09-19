@@ -51,6 +51,9 @@ COMMANDS: tuple[tuple[str, str, str | None], ...] = (
     ("reuse", "before creating something: what already exists? (reuse -> extend -> refactor -> create)", "description"),
     ("duplicates", "candidate duplicate symbols, constants, function bodies and thin wrappers", None),
     ("diff", "change surface of the working tree, staged set or a base ref, with a bloat signal", None),
+    ("impact", "what happens if this symbol or file changes: callers, dependents, types, tests, config, boundary, consequences", "target"),
+    ("trace", "root-cause worksheet: candidate causes downstream and callers upstream of an observed symptom", "target"),
+    ("graph", "inspect one node's edges in the relationship graph", "target"),
 )
 
 
@@ -78,6 +81,10 @@ def build_parser() -> argparse.ArgumentParser:
             p.add_argument("--base", default=None, help="compare against this ref (default: working tree vs HEAD)")
             p.add_argument("--staged", action="store_true", help="compare the staged set only")
             p.add_argument("--scope", action="append", default=[], help="path or term the task is about (repeatable)")
+        if name in ("impact", "trace"):
+            p.add_argument("--depth", type=int, default=2 if name == "impact" else 3, help="traversal depth")
+        if name == "trace":
+            p.add_argument("--observed", default="", help="the symptom as observed (input, expected vs actual)")
     return parser
 
 
@@ -135,6 +142,33 @@ def run(args: argparse.Namespace, root: Path) -> Report:
         from lord.change_surface import measure
 
         return measure(config, index, base=args.base, staged=args.staged, scope=tuple(args.scope))
+    if args.command == "impact":
+        from lord.impact import impact_report
+
+        return impact_report(index, root, args.target, depth=args.depth)
+    if args.command == "trace":
+        from lord.impact import trace_report
+
+        return trace_report(index, root, args.target, depth=args.depth, observed=args.observed)
+    if args.command == "graph":
+        from lord.graph import build_graph, file_node, neighborhood, sym_node
+        from lord.impact import resolve_target
+        from lord.report import OK, UNKNOWN, WARN, Finding
+
+        resolved = resolve_target(index, args.target)
+        report = Report(title=f"graph: {args.target}", meta={"root": str(root)})
+        if resolved is None:
+            report.add(Finding(kind="node", summary=f"{args.target!r} is not an indexed file or symbol", severity=WARN, confidence=UNKNOWN))
+            return report
+        graph = build_graph(index, root)
+        nodes = [file_node(resolved[1])] if resolved[0] == "file" else [sym_node(s) for s in resolved[1]]
+        for node in nodes:
+            hood = neighborhood(graph, node)
+            report.add(Finding(kind="node", summary=f"{node}: {len(hood['outgoing'])} outgoing, {len(hood['incoming'])} incoming", severity=OK,
+                               evidence=[f"-> {e['kind']} {e['to']} [{e['confidence']}, line {e['line']}]" for e in hood["outgoing"][:40]]
+                               + [f"<- {e['kind']} {e['from']} [{e['confidence']}, line {e['line']}]" for e in hood["incoming"][:40]], data=hood))
+        report.meta["edges_total"] = len(graph)
+        return report
     raise SystemExit(2)  # pragma: no cover
 
 

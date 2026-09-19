@@ -22,7 +22,7 @@ from lord.paths import state_dir
 from lord.report import INFO, OK, WARN, Finding, Report
 from lord.symbols import Extraction, Symbol
 
-INDEX_VERSION = 1
+INDEX_VERSION = 2  # 2: Ref.receiver added (Phase 4); older indexes are rebuilt
 INDEX_FILENAME = "index.json"
 
 

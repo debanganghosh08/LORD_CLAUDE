@@ -36,7 +36,7 @@ RE_DYNAMIC_IMPORT = re.compile(r"""import\(\s*['"]([^'"]+)['"]\s*\)""")
 RE_EXPORT_LIST = re.compile(r"export\s*\{([^}]+)\}")
 RE_EXPORTS_ASSIGN = re.compile(rf"(?:module\.)?exports\.({IDENT})\s*=")
 RE_EXPORT_DEFAULT_NAME = re.compile(rf"^\s*export\s+default\s+({IDENT})\s*;?\s*$")
-RE_CALL = re.compile(rf"\b({IDENT})\s*\(")
+RE_CALL = re.compile(rf"(?:({IDENT}(?:\.{IDENT})*)\.)?\b({IDENT})\s*\(")
 RE_ROUTE = re.compile(rf"""\b(?:app|router|server)\.(get|post|put|delete|patch|use|all)\(\s*['"]([^'"]+)['"]""")
 RE_ARROW_OR_FN = re.compile(r"^(?:async\s*)?(?:\([^)]*\)|[A-Za-z_$][\w$]*)\s*(?::\s*[^=]+)?=>|^(?:async\s+)?function\b")
 
@@ -193,10 +193,10 @@ def extract_js_ts(root: Path, rel: str, source: str, language: str) -> Extractio
         # calls (skip the declaration's own name)
         scope = declared.qualname if declared and declared.kind in ("function", "method") else (stack[-1][0] if stack else "")
         for m in RE_CALL.finditer(code):
-            name = m.group(1)
+            receiver, name = m.group(1) or "", m.group(2)
             if name in CALL_KEYWORDS or (declared and name == declared.name):
                 continue
-            out.calls.append(Ref(name, lineno, scope))
+            out.calls.append(Ref(name, lineno, scope, receiver=receiver))
 
         opens, closes = code.count("{"), code.count("}")
         if declared and opens > closes and declared.kind in ("class", "function", "method", "interface", "enum"):

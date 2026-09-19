@@ -55,6 +55,7 @@ class Ref:
     name: str
     line: int
     scope: str = ""              # qualname of the enclosing symbol, "" at module level
+    receiver: str = ""           # dotted receiver for attribute uses ("self", "os", "svc.client"); "" for bare names
 
 
 @dataclass

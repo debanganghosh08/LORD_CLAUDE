@@ -148,8 +148,8 @@ hidden.
 
 ## Git
 
-Commit: Phase 3 commit on `main` (see `git log`). Push result recorded in
-the Phase 4 report.
+Commit: `c3bc593` "Phase 3: reuse-first and anti-bloat engine" on `main`.
+Push: succeeded (`fd0373c..c3bc593 main -> main`).
 
 ## Known limitations
 

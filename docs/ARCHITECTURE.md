@@ -70,7 +70,8 @@ no model API. Exposed through one stable boundary: `python -m lord <command>`
 | `query.py` | def / refs / related / deps / dependents / tests-for / symbols | 2 |
 | `reuse.py` | reuse decision ladder (reuse / extend / refactor / create); duplicate symbols, values, near-duplicate bodies, thin wrappers | 3 |
 | `change_surface.py` | Git-based diff measurement, new symbols, name collisions, resemblance, churn, unrelated files, bloat signal | 3 |
-| graph, impact | relationship graph, impact and root-cause chains | 4 |
+| `graph.py` | relationship graph over the index: defines, imports, calls, references, extends, implements, tests, configures; per-edge confidence | 4 |
+| `impact.py` | impact report (callers, indirect chains, callees, dependents, types, tests, config, boundary, consequences) and root-cause trace worksheet | 4 |
 
 Design rules for the core: prefer the standard library; deterministic and
 reproducible; Windows-first via `pathlib`; every analysis distinguishes
@@ -150,14 +151,16 @@ replaces reading the source.
 
 | Level | Capability |
 |---|---|
-| CONFIRMED | Python: functions, methods, classes, module constants/variables, route decorators, imports resolved to workspace files, calls, name references, class bases; file inventory and exclusions; Git root |
-| HEURISTIC (INFERRED) | JavaScript/TypeScript: declarations, class methods, interfaces/types/enums, imports with relative resolution, exports, calls, Express-style routes; identifier text matches in any text file; `related` behaviour search (term overlap plus a small synonym table); external/unresolved imports |
+| CONFIRMED | Python: functions, methods, classes, module constants/variables (with values), route decorators, imports resolved to workspace files, calls, name references, class bases; graph edges through import bindings or same-file definitions; file inventory and exclusions; Git diff facts |
+| HEURISTIC (INFERRED) | cross-file name-based call/reference resolution; config files naming symbols; duplicate and resemblance similarity; bloat reasons; JavaScript/TypeScript: declarations, class methods, interfaces/types/enums, imports with relative resolution, exports, calls, Express-style routes; identifier text matches in any text file; `related` behaviour search (term overlap plus a small synonym table); external/unresolved imports |
 | UNSUPPORTED (UNKNOWN) | every other language: no symbols or relationships; files still appear in the inventory and in text search, and every report says so |
 | FUTURE | tree-sitter or LSP-backed extractors; type information; cross-language call resolution |
 
 ## 7. Current limitations (after Phase 2)
 
-- Impact traversal and root-cause chains are not yet built (Phase 4).
+- Call resolution is name-based across files (inferred); only import
+  bindings and same-file definitions are confirmed. Dynamic dispatch,
+  reflection and string-based lookups are invisible.
 - Duplicate detection is token-based (exact and identifier-normalised
   shingles); it finds copies and renamed copies, not semantic equivalents.
 - The `related` search is lexical; it finds candidates, it does not prove

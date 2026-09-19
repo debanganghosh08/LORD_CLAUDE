@@ -1,2 +1,4 @@
 email:
   max_length: 254
+entrypoint: pkg.users.handler
+validator: validate_email

@@ -62,6 +62,9 @@ python -m lord tests-for validate_email  # tests that touch it
 python -m lord reuse "validate email" --name EmailChecker   # reuse -> extend -> refactor -> create
 python -m lord duplicates                # duplicate symbols, values, bodies, thin wrappers
 python -m lord diff --scope <path|term>  # change surface + bloat signal (never size alone)
+python -m lord impact validate_email     # callers, dependents, subtypes, tests, config, boundary, consequences
+python -m lord trace UserService.create --observed "..."   # root-cause worksheet: candidate causes + upstream
+python -m lord graph pkg/users.py        # inspect one node's edges
 python -m lord --help                    # all commands; add --json for machine output
 python -m pytest                         # run the LORD test suite (needs pytest)
 ```
