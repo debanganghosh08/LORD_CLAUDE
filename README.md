@@ -59,6 +59,9 @@ python -m lord refs validate_email       # who uses it (confirmed vs text matche
 python -m lord related "validate email"  # existing implementations by behaviour
 python -m lord deps src/users.py         # what a file imports; `dependents` for the reverse
 python -m lord tests-for validate_email  # tests that touch it
+python -m lord reuse "validate email" --name EmailChecker   # reuse -> extend -> refactor -> create
+python -m lord duplicates                # duplicate symbols, values, bodies, thin wrappers
+python -m lord diff --scope <path|term>  # change surface + bloat signal (never size alone)
 python -m lord --help                    # all commands; add --json for machine output
 python -m pytest                         # run the LORD test suite (needs pytest)
 ```

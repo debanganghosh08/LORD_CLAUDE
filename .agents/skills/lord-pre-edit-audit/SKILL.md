@@ -66,8 +66,15 @@ DECISION. One objection, stated once.
 
 ## 5. Smallest valid change
 Choose in order: reuse -> extend -> refactor into existing architecture -> new.
+Before creating any symbol or file, run the reuse check and follow its decision
+(see the `lord-reuse-audit` skill):
+
+```
+python -m lord reuse "<behaviour in words>" --name <ProposedName>
+```
+
 Justify every new file, symbol and dependency by the absence of an existing one
-(cite the `related` result that came up empty).
+(cite the `reuse` decision and the terms it searched).
 
 ## 6. Plan
 3-6 lines: what you read, what changes file by file, what could break, what you
@@ -77,6 +84,14 @@ flagged. Ask only if the interpretations differ materially or the risk is real.
 Keep to the plan. If the diff must grow, stop and say why before continuing.
 
 ## 8. Verify and self-check
-Run tests, type checks, lint and build. State "files: N, +A/-R lines, new
-files: K" and explain anything larger than the task warrants. Report what was
-reused, what was new and why, and what is unresolved.
+Run tests, type checks, lint and build. Then measure the change surface:
+
+```
+python -m lord diff --scope <path or term the task was about>
+```
+
+State "files: N, +A/-R lines, new files: K, bloat: LEVEL" and resolve or
+justify every bloat reason (new single-symbol file, name collision, function
+resembling an existing one, additive-heavy diff, formatting churn, dependency
+change, unrelated files). Report what was reused, what was new and why, and
+what is unresolved.

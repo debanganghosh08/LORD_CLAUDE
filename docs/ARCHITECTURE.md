@@ -68,7 +68,8 @@ no model API. Exposed through one stable boundary: `python -m lord <command>`
 | `index.py` | incremental JSON index in `.lord/index.json` keyed by size/mtime/sha1 | 2 |
 | `search.py` | whole-identifier search; ripgrep if present, pure-Python fallback | 2 |
 | `query.py` | def / refs / related / deps / dependents / tests-for / symbols | 2 |
-| reuse, change_surface | reuse-first and anti-bloat analysis | 3 |
+| `reuse.py` | reuse decision ladder (reuse / extend / refactor / create); duplicate symbols, values, near-duplicate bodies, thin wrappers | 3 |
+| `change_surface.py` | Git-based diff measurement, new symbols, name collisions, resemblance, churn, unrelated files, bloat signal | 3 |
 | graph, impact | relationship graph, impact and root-cause chains | 4 |
 
 Design rules for the core: prefer the standard library; deterministic and
@@ -156,8 +157,9 @@ replaces reading the source.
 
 ## 7. Current limitations (after Phase 2)
 
-- Reuse analysis, change-surface measurement and impact traversal are not
-  yet built (Phases 3-4).
+- Impact traversal and root-cause chains are not yet built (Phase 4).
+- Duplicate detection is token-based (exact and identifier-normalised
+  shingles); it finds copies and renamed copies, not semantic equivalents.
 - The `related` search is lexical; it finds candidates, it does not prove
   equivalence.
 - Python call resolution is by name, not by type: `service.create` matches

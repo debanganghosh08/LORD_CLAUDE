@@ -48,6 +48,9 @@ COMMANDS: tuple[tuple[str, str, str | None], ...] = (
     ("deps", "what a file depends on (resolved imports)", "path"),
     ("dependents", "what depends on a file (importers)", "path"),
     ("tests-for", "test files that touch a symbol or file", "target"),
+    ("reuse", "before creating something: what already exists? (reuse -> extend -> refactor -> create)", "description"),
+    ("duplicates", "candidate duplicate symbols, constants, function bodies and thin wrappers", None),
+    ("diff", "change surface of the working tree, staged set or a base ref, with a bloat signal", None),
 )
 
 
@@ -67,6 +70,14 @@ def build_parser() -> argparse.ArgumentParser:
             p.add_argument("--limit", type=int, default=10)
         if name == "refs":
             p.add_argument("--no-tests", action="store_true", help="exclude test files")
+        if name == "reuse":
+            p.add_argument("--name", action="append", default=[], help="proposed symbol name (repeatable)")
+        if name == "duplicates":
+            p.add_argument("--include-tests", action="store_true", help="also compare test files")
+        if name == "diff":
+            p.add_argument("--base", default=None, help="compare against this ref (default: working tree vs HEAD)")
+            p.add_argument("--staged", action="store_true", help="compare the staged set only")
+            p.add_argument("--scope", action="append", default=[], help="path or term the task is about (repeatable)")
     return parser
 
 
@@ -112,6 +123,18 @@ def run(args: argparse.Namespace, root: Path) -> Report:
         return query.dependents(index, _norm(args.path))
     if args.command == "tests-for":
         return query.tests_for(index, root, _norm(args.target))
+    if args.command == "reuse":
+        from lord.reuse import reuse_report
+
+        return reuse_report(index, root, args.description, names=args.name)
+    if args.command == "duplicates":
+        from lord.reuse import duplicates_report
+
+        return duplicates_report(index, root, include_tests=args.include_tests)
+    if args.command == "diff":
+        from lord.change_surface import measure
+
+        return measure(config, index, base=args.base, staged=args.staged, scope=tuple(args.scope))
     raise SystemExit(2)  # pragma: no cover
 
 

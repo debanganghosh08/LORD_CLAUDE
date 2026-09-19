@@ -49,7 +49,12 @@ SYNONYMS: tuple[frozenset[str], ...] = (
     frozenset({"slug", "slugify", "kebab"}),
     frozenset({"string", "str", "text"}),
 )
-STOPWORDS = {"a", "an", "the", "for", "to", "of", "and", "or", "in", "on", "with", "this", "that", "function", "method", "class", "add", "code", "logic", "implement", "implementation", "some", "new"}
+STOPWORDS = {
+    "a", "an", "the", "for", "to", "of", "and", "or", "in", "on", "with", "this", "that", "is", "it", "be", "as", "at", "by", "if",
+    "we", "do", "whether", "when", "should", "need", "want", "please", "function", "method", "class", "add", "code", "logic",
+    "implement", "implementation", "some", "new",
+}
+PREFIX_STEM = 5  # "validate", "validation", "validator" all share the prefix "valid"
 
 
 def tokenize(text: str) -> set[str]:
@@ -57,12 +62,15 @@ def tokenize(text: str) -> set[str]:
     spaced = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", text)
     spaced = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1 \2", spaced)
     terms = {t for t in re.split(r"[^A-Za-z0-9]+", spaced.lower()) if len(t) > 1 and t not in STOPWORDS}
-    # light stemming: plural and -ing/-ed/-er forms
+    # light stemming: plural and -ing/-ed/-er forms, plus a 5-char prefix stem so
+    # derived forms (validate / validation / valid) meet without a real stemmer
     stemmed = set()
     for t in terms:
         for suffix in ("ing", "ed", "er", "es", "s"):
             if t.endswith(suffix) and len(t) - len(suffix) >= 3:
                 stemmed.add(t[: -len(suffix)])
+        if len(t) > PREFIX_STEM:
+            stemmed.add(t[:PREFIX_STEM])
         stemmed.add(t)
     return stemmed
 

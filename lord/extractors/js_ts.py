@@ -99,6 +99,7 @@ def _strip_strings_and_comments(line: str) -> str:
 def extract_js_ts(root: Path, rel: str, source: str, language: str) -> Extraction:
     out = Extraction(file=rel, language=language, confidence=INFERRED)
     stack: list[tuple[str, int, bool]] = []  # (qualname, owning depth, is_class)
+    open_symbols: dict[str, Symbol] = {}     # symbols whose closing brace has not been seen yet
     depth = 0
     in_block_comment = False
     export_names: set[str] = set()
@@ -200,9 +201,12 @@ def extract_js_ts(root: Path, rel: str, source: str, language: str) -> Extractio
         opens, closes = code.count("{"), code.count("}")
         if declared and opens > closes and declared.kind in ("class", "function", "method", "interface", "enum"):
             stack.append((declared.qualname, depth + 1, declared.kind == "class"))
+            open_symbols[declared.qualname] = declared
         depth += opens - closes
         while stack and stack[-1][1] > depth:
-            stack.pop()
+            closed = stack.pop()[0]
+            if closed in open_symbols:
+                open_symbols.pop(closed).end_line = lineno
 
     out.exports = sorted(export_names)
     return out

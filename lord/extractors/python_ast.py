@@ -48,9 +48,10 @@ def resolve_module(root: Path, rel: str, module: str, level: int) -> str | None:
 
 
 class _Visitor(ast.NodeVisitor):
-    def __init__(self, root: Path, rel: str) -> None:
+    def __init__(self, root: Path, rel: str, source: str = "") -> None:
         self.root = root
         self.rel = rel
+        self.source = source
         self.out = Extraction(file=rel, language="python", confidence=CONFIRMED)
         self.scope: list[str] = []
 
@@ -132,6 +133,11 @@ class _Visitor(ast.NodeVisitor):
     def _assignment_targets(self, node: ast.AST, targets: list[ast.expr]) -> None:
         if self.scope:  # only module-level bindings are symbols
             return
+        value_src = ""
+        value = getattr(node, "value", None)
+        if value is not None and self.source:
+            segment = ast.get_source_segment(self.source, value) or ""
+            value_src = " ".join(segment.split())[:80]
         for target in targets:
             names = [target] if isinstance(target, ast.Name) else [e for e in getattr(target, "elts", []) if isinstance(e, ast.Name)]
             for name_node in names:
@@ -142,6 +148,7 @@ class _Visitor(ast.NodeVisitor):
                     Symbol(
                         name=name, kind="constant" if name.isupper() else "variable", file=self.rel,
                         line=node.lineno, qualname=name, language="python", exported=not name.startswith("_"),
+                        signature=value_src,
                     )
                 )
 
@@ -195,7 +202,7 @@ def extract_python(root: Path, rel: str, source: str) -> Extraction:
         lineno = getattr(exc, "lineno", None)
         return Extraction(file=rel, language="python", confidence=UNKNOWN,
                           error=f"{type(exc).__name__} at line {lineno}: {getattr(exc, 'msg', exc)}")
-    visitor = _Visitor(root, rel)
+    visitor = _Visitor(root, rel, source)
     visitor.visit(tree)
     exported = {s.name for s in visitor.out.symbols if s.exported and not s.parent}
     visitor.out.exports = sorted(exported)
