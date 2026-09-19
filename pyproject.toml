@@ -25,4 +25,4 @@ include = ["lord*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
-addopts = "-q"
+addopts = "-q --ignore=tests/fixtures"

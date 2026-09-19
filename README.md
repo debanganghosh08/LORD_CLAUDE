@@ -51,10 +51,21 @@ kept separate from that adapter so other environments can be supported later.
 Requirements: Python 3.11+ and Git. ripgrep is recommended but optional.
 
 ```
-python -m lord doctor          # verify environment and workspace boundary
-python -m lord --help          # list available commands
-python -m pytest               # run the LORD test suite (needs pytest)
+python -m lord doctor                    # verify environment and workspace boundary
+python -m lord inventory                 # repository shape: kinds, languages, exclusions
+python -m lord index                     # build/refresh .lord/index.json (incremental)
+python -m lord def validate_email        # where is it defined
+python -m lord refs validate_email       # who uses it (confirmed vs text matches, callers)
+python -m lord related "validate email"  # existing implementations by behaviour
+python -m lord deps src/users.py         # what a file imports; `dependents` for the reverse
+python -m lord tests-for validate_email  # tests that touch it
+python -m lord --help                    # all commands; add --json for machine output
+python -m pytest                         # run the LORD test suite (needs pytest)
 ```
+
+Every result carries a confidence: `confirmed` (parsed source), `inferred`
+(heuristic or text match) or `unknown` (analysis unavailable for that
+language). LORD never turns "could not analyse" into "nothing found".
 
 Inside Antigravity, opening this workspace activates
 `.agents/rules/lord-operating-contract.md` (always on), the

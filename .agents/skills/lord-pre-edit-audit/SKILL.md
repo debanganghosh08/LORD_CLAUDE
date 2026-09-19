@@ -9,46 +9,65 @@ request that will change a file. Compress steps 1-6 into one short pass only for
 trivial, single-line, unambiguous edits; never skip step 2 for anything that
 touches a symbol used elsewhere.
 
-## 0. Environment
-Run once per session in a new workspace:
+All commands run from the workspace root. Add `--json` for machine-readable
+output. Every result labels its confidence: `confirmed` (parsed source),
+`inferred` (heuristic or text match), `unknown` (analysis unavailable).
+
+## 0. Environment (once per session)
 
 ```
 python -m lord doctor
+python -m lord inventory
 ```
 
-It confirms the workspace root, that the Git root matches it, and which tools
-are available. If it reports an error, fix or report it before editing.
+`doctor` confirms the workspace root, that the Git root matches it, and which
+tools exist. `inventory` gives the repository shape: kinds, languages, project
+roots, excluded directories. Fix or report any error before editing.
 
 ## 1. Restate the task
 One sentence: the outcome actually wanted, not the literal words.
 
 ## 2. Search, do not assume
-For every symbol you expect to touch, find with evidence:
-- the definition (file and line);
-- every reference and caller across the repository;
-- existing implementations that already do most of the job, searched by
-  behaviour and structure as well as by name.
+For every symbol you expect to touch:
 
-Tooling, in preference order:
-1. `python -m lord` commands (repository intelligence; added in later phases);
-2. `rg -n "<pattern>"` across the workspace root (respects .gitignore);
-3. opening the files the search points at.
+```
+python -m lord def <name>          # where it is defined (confirmed for Python, inferred for JS/TS)
+python -m lord refs <name>         # every use: confirmed code references vs text matches; callers in meta
+python -m lord symbols <file>      # what a file defines
+python -m lord deps <file>         # what it imports (workspace files resolved)
+python -m lord dependents <file>   # who imports it
+python -m lord tests-for <name|file>
+```
+
+For the behaviour being requested, search by meaning before writing anything:
+
+```
+python -m lord related "<describe the behaviour, e.g. validate email address>"
+```
+
+Open every file the results point at. The index says where to look; the source
+says what is implemented. If a result says `unknown` or `analysis unavailable`,
+fall back to `rg -n "<pattern>"` or an editor search and say so; never treat an
+unanalysed language as "no references".
 
 Record the trail briefly: searched X, found Y at path:line.
 
 ## 3. Blast radius
-List every file that could be affected, including indirect consumers: shared
-types, configuration, tests, callers of callers.
+From `refs`, `dependents` and `tests-for`, list every file that could be
+affected, including indirect consumers: shared types, configuration, tests,
+callers of callers.
 
 ## 4. Critical review
 Compare the request with what you found. Raise now, before planning, if the
-request: already exists; contradicts an established pattern; breaks a consumer;
-targets a symptom; rests on a misreading. Use EVIDENCE -> CONSEQUENCE ->
-RECOMMENDATION -> USER DECISION. One objection, stated once.
+request: already exists (`related` or `def` found it); contradicts an
+established pattern; breaks a consumer (`refs`/`dependents`); targets a symptom;
+rests on a misreading. Use EVIDENCE -> CONSEQUENCE -> RECOMMENDATION -> USER
+DECISION. One objection, stated once.
 
 ## 5. Smallest valid change
 Choose in order: reuse -> extend -> refactor into existing architecture -> new.
-Justify every new file, symbol and dependency by the absence of an existing one.
+Justify every new file, symbol and dependency by the absence of an existing one
+(cite the `related` result that came up empty).
 
 ## 6. Plan
 3-6 lines: what you read, what changes file by file, what could break, what you

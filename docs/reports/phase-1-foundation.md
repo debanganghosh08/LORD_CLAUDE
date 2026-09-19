@@ -133,8 +133,8 @@ mangled (replaced; stdout is now reconfigured to UTF-8).
 
 ## Git
 
-Commit: see `git log` (Phase 1 commit on `main`, on top of `dbeba9b`).
-Push: recorded in the section below after the push attempt.
+Commit: `80e60af` "Phase 1: LORD foundation" on `main`, on top of `dbeba9b`.
+Push: succeeded (`dbeba9b..80e60af main -> main`) via Git Credential Manager.
 
 ## Known limitations
 

@@ -62,7 +62,12 @@ no model API. Exposed through one stable boundary: `python -m lord <command>`
 | `report.py` | shared Finding/Report model, JSON and Markdown rendering | 1 |
 | `doctor.py` | environment and boundary verification | 1 |
 | `cli.py` | argparse dispatch; the stable command boundary | 1 |
-| inventory, symbols, extractors, index, query | repository forensics | 2 |
+| `inventory.py` | walk with configurable exclusions; classify kind and language; detect generated code, tests, manifests | 2 |
+| `symbols.py` | Symbol / Import / Ref / Base / Extraction data model with confidence | 2 |
+| `extractors/` | `python_ast.py` (stdlib AST, CONFIRMED); `js_ts.py` (regex heuristics, INFERRED); others -> UNKNOWN | 2 |
+| `index.py` | incremental JSON index in `.lord/index.json` keyed by size/mtime/sha1 | 2 |
+| `search.py` | whole-identifier search; ripgrep if present, pure-Python fallback | 2 |
+| `query.py` | def / refs / related / deps / dependents / tests-for / symbols | 2 |
 | reuse, change_surface | reuse-first and anti-bloat analysis | 3 |
 | graph, impact | relationship graph, impact and root-cause chains | 4 |
 
@@ -140,10 +145,23 @@ deterministic graph answers "where should I look"; the source answers "what is
 implemented"; the model answers "what does it mean". Graph output never
 replaces reading the source.
 
-## 6. Current limitations (Phase 1)
+## 6. Repository intelligence: what is confirmed, heuristic, unsupported
 
-- Repository intelligence, reuse analysis and impact analysis are not yet
-  built; the rules and skill reference them as future commands.
+| Level | Capability |
+|---|---|
+| CONFIRMED | Python: functions, methods, classes, module constants/variables, route decorators, imports resolved to workspace files, calls, name references, class bases; file inventory and exclusions; Git root |
+| HEURISTIC (INFERRED) | JavaScript/TypeScript: declarations, class methods, interfaces/types/enums, imports with relative resolution, exports, calls, Express-style routes; identifier text matches in any text file; `related` behaviour search (term overlap plus a small synonym table); external/unresolved imports |
+| UNSUPPORTED (UNKNOWN) | every other language: no symbols or relationships; files still appear in the inventory and in text search, and every report says so |
+| FUTURE | tree-sitter or LSP-backed extractors; type information; cross-language call resolution |
+
+## 7. Current limitations (after Phase 2)
+
+- Reuse analysis, change-surface measurement and impact traversal are not
+  yet built (Phases 3-4).
+- The `related` search is lexical; it finds candidates, it does not prove
+  equivalence.
+- Python call resolution is by name, not by type: `service.create` matches
+  every `create`, and reports say so through scope/evidence lines.
 - Enforcement is advisory: no hooks are installed yet (Phase 6).
 - Antigravity behaviour is taken from its public documentation; the adapter
   has not been exercised inside a live Antigravity session in this phase.

@@ -27,19 +27,31 @@ proposed change), establish the facts:
 6. Architectural context: the pattern the surrounding code follows.
 
 ## Tools
-Prefer `python -m lord <command>` when the command exists in this workspace
-(run `python -m lord --help`). Otherwise use `rg -n` from the workspace root,
-then open the files the search points at. Never read outside the workspace.
+Run from the workspace root, in this order:
+
+```
+python -m lord def <name>
+python -m lord refs <name>
+python -m lord related "<behaviour in words>"
+python -m lord deps <file>  /  python -m lord dependents <file>
+python -m lord tests-for <name|file>
+python -m lord symbols <file>
+```
+
+Then open the files the results point at with `view_file`; the index says
+where to look, the source says what is implemented. Use `grep_search` for
+anything the index reports as `unknown` or `analysis unavailable`. Never read
+outside the workspace.
 
 ## Output format
 Return only this structure, at most ~40 lines:
 
 ```
 QUESTION: <restated>
-DEFINITION: path:line — <one line> [confirmed|inferred|unknown]
+DEFINITION: path:line - <one line> [confirmed|inferred|unknown]
 REFERENCES: (count) path:line, path:line, ... [confidence]
 CALLERS / CALLEES: ...
-RELATED IMPLEMENTATIONS: path:line — why it is related [confidence]
+RELATED IMPLEMENTATIONS: path:line - why it is related [confidence]
 TESTS: path, path
 CONFIG: path
 ARCHITECTURAL CONTEXT: <2-3 lines>
@@ -48,7 +60,8 @@ UNKNOWN / NOT ANALYSED: <what you could not establish and why>
 ```
 
 ## Rules
-- Every claim carries a confidence label. Never report "no references" when
-  the search was incomplete or the language is unsupported; report UNKNOWN.
+- Every claim carries the confidence label LORD reported. Never report "no
+  references" when the search was incomplete or the language is unsupported;
+  report UNKNOWN.
 - Cite file paths and line numbers, not impressions.
 - Do not propose implementations. Do not edit, create or delete files.
