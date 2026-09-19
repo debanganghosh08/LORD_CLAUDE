@@ -130,8 +130,9 @@ the agent must say so in its report rather than claim full coverage.
 
 ## Git
 
-Commit: Phase 5 commit on `main` (see `git log`). Push result: see the
-final engineering report.
+Commit: `40897a4` "Phase 5: senior-engineer behaviour, critical review,
+specialist agents" on `main`.
+Push: succeeded (`dedf9db..40897a4 main -> main`).
 
 ## Known limitations
 
