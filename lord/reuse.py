@@ -33,8 +33,10 @@ MIN_BODY_TOKENS = 25
 MIN_SHARED_SHINGLES = 3
 DUPLICATE_SIMILARITY = 0.7      # exact-token Jaccard at or above this: duplicate logic
 STRUCTURAL_SIMILARITY = 0.8     # normalised Jaccard at or above this: same structure, renamed identifiers
-STRONG_REUSE_SCORE = 6.0        # `related` score at or above this: reuse/extend before creating
-WEAK_REUSE_SCORE = 3.0          # below this a candidate is noise and does not block creation
+# `related` scores are rarity-weighted (Phase 8A): strong behavioural matches land
+# between roughly 5 and 8, noise below 4. Calibrated on the fixtures and the demo.
+STRONG_REUSE_SCORE = 4.5        # at or above this: reuse/extend before creating
+WEAK_REUSE_SCORE = 2.5          # below this a candidate is noise and does not block creation
 
 KEYWORDS = {
     # python
@@ -199,11 +201,12 @@ def duplicates_report(index: Index, root: Path, include_tests: bool = False) -> 
 
     # same name, several files (functions, classes, constants, types) -- methods excluded: same-named
     # methods on different classes are normal.
-    by_key: dict[tuple[str, str], list[Symbol]] = defaultdict(list)
+    # grouped per project root: sub-projects of a monorepo legitimately reuse names
+    by_key: dict[tuple[str, str, str], list[Symbol]] = defaultdict(list)
     for s in code_symbols:
         if s.kind in ("function", "class", "constant", "type", "interface", "enum") and s.exported:
-            by_key[(s.kind, s.name)].append(s)
-    for (kind, name), group in sorted(by_key.items()):
+            by_key[(index.inventory.project_root_of(s.file), s.kind, s.name)].append(s)
+    for (_project, kind, name), group in sorted(by_key.items()):
         files = sorted({s.file for s in group})
         if len(files) < 2:
             continue
@@ -221,11 +224,11 @@ def duplicates_report(index: Index, root: Path, include_tests: bool = False) -> 
                                consequence="parallel definitions drift independently", recommendation="confirm whether both are needed; prefer one import path"))
 
     # same value, different constant names
-    by_value: dict[str, list[Symbol]] = defaultdict(list)
+    by_value: dict[tuple[str, str], list[Symbol]] = defaultdict(list)
     for s in code_symbols:
         if s.kind == "constant" and len(s.signature) >= 8:
-            by_value[s.signature].append(s)
-    for value, group in by_value.items():
+            by_value[(index.inventory.project_root_of(s.file), s.signature)].append(s)
+    for (_project, value), group in by_value.items():
         names = sorted({s.name for s in group})
         if len(names) < 2:
             continue

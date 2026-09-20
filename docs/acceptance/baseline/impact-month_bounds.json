@@ -1,0 +1,733 @@
+{
+ "title": "impact: month_bounds",
+ "worst_severity": "warn",
+ "meta": {
+  "root": "<root>",
+  "depth": 4,
+  "direct_callers": [
+   "demo/app/services/transactions.py::TransactionService.in_month",
+   "demo/tests/test_dates.py::test_month_bounds_march"
+  ],
+  "indirect_callers": [
+   "demo/app/api/handlers.py::export_csv",
+   "demo/app/api/handlers.py::monthly_report",
+   "demo/app/api/server.py::make_handler.Handler._dispatch",
+   "demo/app/services/export.py::ExportService.monthly_csv",
+   "demo/app/services/reports.py::ReportService.monthly_summary",
+   "demo/tests/test_api.py::test_export_endpoint_returns_csv",
+   "demo/tests/test_api.py::test_monthly_report_formats_totals",
+   "demo/tests/test_api.py::test_report_requires_valid_month",
+   "demo/tests/test_export.py::test_monthly_csv_has_header_and_rows",
+   "demo/tests/test_reports.py::test_empty_month",
+   "demo/tests/test_reports.py::test_monthly_summary_march",
+   "demo/tests/test_reports.py::test_render_lines_use_shared_formatting",
+   "demo/tests/test_transactions.py::test_in_month_selects_march",
+   "demo/tests/test_transactions.py::test_totals_by_kind"
+  ],
+  "dependents": [
+   "demo/app/api/handlers.py",
+   "demo/app/api/server.py",
+   "demo/app/services/export.py",
+   "demo/app/services/reports.py",
+   "demo/app/services/transactions.py",
+   "demo/app/validation.py",
+   "demo/scripts/seed.py",
+   "demo/tests/conftest.py",
+   "demo/tests/test_api.py",
+   "demo/tests/test_dates.py",
+   "demo/tests/test_server.py",
+   "demo/tests/test_transactions.py",
+   "demo/tests/test_validation.py"
+  ],
+  "tests": [
+   "demo/tests/test_dates.py"
+  ],
+  "config": [
+   "docs/acceptance/baseline/def-month_bounds.json",
+   "docs/acceptance/baseline/dependents-dates.json",
+   "docs/acceptance/baseline/impact-month_bounds.json",
+   "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json",
+   "docs/acceptance/baseline/refs-format_amount.json",
+   "docs/acceptance/baseline/refs-normalize_text.json",
+   "docs/acceptance/baseline/refs-validate_transaction.json",
+   "docs/acceptance/baseline/summary.json",
+   "docs/acceptance/baseline/tests-for-format_amount.json",
+   "docs/acceptance/baseline/tests-for-month_bounds.json",
+   "docs/acceptance/baseline/trace-monthly_summary.json"
+  ],
+  "directories": [
+   "demo"
+  ],
+  "overall_confidence": "inferred"
+ },
+ "findings": [
+  {
+   "kind": "definition",
+   "summary": "demo/app/utils/dates.py:18 function month_bounds (year, month)",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "First and last calendar day of the month, both inclusive."
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "direct-reference",
+   "summary": "demo/app/services/transactions.py::TransactionService.in_month calls it",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/app/services/transactions.py:39 calls"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "direct-reference",
+   "summary": "demo/tests/test_dates.py::test_month_bounds_march calls it [test]",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/tests/test_dates.py:16 calls"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "indirect-reference",
+   "summary": "demo/app/services/export.py::ExportService.monthly_csv reaches it at depth 2",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/app/services/export.py::ExportService.monthly_csv <- demo/app/services/transactions.py::TransactionService.in_month <- demo/app/utils/dates.py::month_bounds"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "indirect-reference",
+   "summary": "demo/app/services/reports.py::ReportService.monthly_summary reaches it at depth 2",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/app/services/reports.py::ReportService.monthly_summary <- demo/app/services/transactions.py::TransactionService.in_month <- demo/app/utils/dates.py::month_bounds"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "indirect-reference",
+   "summary": "demo/tests/test_transactions.py::test_in_month_selects_march reaches it at depth 2",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/tests/test_transactions.py::test_in_month_selects_march <- demo/app/services/transactions.py::TransactionService.in_month <- demo/app/utils/dates.py::month_bounds"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "indirect-reference",
+   "summary": "demo/tests/test_transactions.py::test_totals_by_kind reaches it at depth 2",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/tests/test_transactions.py::test_totals_by_kind <- demo/app/services/transactions.py::TransactionService.in_month <- demo/app/utils/dates.py::month_bounds"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "indirect-reference",
+   "summary": "demo/app/api/handlers.py::export_csv reaches it at depth 3",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/app/api/handlers.py::export_csv <- demo/app/services/export.py::ExportService.monthly_csv <- demo/app/services/transactions.py::TransactionService.in_month <- demo/app/utils/dates.py::month_bounds"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "indirect-reference",
+   "summary": "demo/app/api/handlers.py::monthly_report reaches it at depth 3",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/app/api/handlers.py::monthly_report <- demo/app/services/reports.py::ReportService.monthly_summary <- demo/app/services/transactions.py::TransactionService.in_month <- demo/app/utils/dates.py::month_bounds"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "indirect-reference",
+   "summary": "demo/tests/test_export.py::test_monthly_csv_has_header_and_rows reaches it at depth 3",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/tests/test_export.py::test_monthly_csv_has_header_and_rows <- demo/app/services/export.py::ExportService.monthly_csv <- demo/app/services/transactions.py::TransactionService.in_month <- demo/app/utils/dates.py::month_bounds"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "indirect-reference",
+   "summary": "demo/tests/test_reports.py::test_empty_month reaches it at depth 3",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/tests/test_reports.py::test_empty_month <- demo/app/services/reports.py::ReportService.monthly_summary <- demo/app/services/transactions.py::TransactionService.in_month <- demo/app/utils/dates.py::month_bounds"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "indirect-reference",
+   "summary": "demo/tests/test_reports.py::test_monthly_summary_march reaches it at depth 3",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/tests/test_reports.py::test_monthly_summary_march <- demo/app/services/reports.py::ReportService.monthly_summary <- demo/app/services/transactions.py::TransactionService.in_month <- demo/app/utils/dates.py::month_bounds"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "indirect-reference",
+   "summary": "demo/tests/test_reports.py::test_render_lines_use_shared_formatting reaches it at depth 3",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/tests/test_reports.py::test_render_lines_use_shared_formatting <- demo/app/services/reports.py::ReportService.monthly_summary <- demo/app/services/transactions.py::TransactionService.in_month <- demo/app/utils/dates.py::month_bounds"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "indirect-reference",
+   "summary": "demo/app/api/server.py::make_handler.Handler._dispatch reaches it at depth 4",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/app/api/server.py::make_handler.Handler._dispatch <- demo/app/api/handlers.py::export_csv <- demo/app/services/export.py::ExportService.monthly_csv <- demo/app/services/transactions.py::TransactionService.in_month <- demo/app/utils/dates.py::month_bounds"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "indirect-reference",
+   "summary": "demo/tests/test_api.py::test_export_endpoint_returns_csv reaches it at depth 4",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/tests/test_api.py::test_export_endpoint_returns_csv <- demo/app/api/handlers.py::export_csv <- demo/app/services/export.py::ExportService.monthly_csv <- demo/app/services/transactions.py::TransactionService.in_month <- demo/app/utils/dates.py::month_bounds"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "indirect-reference",
+   "summary": "demo/tests/test_api.py::test_monthly_report_formats_totals reaches it at depth 4",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/tests/test_api.py::test_monthly_report_formats_totals <- demo/app/api/handlers.py::monthly_report <- demo/app/services/reports.py::ReportService.monthly_summary <- demo/app/services/transactions.py::TransactionService.in_month <- demo/app/utils/dates.py::month_bounds"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "indirect-reference",
+   "summary": "demo/tests/test_api.py::test_report_requires_valid_month reaches it at depth 4",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/tests/test_api.py::test_report_requires_valid_month <- demo/app/api/handlers.py::monthly_report <- demo/app/services/reports.py::ReportService.monthly_summary <- demo/app/services/transactions.py::TransactionService.in_month <- demo/app/utils/dates.py::month_bounds"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "callee",
+   "summary": "it references demo/web/app.js::month",
+   "severity": "ok",
+   "confidence": "inferred",
+   "evidence": [
+    "line 20"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "callee",
+   "summary": "it references demo/web/app.js::year",
+   "severity": "ok",
+   "confidence": "inferred",
+   "evidence": [
+    "line 20"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependency",
+   "summary": "demo/app/utils/dates.py imports demo/app/config.py (DATE_FORMAT)",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependent",
+   "summary": "demo/app/services/transactions.py depends on it (depth 1)",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependent",
+   "summary": "demo/app/validation.py depends on it (depth 1)",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependent",
+   "summary": "demo/tests/test_dates.py depends on it (depth 1) [test]",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependent",
+   "summary": "demo/app/api/handlers.py depends on it (depth 2)",
+   "severity": "info",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/app/api/handlers.py <- demo/app/validation.py <- demo/app/utils/dates.py"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependent",
+   "summary": "demo/app/services/export.py depends on it (depth 2)",
+   "severity": "info",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/app/services/export.py <- demo/app/services/transactions.py <- demo/app/utils/dates.py"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependent",
+   "summary": "demo/app/services/reports.py depends on it (depth 2)",
+   "severity": "info",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/app/services/reports.py <- demo/app/services/transactions.py <- demo/app/utils/dates.py"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependent",
+   "summary": "demo/tests/test_transactions.py depends on it (depth 2) [test]",
+   "severity": "info",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/tests/test_transactions.py <- demo/app/validation.py <- demo/app/utils/dates.py"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependent",
+   "summary": "demo/tests/test_validation.py depends on it (depth 2) [test]",
+   "severity": "info",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/tests/test_validation.py <- demo/app/validation.py <- demo/app/utils/dates.py"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependent",
+   "summary": "demo/app/api/server.py depends on it (depth 3)",
+   "severity": "info",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/app/api/server.py <- demo/app/api/handlers.py <- demo/app/validation.py <- demo/app/utils/dates.py"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependent",
+   "summary": "demo/scripts/seed.py depends on it (depth 3)",
+   "severity": "info",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/scripts/seed.py <- demo/app/api/handlers.py <- demo/app/validation.py <- demo/app/utils/dates.py"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependent",
+   "summary": "demo/tests/conftest.py depends on it (depth 3) [test]",
+   "severity": "info",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/tests/conftest.py <- demo/app/api/handlers.py <- demo/app/validation.py <- demo/app/utils/dates.py"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependent",
+   "summary": "demo/tests/test_api.py depends on it (depth 3) [test]",
+   "severity": "info",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/tests/test_api.py <- demo/app/api/handlers.py <- demo/app/validation.py <- demo/app/utils/dates.py"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependent",
+   "summary": "demo/tests/test_server.py depends on it (depth 4) [test]",
+   "severity": "info",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/tests/test_server.py <- demo/app/api/server.py <- demo/app/api/handlers.py <- demo/app/validation.py <- demo/app/utils/dates.py"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "test",
+   "summary": "demo/tests/test_dates.py exercises it",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/tests/test_dates.py:16",
+    "demo/tests/test_dates.py:5"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "config",
+   "summary": "docs/acceptance/baseline/def-month_bounds.json mentions it (month_bounds)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/def-month_bounds.json:2",
+    "docs/acceptance/baseline/def-month_bounds.json:10",
+    "docs/acceptance/baseline/def-month_bounds.json:20",
+    "docs/acceptance/baseline/def-month_bounds.json:24"
+   ],
+   "consequence": "a rename or signature change may need a configuration update",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "config",
+   "summary": "docs/acceptance/baseline/dependents-dates.json mentions it (month_bounds)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/dependents-dates.json:15",
+    "docs/acceptance/baseline/dependents-dates.json:27",
+    "docs/acceptance/baseline/dependents-dates.json:51",
+    "docs/acceptance/baseline/dependents-dates.json:63"
+   ],
+   "consequence": "a rename or signature change may need a configuration update",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "config",
+   "summary": "docs/acceptance/baseline/impact-month_bounds.json mentions it (month_bounds)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/impact-month_bounds.json:2",
+    "docs/acceptance/baseline/impact-month_bounds.json:54",
+    "docs/acceptance/baseline/impact-month_bounds.json:94",
+    "docs/acceptance/baseline/impact-month_bounds.json:106",
+    "docs/acceptance/baseline/impact-month_bounds.json:118"
+   ],
+   "consequence": "a rename or signature change may need a configuration update",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "config",
+   "summary": "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json mentions it (month_bounds)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json:159"
+   ],
+   "consequence": "a rename or signature change may need a configuration update",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "config",
+   "summary": "docs/acceptance/baseline/refs-format_amount.json mentions it (month_bounds)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/refs-format_amount.json:261",
+    "docs/acceptance/baseline/refs-format_amount.json:265"
+   ],
+   "consequence": "a rename or signature change may need a configuration update",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "config",
+   "summary": "docs/acceptance/baseline/refs-normalize_text.json mentions it (month_bounds)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/refs-normalize_text.json:169"
+   ],
+   "consequence": "a rename or signature change may need a configuration update",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "config",
+   "summary": "docs/acceptance/baseline/refs-validate_transaction.json mentions it (month_bounds)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/refs-validate_transaction.json:125"
+   ],
+   "consequence": "a rename or signature change may need a configuration update",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "config",
+   "summary": "docs/acceptance/baseline/summary.json mentions it (month_bounds)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/summary.json:17",
+    "docs/acceptance/baseline/summary.json:26",
+    "docs/acceptance/baseline/summary.json:33"
+   ],
+   "consequence": "a rename or signature change may need a configuration update",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "config",
+   "summary": "docs/acceptance/baseline/tests-for-format_amount.json mentions it (month_bounds)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/tests-for-format_amount.json:35",
+    "docs/acceptance/baseline/tests-for-format_amount.json:39"
+   ],
+   "consequence": "a rename or signature change may need a configuration update",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "config",
+   "summary": "docs/acceptance/baseline/tests-for-month_bounds.json mentions it (month_bounds)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/tests-for-month_bounds.json:2",
+    "docs/acceptance/baseline/tests-for-month_bounds.json:18",
+    "docs/acceptance/baseline/tests-for-month_bounds.json:19",
+    "docs/acceptance/baseline/tests-for-month_bounds.json:31",
+    "docs/acceptance/baseline/tests-for-month_bounds.json:32"
+   ],
+   "consequence": "a rename or signature change may need a configuration update",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "config",
+   "summary": "docs/acceptance/baseline/trace-monthly_summary.json mentions it (month_bounds)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/trace-monthly_summary.json:16",
+    "docs/acceptance/baseline/trace-monthly_summary.json:142",
+    "docs/acceptance/baseline/trace-monthly_summary.json:146"
+   ],
+   "consequence": "a rename or signature change may need a configuration update",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "boundary",
+   "summary": "affects 16 file(s) across 1 top-level directory: demo",
+   "severity": "ok",
+   "confidence": "inferred",
+   "evidence": [
+    "project roots: ., demo"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "consequence",
+   "summary": "a signature or behaviour change reaches 1 direct caller/reference site(s) in 2 file(s)",
+   "severity": "warn",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/app/services/transactions.py::TransactionService.in_month",
+    "demo/tests/test_dates.py::test_month_bounds_march"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "consequence",
+   "summary": "14 indirect caller(s) up to depth 4 inherit the change through the chain",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "consequence",
+   "summary": "1 test file(s) exercise it; run them first",
+   "severity": "ok",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/tests/test_dates.py"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "consequence",
+   "summary": "11 configuration file(s) name it; renames must update them",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/def-month_bounds.json",
+    "docs/acceptance/baseline/dependents-dates.json",
+    "docs/acceptance/baseline/impact-month_bounds.json",
+    "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json",
+    "docs/acceptance/baseline/refs-format_amount.json",
+    "docs/acceptance/baseline/refs-normalize_text.json",
+    "docs/acceptance/baseline/refs-validate_transaction.json",
+    "docs/acceptance/baseline/summary.json",
+    "docs/acceptance/baseline/tests-for-format_amount.json",
+    "docs/acceptance/baseline/tests-for-month_bounds.json",
+    "docs/acceptance/baseline/trace-monthly_summary.json"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "consequence",
+   "summary": "callers in unsupported languages are invisible to this analysis: html (1), rust (1), shell (1)",
+   "severity": "info",
+   "confidence": "unknown",
+   "evidence": [],
+   "consequence": "",
+   "recommendation": "search those files by name before concluding nothing else is affected",
+   "data": {}
+  },
+  {
+   "kind": "reuse-candidate",
+   "summary": "lord/paths.py:22 class BoundaryError (RuntimeError)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "matched terms: bound"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "reuse-candidate",
+   "summary": "demo/app/api/handlers.py:55 function monthly_report (services, query)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "matched terms: month"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "reuse-candidate",
+   "summary": "demo/app/models.py:36 class MonthlySummary",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "matched terms: month"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  }
+ ]
+}

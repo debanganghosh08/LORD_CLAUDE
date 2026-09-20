@@ -47,6 +47,7 @@ class Step:
     exit_code: int | None = None
     seconds: float = 0.0
     tail: list[str] = field(default_factory=list)
+    cwd: str = ""             # sub-project directory relative to the workspace root ("" = root)
 
 
 def _module_available(name: str) -> bool:
@@ -54,11 +55,25 @@ def _module_available(name: str) -> bool:
     return completed.returncode == 0
 
 
-def detect_steps(root: Path, index: Index) -> list[Step]:
-    """Verification commands this repository supports, from its manifests."""
+def detect_steps(root: Path, index: Index, subdir: str = ".") -> list[Step]:
+    """Verification commands a project supports, from its manifests.
+
+    `subdir` selects a sub-project inside the workspace (a directory that
+    holds its own manifest, for example `demo/`): only its files are
+    considered, its commands run from that directory, and step names carry
+    the prefix so a monorepo report stays readable.
+    """
+    prefix = "" if subdir in (".", "") else subdir.strip("/") + "/"
+    label = "" if not prefix else f"{subdir.strip('/')}: "
+    base = root if not prefix else root / subdir
+    steps = [Step(label + s.name, s.argv, s.reason, s.available, s.note, cwd=prefix.rstrip("/")) for s in _detect_steps_in(base, index, prefix)]
+    return steps
+
+
+def _detect_steps_in(root: Path, index: Index, prefix: str) -> list[Step]:
     steps: list[Step] = []
-    files = {f.path for f in index.inventory.files}
-    has_py_tests = any(f.kind == "test" and f.language == "python" for f in index.inventory.files)
+    files = {f.path[len(prefix):] for f in index.inventory.files if f.path.startswith(prefix)}
+    has_py_tests = any(f.kind == "test" and f.language == "python" and f.path.startswith(prefix) for f in index.inventory.files)
     pyproject = root / "pyproject.toml"
     py_config = pyproject.is_file() and "pytest" in pyproject.read_text(encoding="utf-8", errors="replace")
     if has_py_tests or py_config or "pytest.ini" in files or "tox.ini" in files:
@@ -105,7 +120,7 @@ def run_steps(root: Path, steps: list[Step], timeout: int = STEP_TIMEOUT) -> Non
             continue
         started = time.time()
         try:
-            completed = subprocess.run(step.argv, cwd=root, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout)
+            completed = subprocess.run(step.argv, cwd=root / step.cwd if step.cwd else root, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout)
         except subprocess.TimeoutExpired:
             step.status, step.seconds = "timeout", time.time() - started
             continue
@@ -175,7 +190,11 @@ def verify(config: LordConfig, index: Index, scope: tuple[str, ...] = (), run: b
                            recommendation="resolve them or list them as known follow-ups in the report"))
         outstanding.append(f"{len(markers)} unresolved marker(s)")
 
-    steps = detect_steps(root, index)
+    # verification steps come from the sub-project(s) the changed code lives in
+    # (a monorepo runs the demo's tests for a demo change, not the root suite)
+    project_roots = sorted({index.inventory.project_root_of(p) for p in changed_code}) or ["."]
+    steps = [s for r in project_roots for s in detect_steps(root, index, r)]
+    report.meta["project_roots"] = project_roots
     if run:
         run_steps(root, steps, timeout=timeout)
     for step in steps:

@@ -1,0 +1,373 @@
+{
+ "title": "references: validate_transaction",
+ "worst_severity": "info",
+ "meta": {
+  "root": "<root>",
+  "definitions": [
+   "demo/app/validation.py:26 function validate_transaction (payload)"
+  ],
+  "confirmed_files": 2,
+  "inferred_files": 13,
+  "callers": [
+   "demo/app/services/transactions.py::TransactionService.add",
+   "demo/tests/test_validation.py::test_every_field_is_checked",
+   "demo/tests/test_validation.py::test_valid_payload_has_no_errors"
+  ]
+ },
+ "findings": [
+  {
+   "kind": "reference",
+   "summary": "demo/app/services/transactions.py: 3 confirmed use(s) in TransactionService.add",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/app/services/transactions.py:10 import from app.validation",
+    "demo/app/services/transactions.py:18 TransactionService.add",
+    "demo/app/services/transactions.py:18 TransactionService.add"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {
+    "path": "demo/app/services/transactions.py",
+    "lines": [
+     18,
+     18,
+     10
+    ],
+    "scopes": [
+     "TransactionService.add"
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "demo/tests/test_validation.py: 5 confirmed use(s) in test_every_field_is_checked, test_valid_payload_has_no_errors",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/tests/test_validation.py:2 import from app.validation",
+    "demo/tests/test_validation.py:8 test_valid_payload_has_no_errors",
+    "demo/tests/test_validation.py:8 test_valid_payload_has_no_errors",
+    "demo/tests/test_validation.py:12 test_every_field_is_checked",
+    "demo/tests/test_validation.py:12 test_every_field_is_checked"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {
+    "path": "demo/tests/test_validation.py",
+    "lines": [
+     8,
+     12,
+     8,
+     12,
+     2
+    ],
+    "scopes": [
+     "test_every_field_is_checked",
+     "test_valid_payload_has_no_errors"
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "docs/acceptance/PHASE-8A-TEST-PLAN.md: 5 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/PHASE-8A-TEST-PLAN.md:31 | validators `validate_transaction` and `require_description` (description required, length limit) used by `TransactionService.add` and, through it, the API | `demo/app/validation.py` |",
+    "docs/acceptance/PHASE-8A-TEST-PLAN.md:159 > In demo/, the API should accept descriptions up to 500 characters, but the rest of the app can keep its limit. Replace the shared validate_transaction call in the API handler with a local validation",
+    "docs/acceptance/PHASE-8A-TEST-PLAN.md:169 `require_description`/`validate_transaction` passed from the API). Then ask",
+    "docs/acceptance/PHASE-8A-TEST-PLAN.md:175 validate_transaction`, `lord refs MAX_NOTE_LENGTH`).",
+    "docs/acceptance/PHASE-8A-TEST-PLAN.md:191 ORACLE: baseline `impact-validate_transaction.json` shows the direct caller"
+   ],
+   "consequence": "text match in docs file without confirmed parsing",
+   "recommendation": "",
+   "data": {
+    "path": "docs/acceptance/PHASE-8A-TEST-PLAN.md",
+    "lines": [
+     31,
+     159,
+     169,
+     175,
+     191
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "docs/acceptance/baseline/dependents-validation.json: 4 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/dependents-validation.json:33 \"summary\": \"demo/app/services/transactions.py imports ValidationError, validate_transaction\",",
+    "docs/acceptance/baseline/dependents-validation.json:45 \"validate_transaction\"",
+    "docs/acceptance/baseline/dependents-validation.json:68 \"summary\": \"demo/tests/test_validation.py imports require_description, validate_transaction [test]\",",
+    "docs/acceptance/baseline/dependents-validation.json:80 \"validate_transaction\""
+   ],
+   "consequence": "text match in config file without confirmed parsing",
+   "recommendation": "",
+   "data": {
+    "path": "docs/acceptance/baseline/dependents-validation.json",
+    "lines": [
+     33,
+     45,
+     68,
+     80
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "docs/acceptance/baseline/impact-validate_transaction.json: 9 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/impact-validate_transaction.json:2 \"title\": \"impact: validate_transaction\",",
+    "docs/acceptance/baseline/impact-validate_transaction.json:47 \"summary\": \"demo/app/validation.py:26 function validate_transaction (payload)\",",
+    "docs/acceptance/baseline/impact-validate_transaction.json:99 \"demo/app/api/handlers.py::create_transaction <- demo/app/services/transactions.py::TransactionService.add <- demo/app/validation.py::validate_transaction\"",
+    "docs/acceptance/baseline/impact-validate_transaction.json:111 \"demo/tests/test_transactions.py::test_add_assigns_ids_and_stores_cents <- demo/app/services/transactions.py::TransactionService.add <- demo/app/validation.py::validate_transaction\"",
+    "docs/acceptance/baseline/impact-validate_transaction.json:123 \"demo/tests/test_transactions.py::test_add_rejects_invalid_payload <- demo/app/services/transactions.py::TransactionService.add <- demo/app/validation.py::validate_transaction\"",
+    "docs/acceptance/baseline/impact-validate_transaction.json:135 \"demo/tests/test_transactions.py::test_list_pages_in_date_order <- demo/app/services/transactions.py::TransactionService.add <- demo/app/validation.py::validate_transaction\"",
+    "docs/acceptance/baseline/impact-validate_transaction.json:147 \"demo/app/api/server.py::make_handler.Handler._dispatch <- demo/app/api/handlers.py::create_transaction <- demo/app/services/transactions.py::TransactionService.add <- demo/app/validation.py::validate",
+    "docs/acceptance/baseline/impact-validate_transaction.json:159 \"demo/tests/test_api.py::test_create_and_list <- demo/app/api/handlers.py::create_transaction <- demo/app/services/transactions.py::TransactionService.add <- demo/app/validation.py::validate_transacti",
+    "docs/acceptance/baseline/impact-validate_transaction.json:171 \"demo/tests/test_api.py::test_create_maps_validation_errors_to_400 <- demo/app/api/handlers.py::create_transaction <- demo/app/services/transactions.py::TransactionService.add <- demo/app/validation.p"
+   ],
+   "consequence": "text match in config file without confirmed parsing",
+   "recommendation": "",
+   "data": {
+    "path": "docs/acceptance/baseline/impact-validate_transaction.json",
+    "lines": [
+     2,
+     47,
+     99,
+     111,
+     123,
+     135,
+     147,
+     159,
+     171
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json: 1 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json:159 \"tests/test_acceptance.py:63 (\\\"normalize_text\\\", \\\"format_amount\\\", \\\"month_bounds\\\", \\\"require_description\\\", \\\"validate_transaction\\\", \\\"DEFAULT_PAGE_SIZE\\\")}\""
+   ],
+   "consequence": "text match in config file without confirmed parsing",
+   "recommendation": "",
+   "data": {
+    "path": "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json",
+    "lines": [
+     159
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "docs/acceptance/baseline/refs-format_amount.json: 1 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/refs-format_amount.json:261 \"tests/test_acceptance.py:63 (\\\"normalize_text\\\", \\\"format_amount\\\", \\\"month_bounds\\\", \\\"require_description\\\", \\\"validate_transaction\\\", \\\"DEFAULT_PAGE_SIZE\\\")}\","
+   ],
+   "consequence": "text match in config file without confirmed parsing",
+   "recommendation": "",
+   "data": {
+    "path": "docs/acceptance/baseline/refs-format_amount.json",
+    "lines": [
+     261
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "docs/acceptance/baseline/refs-normalize_text.json: 1 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/refs-normalize_text.json:169 \"tests/test_acceptance.py:63 (\\\"normalize_text\\\", \\\"format_amount\\\", \\\"month_bounds\\\", \\\"require_description\\\", \\\"validate_transaction\\\", \\\"DEFAULT_PAGE_SIZE\\\")}\","
+   ],
+   "consequence": "text match in config file without confirmed parsing",
+   "recommendation": "",
+   "data": {
+    "path": "docs/acceptance/baseline/refs-normalize_text.json",
+    "lines": [
+     169
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "docs/acceptance/baseline/refs-validate_transaction.json: 13 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/refs-validate_transaction.json:2 \"title\": \"references: validate_transaction\",",
+    "docs/acceptance/baseline/refs-validate_transaction.json:7 \"demo/app/validation.py:26 function validate_transaction (payload)\"",
+    "docs/acceptance/baseline/refs-validate_transaction.json:77 \"docs/acceptance/PHASE-8A-TEST-PLAN.md:31 | validators `validate_transaction` and `require_description` (description required, length limit) used by `TransactionService.add` and, through it, the API |",
+    "docs/acceptance/baseline/refs-validate_transaction.json:78 \"docs/acceptance/PHASE-8A-TEST-PLAN.md:159 > In demo/, the API should accept descriptions up to 500 characters, but the rest of the app can keep its limit. Replace the shared validate_transaction call",
+    "docs/acceptance/baseline/refs-validate_transaction.json:79 \"docs/acceptance/PHASE-8A-TEST-PLAN.md:169 `require_description`/`validate_transaction` passed from the API). Then ask\",",
+    "docs/acceptance/baseline/refs-validate_transaction.json:80 \"docs/acceptance/PHASE-8A-TEST-PLAN.md:175 validate_transaction`, `lord refs MAX_NOTE_LENGTH`).\",",
+    "docs/acceptance/baseline/refs-validate_transaction.json:81 \"docs/acceptance/PHASE-8A-TEST-PLAN.md:191 ORACLE: baseline `impact-validate_transaction.json` shows the direct caller\"",
+    "docs/acceptance/baseline/refs-validate_transaction.json:102 \"lord/acceptance.py:78 \\\"Replace the shared validate_transaction call in the API handler with a local validation function inside \\\"\",",
+    "docs/acceptance/baseline/refs-validate_transaction.json:103 \"lord/acceptance.py:138 \\\"refs-validate_transaction\\\": lambda: query.references(index, root, \\\"validate_transaction\\\"),\",",
+    "docs/acceptance/baseline/refs-validate_transaction.json:104 \"lord/acceptance.py:145 \\\"impact-validate_transaction\\\": lambda: impact_report(index, root, \\\"validate_transaction\\\", depth=3),\","
+   ],
+   "consequence": "text match in config file without confirmed parsing",
+   "recommendation": "",
+   "data": {
+    "path": "docs/acceptance/baseline/refs-validate_transaction.json",
+    "lines": [
+     2,
+     7,
+     77,
+     78,
+     79,
+     80,
+     81,
+     102,
+     103,
+     104,
+     105,
+     125,
+     126
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "docs/acceptance/baseline/reuse-T04.json: 3 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/reuse-T04.json:26 \"summary\": \"demo/app/validation.py:26 function validate_transaction (payload)\",",
+    "docs/acceptance/baseline/reuse-T04.json:39 \"name\": \"validate_transaction\",",
+    "docs/acceptance/baseline/reuse-T04.json:43 \"qualname\": \"validate_transaction\","
+   ],
+   "consequence": "text match in config file without confirmed parsing",
+   "recommendation": "",
+   "data": {
+    "path": "docs/acceptance/baseline/reuse-T04.json",
+    "lines": [
+     26,
+     39,
+     43
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "docs/acceptance/baseline/summary.json: 2 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/summary.json:21 \"refs-validate_transaction\",",
+    "docs/acceptance/baseline/summary.json:28 \"impact-validate_transaction\","
+   ],
+   "consequence": "text match in config file without confirmed parsing",
+   "recommendation": "",
+   "data": {
+    "path": "docs/acceptance/baseline/summary.json",
+    "lines": [
+     21,
+     28
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "docs/acceptance/baseline/tests-for-format_amount.json: 1 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/tests-for-format_amount.json:35 \"tests/test_acceptance.py:63 (\\\"normalize_text\\\", \\\"format_amount\\\", \\\"month_bounds\\\", \\\"require_description\\\", \\\"validate_transaction\\\", \\\"DEFAULT_PAGE_SIZE\\\")}\","
+   ],
+   "consequence": "text match in config file without confirmed parsing",
+   "recommendation": "",
+   "data": {
+    "path": "docs/acceptance/baseline/tests-for-format_amount.json",
+    "lines": [
+     35
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "docs/acceptance/baseline/tests-for-month_bounds.json: 1 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/tests-for-month_bounds.json:31 \"tests/test_acceptance.py:63 (\\\"normalize_text\\\", \\\"format_amount\\\", \\\"month_bounds\\\", \\\"require_description\\\", \\\"validate_transaction\\\", \\\"DEFAULT_PAGE_SIZE\\\")}\","
+   ],
+   "consequence": "text match in config file without confirmed parsing",
+   "recommendation": "",
+   "data": {
+    "path": "docs/acceptance/baseline/tests-for-month_bounds.json",
+    "lines": [
+     31
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "lord/acceptance.py: 4 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "lord/acceptance.py:79 \"Replace the shared validate_transaction call in the API handler with a local validation function inside \"",
+    "lord/acceptance.py:139 \"refs-validate_transaction\": lambda: query.references(index, root, \"validate_transaction\"),",
+    "lord/acceptance.py:146 \"impact-validate_transaction\": lambda: impact_report(index, root, \"validate_transaction\", depth=3),",
+    "lord/acceptance.py:241 handler_refs = _confirmed_ref_files(index, root, \"validate_transaction\")"
+   ],
+   "consequence": "text match in a parsed file (comment, string or attribute)",
+   "recommendation": "",
+   "data": {
+    "path": "lord/acceptance.py",
+    "lines": [
+     79,
+     139,
+     146,
+     241
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "tests/test_acceptance.py: 2 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "tests/test_acceptance.py:78 (\"normalize_text\", \"format_amount\", \"month_bounds\", \"require_description\", \"validate_transaction\", \"DEFAULT_PAGE_SIZE\")}",
+    "tests/test_acceptance.py:99 assert t_val.meta[\"decision\"] == \"extend\" and any(\"require_description\" in s or \"validate_transaction\" in s for s in strong[:2])"
+   ],
+   "consequence": "text match in a parsed file (comment, string or attribute)",
+   "recommendation": "",
+   "data": {
+    "path": "tests/test_acceptance.py",
+    "lines": [
+     78,
+     99
+    ]
+   }
+  },
+  {
+   "kind": "analysis-unavailable",
+   "summary": "references could not be analysed in some files",
+   "severity": "info",
+   "confidence": "unknown",
+   "evidence": [
+    "html: 1 file(s) without an extractor",
+    "rust: 1 file(s) without an extractor",
+    "shell: 1 file(s) without an extractor",
+    "tests/fixtures/sample_repo/pkg/broken.py: parse error"
+   ],
+   "consequence": "text search still covers these files, but structural facts are unknown there",
+   "recommendation": "",
+   "data": {}
+  }
+ ]
+}

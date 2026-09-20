@@ -1,0 +1,290 @@
+{
+ "title": "trace: ReportService.monthly_summary",
+ "worst_severity": "info",
+ "meta": {
+  "root": "<root>",
+  "depth": 4,
+  "observed": "February report contains a March transaction",
+  "candidate_causes": [
+   "demo/app/services/transactions.py::TransactionService.in_month",
+   "demo/app/services/transactions.py::TransactionService.total",
+   "demo/app/models.py::MonthlySummary",
+   "demo/web/app.js::month",
+   "demo/web/app.js::year",
+   "demo/app/repository.py::Repository.all",
+   "demo/app/utils/dates.py::in_range",
+   "demo/app/utils/dates.py::month_bounds",
+   "demo/app/models.py::Transaction"
+  ],
+  "upstream": [
+   "demo/app/api/handlers.py::monthly_report",
+   "demo/app/api/server.py::make_handler.Handler._dispatch",
+   "demo/app/api/server.py::make_handler.Handler.do_GET",
+   "demo/app/api/server.py::make_handler.Handler.do_POST",
+   "demo/tests/test_api.py::test_monthly_report_formats_totals",
+   "demo/tests/test_api.py::test_report_requires_valid_month",
+   "demo/tests/test_reports.py::test_empty_month",
+   "demo/tests/test_reports.py::test_monthly_summary_march",
+   "demo/tests/test_reports.py::test_render_lines_use_shared_formatting"
+  ]
+ },
+ "findings": [
+  {
+   "kind": "observed-symptom",
+   "summary": "February report contains a March transaction",
+   "severity": "info",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/app/services/reports.py:14 ReportService.monthly_summary"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "candidate-cause",
+   "summary": "demo/app/models.py::MonthlySummary (depth 1, other file)",
+   "severity": "info",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/app/services/reports.py::ReportService.monthly_summary -> demo/app/models.py::MonthlySummary"
+   ],
+   "consequence": "a wrong value or side effect here would surface at the symptom",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "candidate-cause",
+   "summary": "demo/app/services/transactions.py::TransactionService.in_month (depth 1, other file)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/app/services/reports.py::ReportService.monthly_summary -> demo/app/services/transactions.py::TransactionService.in_month"
+   ],
+   "consequence": "a wrong value or side effect here would surface at the symptom",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "candidate-cause",
+   "summary": "demo/app/services/transactions.py::TransactionService.total (depth 1, other file)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/app/services/reports.py::ReportService.monthly_summary -> demo/app/services/transactions.py::TransactionService.total"
+   ],
+   "consequence": "a wrong value or side effect here would surface at the symptom",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "candidate-cause",
+   "summary": "demo/web/app.js::month (depth 1, other file)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/app/services/reports.py::ReportService.monthly_summary -> demo/web/app.js::month"
+   ],
+   "consequence": "a wrong value or side effect here would surface at the symptom",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "candidate-cause",
+   "summary": "demo/web/app.js::year (depth 1, other file)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/app/services/reports.py::ReportService.monthly_summary -> demo/web/app.js::year"
+   ],
+   "consequence": "a wrong value or side effect here would surface at the symptom",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "candidate-cause",
+   "summary": "demo/app/models.py::Transaction (depth 2, other file)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/app/services/reports.py::ReportService.monthly_summary -> demo/app/services/transactions.py::TransactionService.in_month -> demo/app/models.py::Transaction"
+   ],
+   "consequence": "a wrong value or side effect here would surface at the symptom",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "candidate-cause",
+   "summary": "demo/app/repository.py::Repository.all (depth 2, other file)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/app/services/reports.py::ReportService.monthly_summary -> demo/app/services/transactions.py::TransactionService.in_month -> demo/app/repository.py::Repository.all"
+   ],
+   "consequence": "a wrong value or side effect here would surface at the symptom",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "candidate-cause",
+   "summary": "demo/app/utils/dates.py::in_range (depth 2, other file)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/app/services/reports.py::ReportService.monthly_summary -> demo/app/services/transactions.py::TransactionService.in_month -> demo/app/utils/dates.py::in_range"
+   ],
+   "consequence": "a wrong value or side effect here would surface at the symptom",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "candidate-cause",
+   "summary": "demo/app/utils/dates.py::month_bounds (depth 2, other file)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/app/services/reports.py::ReportService.monthly_summary -> demo/app/services/transactions.py::TransactionService.in_month -> demo/app/utils/dates.py::month_bounds"
+   ],
+   "consequence": "a wrong value or side effect here would surface at the symptom",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "upstream",
+   "summary": "demo/app/api/handlers.py::monthly_report reaches the symptom (depth 1)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/app/api/handlers.py::monthly_report <- demo/app/services/reports.py::ReportService.monthly_summary"
+   ],
+   "consequence": "if inputs are wrong, the cause may be here rather than at the symptom",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "upstream",
+   "summary": "demo/tests/test_reports.py::test_empty_month reaches the symptom (depth 1)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/tests/test_reports.py::test_empty_month <- demo/app/services/reports.py::ReportService.monthly_summary"
+   ],
+   "consequence": "if inputs are wrong, the cause may be here rather than at the symptom",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "upstream",
+   "summary": "demo/tests/test_reports.py::test_monthly_summary_march reaches the symptom (depth 1)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/tests/test_reports.py::test_monthly_summary_march <- demo/app/services/reports.py::ReportService.monthly_summary"
+   ],
+   "consequence": "if inputs are wrong, the cause may be here rather than at the symptom",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "upstream",
+   "summary": "demo/tests/test_reports.py::test_render_lines_use_shared_formatting reaches the symptom (depth 1)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/tests/test_reports.py::test_render_lines_use_shared_formatting <- demo/app/services/reports.py::ReportService.monthly_summary"
+   ],
+   "consequence": "if inputs are wrong, the cause may be here rather than at the symptom",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "upstream",
+   "summary": "demo/app/api/server.py::make_handler.Handler._dispatch reaches the symptom (depth 2)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/app/api/server.py::make_handler.Handler._dispatch <- demo/app/api/handlers.py::monthly_report <- demo/app/services/reports.py::ReportService.monthly_summary"
+   ],
+   "consequence": "if inputs are wrong, the cause may be here rather than at the symptom",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "upstream",
+   "summary": "demo/tests/test_api.py::test_monthly_report_formats_totals reaches the symptom (depth 2)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/tests/test_api.py::test_monthly_report_formats_totals <- demo/app/api/handlers.py::monthly_report <- demo/app/services/reports.py::ReportService.monthly_summary"
+   ],
+   "consequence": "if inputs are wrong, the cause may be here rather than at the symptom",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "upstream",
+   "summary": "demo/tests/test_api.py::test_report_requires_valid_month reaches the symptom (depth 2)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/tests/test_api.py::test_report_requires_valid_month <- demo/app/api/handlers.py::monthly_report <- demo/app/services/reports.py::ReportService.monthly_summary"
+   ],
+   "consequence": "if inputs are wrong, the cause may be here rather than at the symptom",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "upstream",
+   "summary": "demo/app/api/server.py::make_handler.Handler.do_GET reaches the symptom (depth 3)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/app/api/server.py::make_handler.Handler.do_GET <- demo/app/api/server.py::make_handler.Handler._dispatch <- demo/app/api/handlers.py::monthly_report <- demo/app/services/reports.py::ReportService.monthly_summary"
+   ],
+   "consequence": "if inputs are wrong, the cause may be here rather than at the symptom",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "upstream",
+   "summary": "demo/app/api/server.py::make_handler.Handler.do_POST reaches the symptom (depth 3)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/app/api/server.py::make_handler.Handler.do_POST <- demo/app/api/server.py::make_handler.Handler._dispatch <- demo/app/api/handlers.py::monthly_report <- demo/app/services/reports.py::ReportService.monthly_summary"
+   ],
+   "consequence": "if inputs are wrong, the cause may be here rather than at the symptom",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "missing-evidence",
+   "summary": "what this trace cannot establish",
+   "severity": "info",
+   "confidence": "unknown",
+   "evidence": [
+    "calls not resolved to workspace symbols (external, dynamic or unsupported): by_category.get, by_category.items",
+    "files in unsupported languages are not traversed: html (1), rust (1), shell (1)",
+    "17 chain(s) contain an inferred hop (name-based resolution); confirm by reading the source"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "next-investigation",
+   "summary": "recommended next investigation",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "open demo/app/services/transactions.py::TransactionService.in_month (demo/app/services/transactions.py) and check the value it produces for the failing input",
+    "open demo/app/services/transactions.py::TransactionService.total (demo/app/services/transactions.py) and check the value it produces for the failing input",
+    "open demo/app/models.py::MonthlySummary (demo/app/models.py) and check the value it produces for the failing input",
+    "check what demo/app/api/handlers.py::monthly_report passes in; if the input is already wrong, move the symptom there"
+   ],
+   "consequence": "",
+   "recommendation": "label the cause CONFIRMED only after reading the source and reproducing the behaviour; otherwise keep it as a candidate",
+   "data": {}
+  }
+ ]
+}

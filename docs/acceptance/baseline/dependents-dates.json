@@ -1,0 +1,84 @@
+{
+ "title": "dependents of demo/app/utils/dates.py",
+ "worst_severity": "info",
+ "meta": {
+  "root": "<root>",
+  "dependents": [
+   "demo/app/services/transactions.py",
+   "demo/app/validation.py",
+   "demo/tests/test_dates.py"
+  ]
+ },
+ "findings": [
+  {
+   "kind": "used-by",
+   "summary": "demo/app/services/transactions.py imports in_range, month_bounds, parse_date",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/app/services/transactions.py:8 import app.utils.dates"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {
+    "file": "demo/app/services/transactions.py",
+    "names": [
+     "in_range",
+     "month_bounds",
+     "parse_date"
+    ]
+   }
+  },
+  {
+   "kind": "used-by",
+   "summary": "demo/app/validation.py imports parse_date",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/app/validation.py:6 import app.utils.dates"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {
+    "file": "demo/app/validation.py",
+    "names": [
+     "parse_date"
+    ]
+   }
+  },
+  {
+   "kind": "used-by",
+   "summary": "demo/tests/test_dates.py imports in_range, month_bounds, parse_date [test]",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/tests/test_dates.py:5 import app.utils.dates"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {
+    "file": "demo/tests/test_dates.py",
+    "names": [
+     "in_range",
+     "month_bounds",
+     "parse_date"
+    ]
+   }
+  },
+  {
+   "kind": "analysis-unavailable",
+   "summary": "dependents could not be analysed in some files",
+   "severity": "info",
+   "confidence": "unknown",
+   "evidence": [
+    "html: 1 file(s) without an extractor",
+    "rust: 1 file(s) without an extractor",
+    "shell: 1 file(s) without an extractor",
+    "tests/fixtures/sample_repo/pkg/broken.py: parse error"
+   ],
+   "consequence": "text search still covers these files, but structural facts are unknown there",
+   "recommendation": "",
+   "data": {}
+  }
+ ]
+}

@@ -1,0 +1,51 @@
+{
+ "title": "definition: month_bounds",
+ "worst_severity": "info",
+ "meta": {
+  "root": "<root>"
+ },
+ "findings": [
+  {
+   "kind": "definition",
+   "summary": "demo/app/utils/dates.py:18 function month_bounds (year, month)",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "First and last calendar day of the month, both inclusive."
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {
+    "symbol": {
+     "name": "month_bounds",
+     "kind": "function",
+     "file": "demo/app/utils/dates.py",
+     "line": 18,
+     "qualname": "month_bounds",
+     "language": "python",
+     "confidence": "confirmed",
+     "end_line": 22,
+     "parent": "",
+     "signature": "(year, month)",
+     "exported": true,
+     "doc": "First and last calendar day of the month, both inclusive."
+    }
+   }
+  },
+  {
+   "kind": "analysis-unavailable",
+   "summary": "definitions could not be analysed in some files",
+   "severity": "info",
+   "confidence": "unknown",
+   "evidence": [
+    "html: 1 file(s) without an extractor",
+    "rust: 1 file(s) without an extractor",
+    "shell: 1 file(s) without an extractor",
+    "tests/fixtures/sample_repo/pkg/broken.py: parse error"
+   ],
+   "consequence": "text search still covers these files, but structural facts are unknown there",
+   "recommendation": "",
+   "data": {}
+  }
+ ]
+}

@@ -1,0 +1,38 @@
+{
+ "demo_files": 32,
+ "demo_by_kind": {
+  "config": 1,
+  "docs": 1,
+  "manifest": 1,
+  "script": 1,
+  "source": 18,
+  "test": 10
+ },
+ "verification_steps": [
+  "demo: pytest"
+ ],
+ "artifacts": [
+  "def-normalize_text",
+  "def-format_amount",
+  "def-month_bounds",
+  "def-require_description",
+  "refs-format_amount",
+  "refs-normalize_text",
+  "refs-validate_transaction",
+  "refs-DEFAULT_PAGE_SIZE",
+  "dependents-dates",
+  "dependents-config",
+  "dependents-validation",
+  "impact-month_bounds",
+  "impact-format_amount",
+  "impact-validate_transaction",
+  "trace-monthly_summary",
+  "reuse-T01",
+  "reuse-T02",
+  "reuse-T04",
+  "tests-for-month_bounds",
+  "tests-for-format_amount",
+  "duplicates"
+ ],
+ "generated": "2026-09-20"
+}

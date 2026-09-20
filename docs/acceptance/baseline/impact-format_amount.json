@@ -1,0 +1,665 @@
+{
+ "title": "impact: format_amount",
+ "worst_severity": "warn",
+ "meta": {
+  "root": "<root>",
+  "depth": 3,
+  "direct_callers": [
+   "demo/app/api/handlers.py::monthly_report",
+   "demo/app/services/reports.py::ReportService.render",
+   "demo/tests/test_money.py::test_format_amount_uses_two_decimals_and_currency",
+   "demo/tests/test_money.py::test_parse_and_format_round_trip"
+  ],
+  "indirect_callers": [
+   "demo/app/api/server.py::make_handler.Handler._dispatch",
+   "demo/app/api/server.py::make_handler.Handler.do_GET",
+   "demo/app/api/server.py::make_handler.Handler.do_POST",
+   "demo/tests/test_api.py::test_monthly_report_formats_totals",
+   "demo/tests/test_api.py::test_report_requires_valid_month",
+   "demo/tests/test_reports.py::test_render_lines_use_shared_formatting"
+  ],
+  "dependents": [
+   "demo/app/api/handlers.py",
+   "demo/app/api/server.py",
+   "demo/app/services/export.py",
+   "demo/app/services/reports.py",
+   "demo/app/services/transactions.py",
+   "demo/app/validation.py",
+   "demo/scripts/seed.py",
+   "demo/tests/conftest.py",
+   "demo/tests/test_api.py",
+   "demo/tests/test_money.py",
+   "demo/tests/test_server.py",
+   "demo/tests/test_transactions.py",
+   "demo/tests/test_validation.py"
+  ],
+  "tests": [
+   "demo/tests/test_money.py"
+  ],
+  "config": [
+   "docs/acceptance/baseline/def-format_amount.json",
+   "docs/acceptance/baseline/impact-format_amount.json",
+   "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json",
+   "docs/acceptance/baseline/refs-format_amount.json",
+   "docs/acceptance/baseline/refs-normalize_text.json",
+   "docs/acceptance/baseline/refs-validate_transaction.json",
+   "docs/acceptance/baseline/reuse-T02.json",
+   "docs/acceptance/baseline/summary.json",
+   "docs/acceptance/baseline/tests-for-format_amount.json",
+   "docs/acceptance/baseline/tests-for-month_bounds.json",
+   "docs/acceptance/evidence/TEMPLATE.json"
+  ],
+  "directories": [
+   "demo"
+  ],
+  "overall_confidence": "inferred"
+ },
+ "findings": [
+  {
+   "kind": "definition",
+   "summary": "demo/app/utils/money.py:30 function format_amount (cents, currency)",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "Render cents as \"12.34 EUR\" (negative values keep their sign)."
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "direct-reference",
+   "summary": "demo/app/api/handlers.py::monthly_report calls it",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/app/api/handlers.py:63 calls",
+    "demo/app/api/handlers.py:64 calls",
+    "demo/app/api/handlers.py:65 calls",
+    "demo/app/api/handlers.py:66 calls"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "direct-reference",
+   "summary": "demo/app/services/reports.py::ReportService.render calls it",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/app/services/reports.py:29 calls",
+    "demo/app/services/reports.py:31 calls"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "direct-reference",
+   "summary": "demo/tests/test_money.py::test_format_amount_uses_two_decimals_and_currency calls it [test]",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/tests/test_money.py:18 calls",
+    "demo/tests/test_money.py:19 calls",
+    "demo/tests/test_money.py:20 calls",
+    "demo/tests/test_money.py:21 calls"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "direct-reference",
+   "summary": "demo/tests/test_money.py::test_parse_and_format_round_trip calls it [test]",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/tests/test_money.py:25 calls"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "indirect-reference",
+   "summary": "demo/app/api/server.py::make_handler.Handler._dispatch reaches it at depth 2",
+   "severity": "info",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/app/api/server.py::make_handler.Handler._dispatch <- demo/app/api/handlers.py::monthly_report <- demo/app/utils/money.py::format_amount"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "indirect-reference",
+   "summary": "demo/tests/test_api.py::test_monthly_report_formats_totals reaches it at depth 2",
+   "severity": "info",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/tests/test_api.py::test_monthly_report_formats_totals <- demo/app/api/handlers.py::monthly_report <- demo/app/utils/money.py::format_amount"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "indirect-reference",
+   "summary": "demo/tests/test_api.py::test_report_requires_valid_month reaches it at depth 2",
+   "severity": "info",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/tests/test_api.py::test_report_requires_valid_month <- demo/app/api/handlers.py::monthly_report <- demo/app/utils/money.py::format_amount"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "indirect-reference",
+   "summary": "demo/tests/test_reports.py::test_render_lines_use_shared_formatting reaches it at depth 2",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/tests/test_reports.py::test_render_lines_use_shared_formatting <- demo/app/services/reports.py::ReportService.render <- demo/app/utils/money.py::format_amount"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "indirect-reference",
+   "summary": "demo/app/api/server.py::make_handler.Handler.do_GET reaches it at depth 3",
+   "severity": "info",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/app/api/server.py::make_handler.Handler.do_GET <- demo/app/api/server.py::make_handler.Handler._dispatch <- demo/app/api/handlers.py::monthly_report <- demo/app/utils/money.py::format_amount"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "indirect-reference",
+   "summary": "demo/app/api/server.py::make_handler.Handler.do_POST reaches it at depth 3",
+   "severity": "info",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/app/api/server.py::make_handler.Handler.do_POST <- demo/app/api/server.py::make_handler.Handler._dispatch <- demo/app/api/handlers.py::monthly_report <- demo/app/utils/money.py::format_amount"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "callee",
+   "summary": "it references demo/app/config.py::CURRENCY",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "line 30"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "callee",
+   "summary": "it references demo/web/app.js::sign",
+   "severity": "ok",
+   "confidence": "inferred",
+   "evidence": [
+    "line 34"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependency",
+   "summary": "demo/app/utils/money.py imports demo/app/config.py (CURRENCY)",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependent",
+   "summary": "demo/app/api/handlers.py depends on it (depth 1)",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependent",
+   "summary": "demo/app/services/reports.py depends on it (depth 1)",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependent",
+   "summary": "demo/app/services/transactions.py depends on it (depth 1)",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependent",
+   "summary": "demo/app/validation.py depends on it (depth 1)",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependent",
+   "summary": "demo/tests/test_money.py depends on it (depth 1) [test]",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependent",
+   "summary": "demo/app/api/server.py depends on it (depth 2)",
+   "severity": "info",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/app/api/server.py <- demo/app/api/handlers.py <- demo/app/utils/money.py"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependent",
+   "summary": "demo/app/services/export.py depends on it (depth 2)",
+   "severity": "info",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/app/services/export.py <- demo/app/services/transactions.py <- demo/app/utils/money.py"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependent",
+   "summary": "demo/scripts/seed.py depends on it (depth 2)",
+   "severity": "info",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/scripts/seed.py <- demo/app/api/handlers.py <- demo/app/utils/money.py"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependent",
+   "summary": "demo/tests/conftest.py depends on it (depth 2) [test]",
+   "severity": "info",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/tests/conftest.py <- demo/app/api/handlers.py <- demo/app/utils/money.py"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependent",
+   "summary": "demo/tests/test_api.py depends on it (depth 2) [test]",
+   "severity": "info",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/tests/test_api.py <- demo/app/api/handlers.py <- demo/app/utils/money.py"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependent",
+   "summary": "demo/tests/test_transactions.py depends on it (depth 2) [test]",
+   "severity": "info",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/tests/test_transactions.py <- demo/app/validation.py <- demo/app/utils/money.py"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependent",
+   "summary": "demo/tests/test_validation.py depends on it (depth 2) [test]",
+   "severity": "info",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/tests/test_validation.py <- demo/app/validation.py <- demo/app/utils/money.py"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependent",
+   "summary": "demo/tests/test_server.py depends on it (depth 3) [test]",
+   "severity": "info",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/tests/test_server.py <- demo/app/api/server.py <- demo/app/api/handlers.py <- demo/app/utils/money.py"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "test",
+   "summary": "demo/tests/test_money.py exercises it",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/tests/test_money.py:18",
+    "demo/tests/test_money.py:19",
+    "demo/tests/test_money.py:20",
+    "demo/tests/test_money.py:21",
+    "demo/tests/test_money.py:25"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "config",
+   "summary": "docs/acceptance/baseline/def-format_amount.json mentions it (format_amount)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/def-format_amount.json:2",
+    "docs/acceptance/baseline/def-format_amount.json:10",
+    "docs/acceptance/baseline/def-format_amount.json:20",
+    "docs/acceptance/baseline/def-format_amount.json:24"
+   ],
+   "consequence": "a rename or signature change may need a configuration update",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "config",
+   "summary": "docs/acceptance/baseline/impact-format_amount.json mentions it (format_amount)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/impact-format_amount.json:2",
+    "docs/acceptance/baseline/impact-format_amount.json:50",
+    "docs/acceptance/baseline/impact-format_amount.json:121",
+    "docs/acceptance/baseline/impact-format_amount.json:133",
+    "docs/acceptance/baseline/impact-format_amount.json:145"
+   ],
+   "consequence": "a rename or signature change may need a configuration update",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "config",
+   "summary": "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json mentions it (format_amount)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json:159"
+   ],
+   "consequence": "a rename or signature change may need a configuration update",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "config",
+   "summary": "docs/acceptance/baseline/refs-format_amount.json mentions it (format_amount)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/refs-format_amount.json:2",
+    "docs/acceptance/baseline/refs-format_amount.json:7",
+    "docs/acceptance/baseline/refs-format_amount.json:138",
+    "docs/acceptance/baseline/refs-format_amount.json:155",
+    "docs/acceptance/baseline/refs-format_amount.json:172"
+   ],
+   "consequence": "a rename or signature change may need a configuration update",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "config",
+   "summary": "docs/acceptance/baseline/refs-normalize_text.json mentions it (format_amount)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/refs-normalize_text.json:169"
+   ],
+   "consequence": "a rename or signature change may need a configuration update",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "config",
+   "summary": "docs/acceptance/baseline/refs-validate_transaction.json mentions it (format_amount)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/refs-validate_transaction.json:125"
+   ],
+   "consequence": "a rename or signature change may need a configuration update",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "config",
+   "summary": "docs/acceptance/baseline/reuse-T02.json mentions it (format_amount)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/reuse-T02.json:55",
+    "docs/acceptance/baseline/reuse-T02.json:68",
+    "docs/acceptance/baseline/reuse-T02.json:72"
+   ],
+   "consequence": "a rename or signature change may need a configuration update",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "config",
+   "summary": "docs/acceptance/baseline/summary.json mentions it (format_amount)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/summary.json:16",
+    "docs/acceptance/baseline/summary.json:19",
+    "docs/acceptance/baseline/summary.json:27",
+    "docs/acceptance/baseline/summary.json:34"
+   ],
+   "consequence": "a rename or signature change may need a configuration update",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "config",
+   "summary": "docs/acceptance/baseline/tests-for-format_amount.json mentions it (format_amount)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/tests-for-format_amount.json:2",
+    "docs/acceptance/baseline/tests-for-format_amount.json:18",
+    "docs/acceptance/baseline/tests-for-format_amount.json:19",
+    "docs/acceptance/baseline/tests-for-format_amount.json:20",
+    "docs/acceptance/baseline/tests-for-format_amount.json:21"
+   ],
+   "consequence": "a rename or signature change may need a configuration update",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "config",
+   "summary": "docs/acceptance/baseline/tests-for-month_bounds.json mentions it (format_amount)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/tests-for-month_bounds.json:31",
+    "docs/acceptance/baseline/tests-for-month_bounds.json:36"
+   ],
+   "consequence": "a rename or signature change may need a configuration update",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "config",
+   "summary": "docs/acceptance/evidence/TEMPLATE.json mentions it (format_amount)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/evidence/TEMPLATE.json:20",
+    "docs/acceptance/evidence/TEMPLATE.json:25"
+   ],
+   "consequence": "a rename or signature change may need a configuration update",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "boundary",
+   "summary": "affects 15 file(s) across 1 top-level directory: demo",
+   "severity": "ok",
+   "confidence": "inferred",
+   "evidence": [
+    "project roots: ., demo"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "consequence",
+   "summary": "a signature or behaviour change reaches 2 direct caller/reference site(s) in 3 file(s)",
+   "severity": "warn",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/app/api/handlers.py::monthly_report",
+    "demo/app/services/reports.py::ReportService.render",
+    "demo/tests/test_money.py::test_format_amount_uses_two_decimals_and_currency",
+    "demo/tests/test_money.py::test_parse_and_format_round_trip"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "consequence",
+   "summary": "6 indirect caller(s) up to depth 3 inherit the change through the chain",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "consequence",
+   "summary": "1 test file(s) exercise it; run them first",
+   "severity": "ok",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/tests/test_money.py"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "consequence",
+   "summary": "11 configuration file(s) name it; renames must update them",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/def-format_amount.json",
+    "docs/acceptance/baseline/impact-format_amount.json",
+    "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json",
+    "docs/acceptance/baseline/refs-format_amount.json",
+    "docs/acceptance/baseline/refs-normalize_text.json",
+    "docs/acceptance/baseline/refs-validate_transaction.json",
+    "docs/acceptance/baseline/reuse-T02.json",
+    "docs/acceptance/baseline/summary.json",
+    "docs/acceptance/baseline/tests-for-format_amount.json",
+    "docs/acceptance/baseline/tests-for-month_bounds.json",
+    "docs/acceptance/evidence/TEMPLATE.json"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "consequence",
+   "summary": "callers in unsupported languages are invisible to this analysis: html (1), rust (1), shell (1)",
+   "severity": "info",
+   "confidence": "unknown",
+   "evidence": [],
+   "consequence": "",
+   "recommendation": "search those files by name before concluding nothing else is affected",
+   "data": {}
+  },
+  {
+   "kind": "reuse-candidate",
+   "summary": "lord/extractors/js_ts.py:93 function _strip_strings_and_comments (line)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "matched terms: strin"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "reuse-candidate",
+   "summary": "demo/app/utils/money.py:8 function parse_amount (value)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "matched terms: amoun"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "reuse-candidate",
+   "summary": "lord/memory.py:325 function write_handoff (root, fields, replace, today)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "matched terms: strin, write"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  }
+ ]
+}

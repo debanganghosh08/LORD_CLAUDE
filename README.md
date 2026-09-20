@@ -71,6 +71,7 @@ python -m lord context validate_email --intent "..."  # handoff + memory + brief
 python -m lord memory query --path src/users.py       # durable decisions, traps, conventions for an area
 python -m lord memory add --category trap --statement "..." --evidence "file:line"   # record what must outlive the session
 python -m lord handoff write --doing "..." --remaining "..." --from-verify           # resume point for unfinished work
+python -m lord acceptance prompts                     # demo evaluation scenarios; also baseline | check --test T03 | record --test T03 --model <label>
 python -m lord --help                    # all commands; add --json for machine output
 python -m pytest                         # run the LORD test suite (needs pytest)
 ```
@@ -98,6 +99,8 @@ lord/               LORD core, Python standard library only
 tests/              pytest suite and fixtures
 docs/               architecture, roadmap, security, decisions, phase reports
 docs/state/         durable engineering memory (memory.jsonl) and handoff (handoff.json), versioned
+docs/acceptance/    evaluation: test plan, scorecard, manual Antigravity/Gemini guide, baseline ground truth, evidence records
+demo/               small ledger application used as the evaluation environment (reuse traps, a planted root-cause bug)
 AGENTS.md           cross-tool pointer to the contract; CLAUDE.md imports it
 lord.toml           optional per-project configuration (exclusions)
 lord_hook.py        hook launcher (identical copy in .agents/); docs/ARCHITECTURE.md section 7

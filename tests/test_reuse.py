@@ -93,7 +93,8 @@ def test_reuse_recommends_extend_for_strong_behavioural_match(index, repo: Path)
     report = reuse_report(index, repo, "check whether an e-mail address is valid", names=["EmailChecker"])
     assert report.meta["decision"] == "extend"
     strong = [f for f in report.findings if f.kind == "candidate-reuse-or-extend"]
-    assert strong and "validate_email" in strong[0].summary
+    # validate_email and its legacy near-duplicate check_email are both strong; either may lead
+    assert strong and any("validate_email" in f.summary for f in strong[:2])
 
 
 def test_reuse_allows_create_when_nothing_matches(index, repo: Path):

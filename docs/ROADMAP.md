@@ -12,7 +12,8 @@ and a push. A phase is never marked complete if it is not.
 | 5 | Senior-engineer behaviour | specialist agents (reuse auditor, impact analyst, skeptical reviewer, verification reviewer); critical-review protocol; skills that bind the tooling to the workflow |
 | 6 | Enforcement | `.agents/hooks.json`: pre-edit gate (deny/ask/allow from session evidence), completion gate on failed verification (bounded), change-surface advisory; fail-safe launcher; hook test suite; live Antigravity findings |
 | 7 | Durable memory | `docs/state/memory.jsonl` (7 categories, trust statuses, evidence, supersession, key conflicts, deterministic retrieval), `docs/state/handoff.json`, `lord context` assembly interface, `lord-memory` skill |
-| 8 | Distribution | Antigravity plugin (`plugin.json`), global installation/synchronisation, versioning, per-project bootstrap |
+| 8A | Acceptance / dogfooding | `demo/` evaluation codebase with reuse traps and a planted root-cause bug; eight-scenario test plan with oracles; scorecard; manual Antigravity/Gemini procedure; LORD baseline ground truth; evidence records; `lord acceptance` tooling |
+| 8B | Distribution | Antigravity plugin (`plugin.json`), global installation/synchronisation, versioning, per-project bootstrap; packaged only after the 8A evidence is reviewed |
 | 9 | Benchmarking | repeatable task suite comparing models with and without LORD on bloat, reuse, root-cause accuracy and pushback quality |
 
 Later direction (conceptual, not committed): forensics, context and critic

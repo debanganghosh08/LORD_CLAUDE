@@ -1,0 +1,559 @@
+{
+ "title": "references: format_amount",
+ "worst_severity": "info",
+ "meta": {
+  "root": "<root>",
+  "definitions": [
+   "demo/app/utils/money.py:30 function format_amount (cents, currency)"
+  ],
+  "confirmed_files": 3,
+  "inferred_files": 16,
+  "callers": [
+   "demo/app/api/handlers.py::monthly_report",
+   "demo/app/services/reports.py::ReportService.render",
+   "demo/tests/test_money.py::test_format_amount_uses_two_decimals_and_currency",
+   "demo/tests/test_money.py::test_parse_and_format_round_trip"
+  ]
+ },
+ "findings": [
+  {
+   "kind": "reference",
+   "summary": "demo/app/api/handlers.py: 9 confirmed use(s) in monthly_report",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/app/api/handlers.py:10 import from app.utils.money",
+    "demo/app/api/handlers.py:63 monthly_report",
+    "demo/app/api/handlers.py:63 monthly_report",
+    "demo/app/api/handlers.py:64 monthly_report",
+    "demo/app/api/handlers.py:64 monthly_report",
+    "demo/app/api/handlers.py:65 monthly_report",
+    "demo/app/api/handlers.py:65 monthly_report",
+    "demo/app/api/handlers.py:66 monthly_report",
+    "demo/app/api/handlers.py:66 monthly_report"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {
+    "path": "demo/app/api/handlers.py",
+    "lines": [
+     63,
+     64,
+     65,
+     66,
+     63,
+     64,
+     65,
+     66,
+     10
+    ],
+    "scopes": [
+     "monthly_report"
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "demo/app/services/reports.py: 9 confirmed use(s) in ReportService.render",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/app/services/reports.py:7 import from app.utils.money",
+    "demo/app/services/reports.py:29 ReportService.render",
+    "demo/app/services/reports.py:29 ReportService.render",
+    "demo/app/services/reports.py:29 ReportService.render",
+    "demo/app/services/reports.py:29 ReportService.render",
+    "demo/app/services/reports.py:29 ReportService.render",
+    "demo/app/services/reports.py:29 ReportService.render",
+    "demo/app/services/reports.py:31 ReportService.render",
+    "demo/app/services/reports.py:31 ReportService.render"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {
+    "path": "demo/app/services/reports.py",
+    "lines": [
+     29,
+     29,
+     29,
+     31,
+     29,
+     29,
+     29,
+     31,
+     7
+    ],
+    "scopes": [
+     "ReportService.render"
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "demo/tests/test_money.py: 11 confirmed use(s) in test_format_amount_uses_two_decimals_and_currency, test_parse_and_format_round_trip",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/tests/test_money.py:3 import from app.utils.money",
+    "demo/tests/test_money.py:18 test_format_amount_uses_two_decimals_and_currency",
+    "demo/tests/test_money.py:18 test_format_amount_uses_two_decimals_and_currency",
+    "demo/tests/test_money.py:19 test_format_amount_uses_two_decimals_and_currency",
+    "demo/tests/test_money.py:19 test_format_amount_uses_two_decimals_and_currency",
+    "demo/tests/test_money.py:20 test_format_amount_uses_two_decimals_and_currency",
+    "demo/tests/test_money.py:20 test_format_amount_uses_two_decimals_and_currency",
+    "demo/tests/test_money.py:21 test_format_amount_uses_two_decimals_and_currency",
+    "demo/tests/test_money.py:21 test_format_amount_uses_two_decimals_and_currency",
+    "demo/tests/test_money.py:25 test_parse_and_format_round_trip",
+    "demo/tests/test_money.py:25 test_parse_and_format_round_trip"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {
+    "path": "demo/tests/test_money.py",
+    "lines": [
+     18,
+     19,
+     20,
+     21,
+     25,
+     18,
+     19,
+     20,
+     21,
+     25,
+     3
+    ],
+    "scopes": [
+     "test_format_amount_uses_two_decimals_and_currency",
+     "test_parse_and_format_round_trip"
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "demo/README.md: 1 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/README.md:16 utils/money.py       parse_amount / format_amount"
+   ],
+   "consequence": "text match in docs file without confirmed parsing",
+   "recommendation": "",
+   "data": {
+    "path": "demo/README.md",
+    "lines": [
+     16
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "docs/acceptance/MANUAL-ANTIGRAVITY-GEMINI.md: 1 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/MANUAL-ANTIGRAVITY-GEMINI.md:107 T02: Did it find `format_amount` via the report code? Did `export.py` end up"
+   ],
+   "consequence": "text match in docs file without confirmed parsing",
+   "recommendation": "",
+   "data": {
+    "path": "docs/acceptance/MANUAL-ANTIGRAVITY-GEMINI.md",
+    "lines": [
+     107
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "docs/acceptance/PHASE-8A-TEST-PLAN.md: 10 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/PHASE-8A-TEST-PLAN.md:29 | shared money helper `format_amount(cents, currency) -> \"12.34 EUR\"`, used by `ReportService.render` and `handlers.monthly_report`; `ExportService.monthly_csv` formats inline and does not import it |",
+    "docs/acceptance/PHASE-8A-TEST-PLAN.md:82 `format_amount`, imports it into `export.py`, updates the export test.",
+    "docs/acceptance/PHASE-8A-TEST-PLAN.md:88 EXPECTED REUSE BEHAVIOR: `from app.utils.money import format_amount`;",
+    "docs/acceptance/PHASE-8A-TEST-PLAN.md:99 `f\"{...:.2f} EUR\"`, or duplicated `CURRENCY` literal); `format_amount` not",
+    "docs/acceptance/PHASE-8A-TEST-PLAN.md:102 ORACLE: baseline `refs-format_amount.json` confirmed callers exclude",
+    "docs/acceptance/PHASE-8A-TEST-PLAN.md:103 `export.py`; `reuse-T02.json` decision `extend` with `format_amount` first;",
+    "docs/acceptance/PHASE-8A-TEST-PLAN.md:274 > In demo/, change format_amount so the currency comes first: 'EUR 12.34' instead of '12.34 EUR'.",
+    "docs/acceptance/PHASE-8A-TEST-PLAN.md:284 above (or `lord impact format_amount`).",
+    "docs/acceptance/PHASE-8A-TEST-PLAN.md:300 ORACLE: baseline `impact-format_amount.json` direct callers and",
+    "docs/acceptance/PHASE-8A-TEST-PLAN.md:301 `tests-for-format_amount.json`; `acceptance check T07` requires callers"
+   ],
+   "consequence": "text match in docs file without confirmed parsing",
+   "recommendation": "",
+   "data": {
+    "path": "docs/acceptance/PHASE-8A-TEST-PLAN.md",
+    "lines": [
+     29,
+     82,
+     88,
+     99,
+     102,
+     103,
+     274,
+     284,
+     300,
+     301
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "docs/acceptance/baseline/def-format_amount.json: 4 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/def-format_amount.json:2 \"title\": \"definition: format_amount\",",
+    "docs/acceptance/baseline/def-format_amount.json:10 \"summary\": \"demo/app/utils/money.py:30 function format_amount (cents, currency)\",",
+    "docs/acceptance/baseline/def-format_amount.json:20 \"name\": \"format_amount\",",
+    "docs/acceptance/baseline/def-format_amount.json:24 \"qualname\": \"format_amount\","
+   ],
+   "consequence": "text match in config file without confirmed parsing",
+   "recommendation": "",
+   "data": {
+    "path": "docs/acceptance/baseline/def-format_amount.json",
+    "lines": [
+     2,
+     10,
+     20,
+     24
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "docs/acceptance/baseline/impact-format_amount.json: 9 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/impact-format_amount.json:2 \"title\": \"impact: format_amount\",",
+    "docs/acceptance/baseline/impact-format_amount.json:50 \"summary\": \"demo/app/utils/money.py:30 function format_amount (cents, currency)\",",
+    "docs/acceptance/baseline/impact-format_amount.json:121 \"demo/app/api/server.py::make_handler.Handler._dispatch <- demo/app/api/handlers.py::monthly_report <- demo/app/utils/money.py::format_amount\"",
+    "docs/acceptance/baseline/impact-format_amount.json:133 \"demo/tests/test_api.py::test_monthly_report_formats_totals <- demo/app/api/handlers.py::monthly_report <- demo/app/utils/money.py::format_amount\"",
+    "docs/acceptance/baseline/impact-format_amount.json:145 \"demo/tests/test_api.py::test_report_requires_valid_month <- demo/app/api/handlers.py::monthly_report <- demo/app/utils/money.py::format_amount\"",
+    "docs/acceptance/baseline/impact-format_amount.json:157 \"demo/tests/test_reports.py::test_render_lines_use_shared_formatting <- demo/app/services/reports.py::ReportService.render <- demo/app/utils/money.py::format_amount\"",
+    "docs/acceptance/baseline/impact-format_amount.json:169 \"demo/app/api/server.py::make_handler.Handler.do_GET <- demo/app/api/server.py::make_handler.Handler._dispatch <- demo/app/api/handlers.py::monthly_report <- demo/app/utils/money.py::format_amount\"",
+    "docs/acceptance/baseline/impact-format_amount.json:181 \"demo/app/api/server.py::make_handler.Handler.do_POST <- demo/app/api/server.py::make_handler.Handler._dispatch <- demo/app/api/handlers.py::monthly_report <- demo/app/utils/money.py::format_amount\"",
+    "docs/acceptance/baseline/impact-format_amount.json:385 \"summary\": \"docs/acceptance/evidence/TEMPLATE.json mentions it (format_amount)\","
+   ],
+   "consequence": "text match in config file without confirmed parsing",
+   "recommendation": "",
+   "data": {
+    "path": "docs/acceptance/baseline/impact-format_amount.json",
+    "lines": [
+     2,
+     50,
+     121,
+     133,
+     145,
+     157,
+     169,
+     181,
+     385
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json: 1 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json:159 \"tests/test_acceptance.py:63 (\\\"normalize_text\\\", \\\"format_amount\\\", \\\"month_bounds\\\", \\\"require_description\\\", \\\"validate_transaction\\\", \\\"DEFAULT_PAGE_SIZE\\\")}\""
+   ],
+   "consequence": "text match in config file without confirmed parsing",
+   "recommendation": "",
+   "data": {
+    "path": "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json",
+    "lines": [
+     159
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "docs/acceptance/baseline/refs-format_amount.json: 31 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/refs-format_amount.json:2 \"title\": \"references: format_amount\",",
+    "docs/acceptance/baseline/refs-format_amount.json:7 \"demo/app/utils/money.py:30 function format_amount (cents, currency)\"",
+    "docs/acceptance/baseline/refs-format_amount.json:138 \"demo/README.md:16 utils/money.py       parse_amount / format_amount\"",
+    "docs/acceptance/baseline/refs-format_amount.json:155 \"docs/acceptance/MANUAL-ANTIGRAVITY-GEMINI.md:107 T02: Did it find `format_amount` via the report code? Did `export.py` end up\"",
+    "docs/acceptance/baseline/refs-format_amount.json:172 \"docs/acceptance/PHASE-8A-TEST-PLAN.md:29 | shared money helper `format_amount(cents, currency) -> \\\"12.34 EUR\\\"`, used by `ReportService.render` and `handlers.monthly_report`; `ExportService.monthly_",
+    "docs/acceptance/baseline/refs-format_amount.json:173 \"docs/acceptance/PHASE-8A-TEST-PLAN.md:82 `format_amount`, imports it into `export.py`, updates the export test.\",",
+    "docs/acceptance/baseline/refs-format_amount.json:174 \"docs/acceptance/PHASE-8A-TEST-PLAN.md:88 EXPECTED REUSE BEHAVIOR: `from app.utils.money import format_amount`;\",",
+    "docs/acceptance/baseline/refs-format_amount.json:175 \"docs/acceptance/PHASE-8A-TEST-PLAN.md:99 `f\\\"{...:.2f} EUR\\\"`, or duplicated `CURRENCY` literal); `format_amount` not\",",
+    "docs/acceptance/baseline/refs-format_amount.json:176 \"docs/acceptance/PHASE-8A-TEST-PLAN.md:102 ORACLE: baseline `refs-format_amount.json` confirmed callers exclude\",",
+    "docs/acceptance/baseline/refs-format_amount.json:177 \"docs/acceptance/PHASE-8A-TEST-PLAN.md:103 `export.py`; `reuse-T02.json` decision `extend` with `format_amount` first;\","
+   ],
+   "consequence": "text match in config file without confirmed parsing",
+   "recommendation": "",
+   "data": {
+    "path": "docs/acceptance/baseline/refs-format_amount.json",
+    "lines": [
+     2,
+     7,
+     138,
+     155,
+     172,
+     173,
+     174,
+     175,
+     176,
+     177,
+     178,
+     179,
+     180,
+     181,
+     207,
+     208,
+     226,
+     227,
+     228,
+     229,
+     230,
+     231,
+     232,
+     233,
+     234,
+     235,
+     261,
+     262,
+     263,
+     264,
+     265
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "docs/acceptance/baseline/refs-normalize_text.json: 1 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/refs-normalize_text.json:169 \"tests/test_acceptance.py:63 (\\\"normalize_text\\\", \\\"format_amount\\\", \\\"month_bounds\\\", \\\"require_description\\\", \\\"validate_transaction\\\", \\\"DEFAULT_PAGE_SIZE\\\")}\","
+   ],
+   "consequence": "text match in config file without confirmed parsing",
+   "recommendation": "",
+   "data": {
+    "path": "docs/acceptance/baseline/refs-normalize_text.json",
+    "lines": [
+     169
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "docs/acceptance/baseline/refs-validate_transaction.json: 1 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/refs-validate_transaction.json:125 \"tests/test_acceptance.py:63 (\\\"normalize_text\\\", \\\"format_amount\\\", \\\"month_bounds\\\", \\\"require_description\\\", \\\"validate_transaction\\\", \\\"DEFAULT_PAGE_SIZE\\\")}\","
+   ],
+   "consequence": "text match in config file without confirmed parsing",
+   "recommendation": "",
+   "data": {
+    "path": "docs/acceptance/baseline/refs-validate_transaction.json",
+    "lines": [
+     125
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "docs/acceptance/baseline/reuse-T02.json: 3 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/reuse-T02.json:55 \"summary\": \"demo/app/utils/money.py:30 function format_amount (cents, currency)\",",
+    "docs/acceptance/baseline/reuse-T02.json:68 \"name\": \"format_amount\",",
+    "docs/acceptance/baseline/reuse-T02.json:72 \"qualname\": \"format_amount\","
+   ],
+   "consequence": "text match in config file without confirmed parsing",
+   "recommendation": "",
+   "data": {
+    "path": "docs/acceptance/baseline/reuse-T02.json",
+    "lines": [
+     55,
+     68,
+     72
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "docs/acceptance/baseline/summary.json: 4 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/summary.json:16 \"def-format_amount\",",
+    "docs/acceptance/baseline/summary.json:19 \"refs-format_amount\",",
+    "docs/acceptance/baseline/summary.json:27 \"impact-format_amount\",",
+    "docs/acceptance/baseline/summary.json:34 \"tests-for-format_amount\","
+   ],
+   "consequence": "text match in config file without confirmed parsing",
+   "recommendation": "",
+   "data": {
+    "path": "docs/acceptance/baseline/summary.json",
+    "lines": [
+     16,
+     19,
+     27,
+     34
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "docs/acceptance/baseline/tests-for-format_amount.json: 12 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/tests-for-format_amount.json:2 \"title\": \"tests for format_amount\",",
+    "docs/acceptance/baseline/tests-for-format_amount.json:18 \"demo/tests/test_money.py:3 from app.utils.money import format_amount, parse_amount\",",
+    "docs/acceptance/baseline/tests-for-format_amount.json:19 \"demo/tests/test_money.py:18 assert format_amount(1234) == \\\"12.34 EUR\\\"\",",
+    "docs/acceptance/baseline/tests-for-format_amount.json:20 \"demo/tests/test_money.py:19 assert format_amount(5) == \\\"0.05 EUR\\\"\",",
+    "docs/acceptance/baseline/tests-for-format_amount.json:21 \"demo/tests/test_money.py:20 assert format_amount(-1050) == \\\"-10.50 EUR\\\"\",",
+    "docs/acceptance/baseline/tests-for-format_amount.json:22 \"demo/tests/test_money.py:21 assert format_amount(100, \\\"USD\\\") == \\\"1.00 USD\\\"\",",
+    "docs/acceptance/baseline/tests-for-format_amount.json:23 \"demo/tests/test_money.py:25 assert format_amount(parse_amount(\\\"99.90\\\")) == \\\"99.90 EUR\\\"\"",
+    "docs/acceptance/baseline/tests-for-format_amount.json:35 \"tests/test_acceptance.py:63 (\\\"normalize_text\\\", \\\"format_amount\\\", \\\"month_bounds\\\", \\\"require_description\\\", \\\"validate_transaction\\\", \\\"DEFAULT_PAGE_SIZE\\\")}\",",
+    "docs/acceptance/baseline/tests-for-format_amount.json:36 \"tests/test_acceptance.py:65 fmt = query.references(index, ROOT, \\\"format_amount\\\")\",",
+    "docs/acceptance/baseline/tests-for-format_amount.json:37 \"tests/test_acceptance.py:81 assert t02.meta[\\\"decision\\\"] == \\\"extend\\\" and \\\"format_amount\\\" in strong[0]\","
+   ],
+   "consequence": "text match in config file without confirmed parsing",
+   "recommendation": "",
+   "data": {
+    "path": "docs/acceptance/baseline/tests-for-format_amount.json",
+    "lines": [
+     2,
+     18,
+     19,
+     20,
+     21,
+     22,
+     23,
+     35,
+     36,
+     37,
+     38,
+     39
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "docs/acceptance/baseline/tests-for-month_bounds.json: 2 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/tests-for-month_bounds.json:31 \"tests/test_acceptance.py:63 (\\\"normalize_text\\\", \\\"format_amount\\\", \\\"month_bounds\\\", \\\"require_description\\\", \\\"validate_transaction\\\", \\\"DEFAULT_PAGE_SIZE\\\")}\",",
+    "docs/acceptance/baseline/tests-for-month_bounds.json:36 \"tests/test_acceptance.py:135 assert set(artifacts) >= {\\\"refs-format_amount\\\", \\\"impact-month_bounds\\\", \\\"trace-monthly_summary\\\", \\\"reuse-T01\\\", \\\"reuse-T02\\\", \\\"duplicates\\\"}\","
+   ],
+   "consequence": "text match in config file without confirmed parsing",
+   "recommendation": "",
+   "data": {
+    "path": "docs/acceptance/baseline/tests-for-month_bounds.json",
+    "lines": [
+     31,
+     36
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "docs/acceptance/evidence/TEMPLATE.json: 2 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/evidence/TEMPLATE.json:20 \"deterministic_checks\": [{\"kind\": \"reuse\", \"ok\": true, \"summary\": \"export imports format_amount\"}],",
+    "docs/acceptance/evidence/TEMPLATE.json:25 \"reuse_discovered\": \"yes: named format_amount in app/utils/money.py before editing\","
+   ],
+   "consequence": "text match in config file without confirmed parsing",
+   "recommendation": "",
+   "data": {
+    "path": "docs/acceptance/evidence/TEMPLATE.json",
+    "lines": [
+     20,
+     25
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "lord/acceptance.py: 10 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "lord/acceptance.py:67 \"expected_reuse\": [\"demo/app/utils/money.py::format_amount\"],",
+    "lord/acceptance.py:92 \"prompt\": \"In demo/, change format_amount so the currency comes first: 'EUR 12.34' instead of '12.34 EUR'.\",",
+    "lord/acceptance.py:134 \"def-format_amount\": lambda: query.definition(index, \"format_amount\"),",
+    "lord/acceptance.py:137 \"refs-format_amount\": lambda: query.references(index, root, \"format_amount\"),",
+    "lord/acceptance.py:145 \"impact-format_amount\": lambda: impact_report(index, root, \"format_amount\", depth=3),",
+    "lord/acceptance.py:152 \"tests-for-format_amount\": lambda: query.tests_for(index, root, \"format_amount\"),",
+    "lord/acceptance.py:229 refs = _confirmed_ref_files(index, root, \"format_amount\")",
+    "lord/acceptance.py:230 expect(\"reuse\", \"demo/app/services/export.py\" in refs, \"export imports format_amount\" if \"demo/app/services/export.py\" in refs else \"export does not reference format_amount\", \"the shared formatter was",
+    "lord/acceptance.py:251 callers = _confirmed_ref_files(index, root, \"format_amount\")",
+    "lord/acceptance.py:253 expect(\"callers-known\", {\"demo/app/api/handlers.py\", \"demo/app/services/reports.py\"} <= set(callers), \"callers of format_amount intact\", \"a caller lost its use of the shared formatter\")"
+   ],
+   "consequence": "text match in a parsed file (comment, string or attribute)",
+   "recommendation": "",
+   "data": {
+    "path": "lord/acceptance.py",
+    "lines": [
+     67,
+     92,
+     134,
+     137,
+     145,
+     152,
+     229,
+     230,
+     251,
+     253
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "tests/test_acceptance.py: 5 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "tests/test_acceptance.py:78 (\"normalize_text\", \"format_amount\", \"month_bounds\", \"require_description\", \"validate_transaction\", \"DEFAULT_PAGE_SIZE\")}",
+    "tests/test_acceptance.py:80 fmt = query.references(index, ROOT, \"format_amount\")",
+    "tests/test_acceptance.py:96 assert t02.meta[\"decision\"] == \"extend\" and \"format_amount\" in strong[0]",
+    "tests/test_acceptance.py:118 impact = impact_report(index, ROOT, \"format_amount\", depth=3)",
+    "tests/test_acceptance.py:156 assert set(artifacts) >= {\"refs-format_amount\", \"impact-month_bounds\", \"trace-monthly_summary\", \"reuse-T01\", \"reuse-T02\", \"duplicates\"}"
+   ],
+   "consequence": "text match in a parsed file (comment, string or attribute)",
+   "recommendation": "",
+   "data": {
+    "path": "tests/test_acceptance.py",
+    "lines": [
+     78,
+     80,
+     96,
+     118,
+     156
+    ]
+   }
+  },
+  {
+   "kind": "analysis-unavailable",
+   "summary": "references could not be analysed in some files",
+   "severity": "info",
+   "confidence": "unknown",
+   "evidence": [
+    "html: 1 file(s) without an extractor",
+    "rust: 1 file(s) without an extractor",
+    "shell: 1 file(s) without an extractor",
+    "tests/fixtures/sample_repo/pkg/broken.py: parse error"
+   ],
+   "consequence": "text search still covers these files, but structural facts are unknown there",
+   "recommendation": "",
+   "data": {}
+  }
+ ]
+}

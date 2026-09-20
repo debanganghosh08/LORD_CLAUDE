@@ -62,6 +62,7 @@ COMMANDS: tuple[tuple[str, str, str | None], ...] = (
 
 MEMORY_ACTIONS = ("query", "add", "supersede", "update", "check", "list")
 HANDOFF_ACTIONS = ("show", "write", "clear")
+ACCEPTANCE_ACTIONS = ("baseline", "check", "record", "prompts")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -135,6 +136,14 @@ def build_parser() -> argparse.ArgumentParser:
         handoff.add_argument(f"--{field}", action="append", default=[], help=f"{field} entry (repeatable)")
     handoff.add_argument("--from-verify", action="store_true", help="attach the current `verify` verdict and outstanding items")
     handoff.add_argument("--replace", action="store_true", help="replace the record instead of merging")
+
+    acceptance = sub.add_parser("acceptance", help="demo acceptance evaluation: baseline ground truth, deterministic checks, evidence records")
+    _add_common(acceptance)
+    acceptance.add_argument("action", choices=ACCEPTANCE_ACTIONS)
+    acceptance.add_argument("--test", default="", help="scenario id, e.g. T03")
+    acceptance.add_argument("--model", default="", help="model label for the evidence record, e.g. gemini-3.6-flash")
+    acceptance.add_argument("--transcript", default="", help="conversation id or exported transcript path")
+    acceptance.add_argument("--notes", default="", help="free-text observations")
     return parser
 
 
@@ -212,6 +221,24 @@ def run(args: argparse.Namespace, root: Path) -> Report:
         return _memory(args, root)
     if args.command == "handoff":
         return _handoff(args, root, config, index)
+    if args.command == "acceptance":
+        from lord import acceptance
+        from lord.report import CONFIRMED, ERROR, OK, Finding
+
+        if args.action == "baseline":
+            return acceptance.write_baseline(config, index)
+        if args.action == "prompts":
+            report = Report(title="acceptance prompts", meta={"tests": list(acceptance.SCENARIOS)})
+            for test_id, scenario in acceptance.SCENARIOS.items():
+                report.add(Finding(kind=test_id, summary=scenario["name"], severity=OK, confidence=CONFIRMED, evidence=[scenario["prompt"]]))
+            return report
+        if not args.test:
+            return Report(title="acceptance", findings=[Finding(kind="usage", summary="--test T0x is required", severity=ERROR, confidence=CONFIRMED)])
+        if args.action == "check":
+            return acceptance.check(config, index, args.test)
+        if not args.model:
+            return Report(title="acceptance", findings=[Finding(kind="usage", summary="--model is required for record", severity=ERROR, confidence=CONFIRMED)])
+        return acceptance.record(config, index, args.test, args.model, transcript=args.transcript, notes=args.notes)
     if args.command == "verify":
         from lord.review import verify
 

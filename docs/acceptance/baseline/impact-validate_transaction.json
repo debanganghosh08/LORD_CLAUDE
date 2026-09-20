@@ -1,0 +1,697 @@
+{
+ "title": "impact: validate_transaction",
+ "worst_severity": "warn",
+ "meta": {
+  "root": "<root>",
+  "depth": 3,
+  "direct_callers": [
+   "demo/app/services/transactions.py::TransactionService.add",
+   "demo/tests/test_validation.py::test_every_field_is_checked",
+   "demo/tests/test_validation.py::test_valid_payload_has_no_errors"
+  ],
+  "indirect_callers": [
+   "demo/app/api/handlers.py::create_transaction",
+   "demo/app/api/server.py::make_handler.Handler._dispatch",
+   "demo/tests/test_api.py::test_create_and_list",
+   "demo/tests/test_api.py::test_create_maps_validation_errors_to_400",
+   "demo/tests/test_transactions.py::test_add_assigns_ids_and_stores_cents",
+   "demo/tests/test_transactions.py::test_add_rejects_invalid_payload",
+   "demo/tests/test_transactions.py::test_list_pages_in_date_order"
+  ],
+  "dependents": [
+   "demo/app/api/handlers.py",
+   "demo/app/api/server.py",
+   "demo/app/services/export.py",
+   "demo/app/services/reports.py",
+   "demo/app/services/transactions.py",
+   "demo/scripts/seed.py",
+   "demo/tests/conftest.py",
+   "demo/tests/test_api.py",
+   "demo/tests/test_server.py",
+   "demo/tests/test_transactions.py",
+   "demo/tests/test_validation.py"
+  ],
+  "tests": [
+   "demo/tests/test_transactions.py",
+   "demo/tests/test_validation.py"
+  ],
+  "config": [
+   "docs/acceptance/baseline/dependents-validation.json",
+   "docs/acceptance/baseline/impact-validate_transaction.json",
+   "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json",
+   "docs/acceptance/baseline/refs-format_amount.json",
+   "docs/acceptance/baseline/refs-normalize_text.json",
+   "docs/acceptance/baseline/refs-validate_transaction.json",
+   "docs/acceptance/baseline/reuse-T04.json",
+   "docs/acceptance/baseline/summary.json",
+   "docs/acceptance/baseline/tests-for-format_amount.json",
+   "docs/acceptance/baseline/tests-for-month_bounds.json"
+  ],
+  "directories": [
+   "demo"
+  ],
+  "overall_confidence": "inferred"
+ },
+ "findings": [
+  {
+   "kind": "definition",
+   "summary": "demo/app/validation.py:26 function validate_transaction (payload)",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "Collect every problem with a transaction payload; empty list means valid."
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "direct-reference",
+   "summary": "demo/app/services/transactions.py::TransactionService.add calls it",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/app/services/transactions.py:18 calls"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "direct-reference",
+   "summary": "demo/tests/test_validation.py::test_every_field_is_checked calls it [test]",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/tests/test_validation.py:12 calls"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "direct-reference",
+   "summary": "demo/tests/test_validation.py::test_valid_payload_has_no_errors calls it [test]",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/tests/test_validation.py:8 calls"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "indirect-reference",
+   "summary": "demo/app/api/handlers.py::create_transaction reaches it at depth 2",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/app/api/handlers.py::create_transaction <- demo/app/services/transactions.py::TransactionService.add <- demo/app/validation.py::validate_transaction"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "indirect-reference",
+   "summary": "demo/tests/test_transactions.py::test_add_assigns_ids_and_stores_cents reaches it at depth 2",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/tests/test_transactions.py::test_add_assigns_ids_and_stores_cents <- demo/app/services/transactions.py::TransactionService.add <- demo/app/validation.py::validate_transaction"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "indirect-reference",
+   "summary": "demo/tests/test_transactions.py::test_add_rejects_invalid_payload reaches it at depth 2",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/tests/test_transactions.py::test_add_rejects_invalid_payload <- demo/app/services/transactions.py::TransactionService.add <- demo/app/validation.py::validate_transaction"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "indirect-reference",
+   "summary": "demo/tests/test_transactions.py::test_list_pages_in_date_order reaches it at depth 2",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/tests/test_transactions.py::test_list_pages_in_date_order <- demo/app/services/transactions.py::TransactionService.add <- demo/app/validation.py::validate_transaction"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "indirect-reference",
+   "summary": "demo/app/api/server.py::make_handler.Handler._dispatch reaches it at depth 3",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/app/api/server.py::make_handler.Handler._dispatch <- demo/app/api/handlers.py::create_transaction <- demo/app/services/transactions.py::TransactionService.add <- demo/app/validation.py::validate_transaction"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "indirect-reference",
+   "summary": "demo/tests/test_api.py::test_create_and_list reaches it at depth 3",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/tests/test_api.py::test_create_and_list <- demo/app/api/handlers.py::create_transaction <- demo/app/services/transactions.py::TransactionService.add <- demo/app/validation.py::validate_transaction"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "indirect-reference",
+   "summary": "demo/tests/test_api.py::test_create_maps_validation_errors_to_400 reaches it at depth 3",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/tests/test_api.py::test_create_maps_validation_errors_to_400 <- demo/app/api/handlers.py::create_transaction <- demo/app/services/transactions.py::TransactionService.add <- demo/app/validation.py::validate_transaction"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "callee",
+   "summary": "it references demo/app/config.py::CATEGORIES",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "line 39",
+    "line 40"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "callee",
+   "summary": "it references demo/app/config.py::KINDS",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "line 37",
+    "line 38"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "callee",
+   "summary": "it calls demo/app/utils/dates.py::parse_date",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "line 30"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "callee",
+   "summary": "it calls demo/app/utils/money.py::parse_amount",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "line 34"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "callee",
+   "summary": "it calls demo/app/validation.py::require_description",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "line 41"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "callee",
+   "summary": "it references demo/web/app.js::payload",
+   "severity": "ok",
+   "confidence": "inferred",
+   "evidence": [
+    "line 30",
+    "line 34",
+    "line 37",
+    "line 39",
+    "line 41"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependency",
+   "summary": "demo/app/validation.py imports demo/app/config.py (CATEGORIES, KINDS, MAX_NOTE_LENGTH)",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependency",
+   "summary": "demo/app/validation.py imports demo/app/utils/dates.py (parse_date)",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependency",
+   "summary": "demo/app/validation.py imports demo/app/utils/money.py (parse_amount)",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependent",
+   "summary": "demo/app/api/handlers.py depends on it (depth 1)",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependent",
+   "summary": "demo/app/services/transactions.py depends on it (depth 1)",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependent",
+   "summary": "demo/tests/test_transactions.py depends on it (depth 1) [test]",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependent",
+   "summary": "demo/tests/test_validation.py depends on it (depth 1) [test]",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependent",
+   "summary": "demo/app/api/server.py depends on it (depth 2)",
+   "severity": "info",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/app/api/server.py <- demo/app/api/handlers.py <- demo/app/validation.py"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependent",
+   "summary": "demo/app/services/export.py depends on it (depth 2)",
+   "severity": "info",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/app/services/export.py <- demo/app/services/transactions.py <- demo/app/validation.py"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependent",
+   "summary": "demo/app/services/reports.py depends on it (depth 2)",
+   "severity": "info",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/app/services/reports.py <- demo/app/services/transactions.py <- demo/app/validation.py"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependent",
+   "summary": "demo/scripts/seed.py depends on it (depth 2)",
+   "severity": "info",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/scripts/seed.py <- demo/app/api/handlers.py <- demo/app/validation.py"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependent",
+   "summary": "demo/tests/conftest.py depends on it (depth 2) [test]",
+   "severity": "info",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/tests/conftest.py <- demo/app/api/handlers.py <- demo/app/validation.py"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependent",
+   "summary": "demo/tests/test_api.py depends on it (depth 2) [test]",
+   "severity": "info",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/tests/test_api.py <- demo/app/api/handlers.py <- demo/app/validation.py"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "dependent",
+   "summary": "demo/tests/test_server.py depends on it (depth 3) [test]",
+   "severity": "info",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/tests/test_server.py <- demo/app/api/server.py <- demo/app/api/handlers.py <- demo/app/validation.py"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "test",
+   "summary": "demo/tests/test_transactions.py exercises it",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/tests/test_transactions.py:8"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "test",
+   "summary": "demo/tests/test_validation.py exercises it",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/tests/test_validation.py:8",
+    "demo/tests/test_validation.py:12",
+    "demo/tests/test_validation.py:2"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "config",
+   "summary": "docs/acceptance/baseline/dependents-validation.json mentions it (validate_transaction)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/dependents-validation.json:33",
+    "docs/acceptance/baseline/dependents-validation.json:45",
+    "docs/acceptance/baseline/dependents-validation.json:68",
+    "docs/acceptance/baseline/dependents-validation.json:80"
+   ],
+   "consequence": "a rename or signature change may need a configuration update",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "config",
+   "summary": "docs/acceptance/baseline/impact-validate_transaction.json mentions it (validate_transaction)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/impact-validate_transaction.json:2",
+    "docs/acceptance/baseline/impact-validate_transaction.json:47",
+    "docs/acceptance/baseline/impact-validate_transaction.json:99",
+    "docs/acceptance/baseline/impact-validate_transaction.json:111",
+    "docs/acceptance/baseline/impact-validate_transaction.json:123"
+   ],
+   "consequence": "a rename or signature change may need a configuration update",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "config",
+   "summary": "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json mentions it (validate_transaction)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json:159"
+   ],
+   "consequence": "a rename or signature change may need a configuration update",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "config",
+   "summary": "docs/acceptance/baseline/refs-format_amount.json mentions it (validate_transaction)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/refs-format_amount.json:261"
+   ],
+   "consequence": "a rename or signature change may need a configuration update",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "config",
+   "summary": "docs/acceptance/baseline/refs-normalize_text.json mentions it (validate_transaction)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/refs-normalize_text.json:169"
+   ],
+   "consequence": "a rename or signature change may need a configuration update",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "config",
+   "summary": "docs/acceptance/baseline/refs-validate_transaction.json mentions it (validate_transaction)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/refs-validate_transaction.json:2",
+    "docs/acceptance/baseline/refs-validate_transaction.json:7",
+    "docs/acceptance/baseline/refs-validate_transaction.json:77",
+    "docs/acceptance/baseline/refs-validate_transaction.json:78",
+    "docs/acceptance/baseline/refs-validate_transaction.json:79"
+   ],
+   "consequence": "a rename or signature change may need a configuration update",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "config",
+   "summary": "docs/acceptance/baseline/reuse-T04.json mentions it (validate_transaction)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/reuse-T04.json:26",
+    "docs/acceptance/baseline/reuse-T04.json:39",
+    "docs/acceptance/baseline/reuse-T04.json:43"
+   ],
+   "consequence": "a rename or signature change may need a configuration update",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "config",
+   "summary": "docs/acceptance/baseline/summary.json mentions it (validate_transaction)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/summary.json:21",
+    "docs/acceptance/baseline/summary.json:28"
+   ],
+   "consequence": "a rename or signature change may need a configuration update",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "config",
+   "summary": "docs/acceptance/baseline/tests-for-format_amount.json mentions it (validate_transaction)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/tests-for-format_amount.json:35"
+   ],
+   "consequence": "a rename or signature change may need a configuration update",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "config",
+   "summary": "docs/acceptance/baseline/tests-for-month_bounds.json mentions it (validate_transaction)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/tests-for-month_bounds.json:31"
+   ],
+   "consequence": "a rename or signature change may need a configuration update",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "boundary",
+   "summary": "affects 12 file(s) across 1 top-level directory: demo",
+   "severity": "ok",
+   "confidence": "inferred",
+   "evidence": [
+    "project roots: ., demo"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "consequence",
+   "summary": "a signature or behaviour change reaches 1 direct caller/reference site(s) in 2 file(s)",
+   "severity": "warn",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/app/services/transactions.py::TransactionService.add",
+    "demo/tests/test_validation.py::test_every_field_is_checked",
+    "demo/tests/test_validation.py::test_valid_payload_has_no_errors"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "consequence",
+   "summary": "7 indirect caller(s) up to depth 3 inherit the change through the chain",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "consequence",
+   "summary": "2 test file(s) exercise it; run them first",
+   "severity": "ok",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/tests/test_transactions.py",
+    "demo/tests/test_validation.py"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "consequence",
+   "summary": "10 configuration file(s) name it; renames must update them",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/dependents-validation.json",
+    "docs/acceptance/baseline/impact-validate_transaction.json",
+    "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json",
+    "docs/acceptance/baseline/refs-format_amount.json",
+    "docs/acceptance/baseline/refs-normalize_text.json",
+    "docs/acceptance/baseline/refs-validate_transaction.json",
+    "docs/acceptance/baseline/reuse-T04.json",
+    "docs/acceptance/baseline/summary.json",
+    "docs/acceptance/baseline/tests-for-format_amount.json",
+    "docs/acceptance/baseline/tests-for-month_bounds.json"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "consequence",
+   "summary": "callers in unsupported languages are invisible to this analysis: html (1), rust (1), shell (1)",
+   "severity": "info",
+   "confidence": "unknown",
+   "evidence": [],
+   "consequence": "",
+   "recommendation": "search those files by name before concluding nothing else is affected",
+   "data": {}
+  },
+  {
+   "kind": "reuse-candidate",
+   "summary": "demo/app/models.py:10 class Transaction",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "matched terms: trans"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "reuse-candidate",
+   "summary": "lord/acceptance.py:184 function check (config, index, test_id)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "matched terms: check"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  },
+  {
+   "kind": "reuse-candidate",
+   "summary": "lord/review.py:153 function verify (config, index, scope, run, base, staged, timeout)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "matched terms: verif"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  }
+ ]
+}

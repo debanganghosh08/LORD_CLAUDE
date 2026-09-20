@@ -1,0 +1,288 @@
+{
+ "title": "reuse check: validate a transaction description length for the API",
+ "worst_severity": "warn",
+ "meta": {
+  "root": "<root>",
+  "proposed_names": [
+   "validate_api_transaction"
+  ],
+  "decision": "extend"
+ },
+ "findings": [
+  {
+   "kind": "exists",
+   "summary": "validate_api_transaction appears in 1 code file(s) but has no indexed definition",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "lord/acceptance.py:150 \"reuse-T04\": lambda: reuse_report(index, root, \"validate a transaction description length for the API\", names=[\"validate_api_transaction\"]),"
+   ],
+   "consequence": "possibly defined in an unsupported language, or only referenced",
+   "recommendation": "open the files before creating a symbol with this name",
+   "data": {}
+  },
+  {
+   "kind": "candidate-reuse-or-extend",
+   "summary": "demo/app/validation.py:26 function validate_transaction (payload)",
+   "severity": "ok",
+   "confidence": "inferred",
+   "evidence": [
+    "matched terms: trans, valid",
+    "score 7.2",
+    "Collect every problem with a transaction payload; empty list means valid."
+   ],
+   "consequence": "",
+   "recommendation": "open it; if it covers the behaviour, reuse it; if it covers most, extend it with a parameter or branch",
+   "data": {
+    "score": 7.172608881079531,
+    "symbol": {
+     "name": "validate_transaction",
+     "kind": "function",
+     "file": "demo/app/validation.py",
+     "line": 26,
+     "qualname": "validate_transaction",
+     "language": "python",
+     "confidence": "confirmed",
+     "end_line": 44,
+     "parent": "",
+     "signature": "(payload)",
+     "exported": true,
+     "doc": "Collect every problem with a transaction payload; empty list means valid."
+    }
+   }
+  },
+  {
+   "kind": "candidate-reuse-or-extend",
+   "summary": "demo/app/validation.py:16 function require_description (value)",
+   "severity": "ok",
+   "confidence": "inferred",
+   "evidence": [
+    "matched terms: descr, valid",
+    "score 4.8",
+    "Return an error message when a description is missing, blank or too long."
+   ],
+   "consequence": "",
+   "recommendation": "open it; if it covers the behaviour, reuse it; if it covers most, extend it with a parameter or branch",
+   "data": {
+    "score": 4.783443176853381,
+    "symbol": {
+     "name": "require_description",
+     "kind": "function",
+     "file": "demo/app/validation.py",
+     "line": 16,
+     "qualname": "require_description",
+     "language": "python",
+     "confidence": "confirmed",
+     "end_line": 23,
+     "parent": "",
+     "signature": "(value)",
+     "exported": true,
+     "doc": "Return an error message when a description is missing, blank or too long."
+    }
+   }
+  },
+  {
+   "kind": "candidate-reuse-or-extend",
+   "summary": "demo/web/app.js:3 function api",
+   "severity": "ok",
+   "confidence": "inferred",
+   "evidence": [
+    "matched terms: api",
+    "score 4.8"
+   ],
+   "consequence": "",
+   "recommendation": "open it; if it covers the behaviour, reuse it; if it covers most, extend it with a parameter or branch",
+   "data": {
+    "score": 4.770065906112029,
+    "symbol": {
+     "name": "api",
+     "kind": "function",
+     "file": "demo/web/app.js",
+     "line": 3,
+     "qualname": "api",
+     "language": "javascript",
+     "confidence": "inferred",
+     "end_line": 10,
+     "parent": "",
+     "signature": "",
+     "exported": false,
+     "doc": ""
+    }
+   }
+  },
+  {
+   "kind": "candidate-partial",
+   "summary": "demo/app/models.py:10 class Transaction",
+   "severity": "ok",
+   "confidence": "inferred",
+   "evidence": [
+    "matched terms: trans",
+    "score 4.3"
+   ],
+   "consequence": "",
+   "recommendation": "related behaviour; consider composing with it or following its pattern",
+   "data": {
+    "score": 4.271808372057585,
+    "symbol": {
+     "name": "Transaction",
+     "kind": "class",
+     "file": "demo/app/models.py",
+     "line": 10,
+     "qualname": "Transaction",
+     "language": "python",
+     "confidence": "confirmed",
+     "end_line": 32,
+     "parent": "",
+     "signature": "",
+     "exported": true,
+     "doc": ""
+    }
+   }
+  },
+  {
+   "kind": "candidate-partial",
+   "summary": "demo/app/api/handlers.py:14 class ApiError (Exception)",
+   "severity": "ok",
+   "confidence": "inferred",
+   "evidence": [
+    "matched terms: api",
+    "score 4.1"
+   ],
+   "consequence": "",
+   "recommendation": "related behaviour; consider composing with it or following its pattern",
+   "data": {
+    "score": 4.148410223797367,
+    "symbol": {
+     "name": "ApiError",
+     "kind": "class",
+     "file": "demo/app/api/handlers.py",
+     "line": 14,
+     "qualname": "ApiError",
+     "language": "python",
+     "confidence": "confirmed",
+     "end_line": 18,
+     "parent": "",
+     "signature": "(Exception)",
+     "exported": true,
+     "doc": ""
+    }
+   }
+  },
+  {
+   "kind": "candidate-partial",
+   "summary": "lord/acceptance.py:184 function check (config, index, test_id)",
+   "severity": "ok",
+   "confidence": "inferred",
+   "evidence": [
+    "matched terms: check",
+    "score 3.8"
+   ],
+   "consequence": "",
+   "recommendation": "related behaviour; consider composing with it or following its pattern",
+   "data": {
+    "score": 3.835656621260741,
+    "symbol": {
+     "name": "check",
+     "kind": "function",
+     "file": "lord/acceptance.py",
+     "line": 184,
+     "qualname": "check",
+     "language": "python",
+     "confidence": "confirmed",
+     "end_line": 263,
+     "parent": "",
+     "signature": "(config, index, test_id)",
+     "exported": true,
+     "doc": ""
+    }
+   }
+  },
+  {
+   "kind": "candidate-partial",
+   "summary": "demo/app/api/handlers.py:15 method ApiError.__init__ (self, status, errors)",
+   "severity": "ok",
+   "confidence": "inferred",
+   "evidence": [
+    "matched terms: api",
+    "score 3.8"
+   ],
+   "consequence": "",
+   "recommendation": "related behaviour; consider composing with it or following its pattern",
+   "data": {
+    "score": 3.8150768904640335,
+    "symbol": {
+     "name": "__init__",
+     "kind": "method",
+     "file": "demo/app/api/handlers.py",
+     "line": 15,
+     "qualname": "ApiError.__init__",
+     "language": "python",
+     "confidence": "confirmed",
+     "end_line": 18,
+     "parent": "ApiError",
+     "signature": "(self, status, errors)",
+     "exported": false,
+     "doc": ""
+    }
+   }
+  },
+  {
+   "kind": "candidate-partial",
+   "summary": "lord/review.py:153 function verify (config, index, scope, run, base, staged, timeout)",
+   "severity": "ok",
+   "confidence": "inferred",
+   "evidence": [
+    "matched terms: verif",
+    "score 3.7"
+   ],
+   "consequence": "",
+   "recommendation": "related behaviour; consider composing with it or following its pattern",
+   "data": {
+    "score": 3.724472937355852,
+    "symbol": {
+     "name": "verify",
+     "kind": "function",
+     "file": "lord/review.py",
+     "line": 153,
+     "qualname": "verify",
+     "language": "python",
+     "confidence": "confirmed",
+     "end_line": 227,
+     "parent": "",
+     "signature": "(config, index, scope, run, base, staged, timeout)",
+     "exported": true,
+     "doc": ""
+    }
+   }
+  },
+  {
+   "kind": "decision",
+   "summary": "EXTEND: strong candidates cover most of this behaviour. Extend one before writing a parallel implementation.",
+   "severity": "warn",
+   "confidence": "inferred",
+   "evidence": [
+    "terms searched: api, assert, check, descr, description, ensure, is_valid, lengt, length, trans, transaction, valid, validate, validation, validator, verify"
+   ],
+   "consequence": "lexical search only: absence of a match is not proof of absence",
+   "recommendation": "",
+   "data": {
+    "decision": "extend"
+   }
+  },
+  {
+   "kind": "analysis-unavailable",
+   "summary": "related implementations could not be analysed in some files",
+   "severity": "info",
+   "confidence": "unknown",
+   "evidence": [
+    "html: 1 file(s) without an extractor",
+    "rust: 1 file(s) without an extractor",
+    "shell: 1 file(s) without an extractor",
+    "tests/fixtures/sample_repo/pkg/broken.py: parse error"
+   ],
+   "consequence": "text search still covers these files, but structural facts are unknown there",
+   "recommendation": "",
+   "data": {}
+  }
+ ]
+}

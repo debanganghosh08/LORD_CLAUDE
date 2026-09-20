@@ -17,6 +17,7 @@ Languages without an extractor are reported as UNKNOWN, never as "none".
 
 from __future__ import annotations
 
+import math
 import re
 from collections import defaultdict
 from pathlib import Path
@@ -73,6 +74,11 @@ def tokenize(text: str) -> set[str]:
             stemmed.add(t[:PREFIX_STEM])
         stemmed.add(t)
     return stemmed
+
+
+def canonical_keys(terms: set[str]) -> set[str]:
+    """Collapse a term and its stem variants (validate / validation / valid) into one key."""
+    return {t[:PREFIX_STEM] if len(t) > PREFIX_STEM else t for t in terms}
 
 
 def expand(terms: set[str]) -> set[str]:
@@ -191,21 +197,38 @@ def related(index: Index, query: str, limit: int = 10) -> Report:
         report.add(Finding(kind="related", summary="query has no searchable terms", severity=WARN, confidence=UNKNOWN))
         return report
 
+    # Terms are compared by canonical key (a word and its stem variants count once)
+    # and weighted by rarity across symbol names, so a corpus-wide noun such as
+    # "transaction" cannot outweigh the specific term of the request.
+    symbols = list(index.symbols())
+    name_keys = {s.id: canonical_keys(tokenize(s.qualname)) for s in symbols}
+    df: dict[str, int] = {}
+    for keys in name_keys.values():
+        for key in keys:
+            df[key] = df.get(key, 0) + 1
+    total = max(1, len(symbols))
+    query_keys = canonical_keys(terms)
+    raw_keys = canonical_keys(raw_terms)
+
+    def weight(key: str) -> float:
+        return max(0.2, math.log((total + 1) / (df.get(key, 0) + 1)) / math.log(total + 1))
+
     scored: list[tuple[float, Symbol, set[str]]] = []
-    for s in index.symbols():
+    for s in symbols:
         if s.kind in ("variable",) and not s.exported:
             continue
-        name_terms = tokenize(s.qualname)
-        file_terms = tokenize(Path(s.file).stem) | tokenize(Path(s.file).parent.name)
-        doc_terms = tokenize(s.doc) if s.doc else set()
-        hits_name = name_terms & terms
-        hits_file = file_terms & terms
-        hits_doc = doc_terms & terms
+        keys = name_keys[s.id]
+        file_keys = canonical_keys(tokenize(Path(s.file).stem) | tokenize(Path(s.file).parent.name))
+        doc_keys = canonical_keys(tokenize(s.doc)) if s.doc else set()
+        hits_name = keys & query_keys
+        hits_file = file_keys & query_keys
+        hits_doc = doc_keys & query_keys
         if not hits_name and not hits_doc:
             continue
-        score = 3.0 * len(hits_name & raw_terms) + 2.0 * len(hits_name) + 1.0 * len(hits_doc) + 0.5 * len(hits_file)
+        score = sum((3.0 if key in raw_keys else 2.0) * weight(key) for key in hits_name)
+        score += sum(1.0 * weight(key) for key in hits_doc) + sum(0.5 * weight(key) for key in hits_file)
         # precision: prefer names the query covers fully over long names with extra terms
-        score += 2.0 * (len(hits_name) / len(name_terms)) if name_terms else 0.0
+        score += 2.0 * (len(hits_name) / len(keys)) if keys else 0.0
         if s.kind in ("function", "method", "class"):
             score += 0.5
         record = index.inventory.get(s.file)
@@ -279,7 +302,14 @@ def dependents(index: Index, path: str) -> Report:
 def tests_for(index: Index, root: Path, target: str) -> Report:
     """Test files that import `target` (a file) or mention it (a symbol name)."""
     report = Report(title=f"tests for {target}", meta={"root": index.root})
-    test_files = {f.path for f in index.inventory.files if f.kind == "test"}
+    # tests are searched inside the target's own project root: in a monorepo, another
+    # project's tests mentioning the same name are not this project's coverage
+    if target in index.entries:
+        project = index.inventory.project_root_of(target)
+    else:
+        owners = {s.file for s in index.symbols_named(target)}
+        project = index.inventory.project_root_of(sorted(owners)[0]) if owners else "."
+    test_files = {f.path for f in index.inventory.files if f.kind == "test" and index.inventory.project_root_of(f.path) == project}
     found: dict[str, list[str]] = defaultdict(list)
     if target in index.entries:
         for file, imp in index.importers_of(target):

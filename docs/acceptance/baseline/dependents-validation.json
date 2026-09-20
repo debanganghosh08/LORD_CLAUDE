@@ -1,0 +1,100 @@
+{
+ "title": "dependents of demo/app/validation.py",
+ "worst_severity": "info",
+ "meta": {
+  "root": "<root>",
+  "dependents": [
+   "demo/app/api/handlers.py",
+   "demo/app/services/transactions.py",
+   "demo/tests/test_transactions.py",
+   "demo/tests/test_validation.py"
+  ]
+ },
+ "findings": [
+  {
+   "kind": "used-by",
+   "summary": "demo/app/api/handlers.py imports ValidationError",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/app/api/handlers.py:11 import app.validation"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {
+    "file": "demo/app/api/handlers.py",
+    "names": [
+     "ValidationError"
+    ]
+   }
+  },
+  {
+   "kind": "used-by",
+   "summary": "demo/app/services/transactions.py imports ValidationError, validate_transaction",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/app/services/transactions.py:10 import app.validation"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {
+    "file": "demo/app/services/transactions.py",
+    "names": [
+     "ValidationError",
+     "validate_transaction"
+    ]
+   }
+  },
+  {
+   "kind": "used-by",
+   "summary": "demo/tests/test_transactions.py imports ValidationError [test]",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/tests/test_transactions.py:8 import app.validation"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {
+    "file": "demo/tests/test_transactions.py",
+    "names": [
+     "ValidationError"
+    ]
+   }
+  },
+  {
+   "kind": "used-by",
+   "summary": "demo/tests/test_validation.py imports require_description, validate_transaction [test]",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/tests/test_validation.py:2 import app.validation"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {
+    "file": "demo/tests/test_validation.py",
+    "names": [
+     "require_description",
+     "validate_transaction"
+    ]
+   }
+  },
+  {
+   "kind": "analysis-unavailable",
+   "summary": "dependents could not be analysed in some files",
+   "severity": "info",
+   "confidence": "unknown",
+   "evidence": [
+    "html: 1 file(s) without an extractor",
+    "rust: 1 file(s) without an extractor",
+    "shell: 1 file(s) without an extractor",
+    "tests/fixtures/sample_repo/pkg/broken.py: parse error"
+   ],
+   "consequence": "text search still covers these files, but structural facts are unknown there",
+   "recommendation": "",
+   "data": {}
+  }
+ ]
+}

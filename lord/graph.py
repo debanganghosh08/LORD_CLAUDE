@@ -32,6 +32,9 @@ from lord.report import INFERRED
 from lord.symbols import Symbol
 
 EDGE_KINDS = ("defines", "imports", "calls", "references", "extends", "implements", "tests", "configures")
+# Method names shared with builtin types (dict.get, list.append, str.split, ...). An unknown
+# receiver calling one of these only links to methods in the caller's own or imported files.
+BUILTIN_METHOD_NAMES = frozenset(n for t in (dict, list, str, set, tuple, bytes, int, float) for n in dir(t) if not n.startswith("_"))
 CONFIG_TOKEN_RE = re.compile(r"[A-Za-z_][\w.]*")
 CAMEL_RE = re.compile(r"[a-z][A-Z]")
 
@@ -143,6 +146,18 @@ def build_graph(index: Index, root: Path) -> Graph:
                             module_aliases[alias] = candidate
                             break
 
+        imported_files = {imp.resolved for imp in ex.imports if imp.resolved}
+        project = index.inventory.project_root_of(ex.file)
+
+        def unknown_receiver(short: str) -> list[tuple[Symbol, str]]:
+            """Methods named `short` in the caller's project (inferred); names shared
+            with builtin types (get, add, split, ...) only in the caller's own or
+            imported files, so `by_category.get()` never links to a stranger's `get`."""
+            candidates = [t for t in by_name_methods.get(short, []) if _is_code(index, t.file) and index.inventory.project_root_of(t.file) == project]
+            if short in BUILTIN_METHOD_NAMES:
+                candidates = [t for t in candidates if t.file == ex.file or t.file in imported_files]
+            return [(t, INFERRED) for t in candidates]
+
         def resolve(name: str, receiver: str = "", scope: str = "") -> list[tuple[Symbol, str]]:
             """Receiver-aware resolution. Unknown receivers only match methods, so
             `subprocess.run()` never links to a module-level `run` elsewhere."""
@@ -151,6 +166,8 @@ def build_graph(index: Index, root: Path) -> Graph:
                 head = receiver.split(".")[0]
                 if head in module_aliases and receiver == head:
                     return [(t, ex.confidence) for t in by_file[module_aliases[head]].get(short, []) if not t.parent]
+                if head in ("self", "cls", "this", "super") and receiver != head:
+                    return unknown_receiver(short)  # self.<attr>.<method>: another object's method
                 if head in ("self", "cls", "this", "super"):
                     owner = scope.rsplit(".", 1)[0] if "." in scope else scope
                     # walk the same-file inheritance chain: own class, then its bases
@@ -169,7 +186,7 @@ def build_graph(index: Index, root: Path) -> Graph:
                     # attribute on an imported class/object: its methods
                     owners = {b.qualname for b in bindings[head]}
                     return [(t, INFERRED) for b in bindings[head] for t in by_file[b.file].get(short, []) if t.parent in owners]
-                return [(t, INFERRED) for t in by_name_methods.get(short, []) if _is_code(index, t.file)]
+                return unknown_receiver(short)
             if short in bindings and bindings[short]:
                 return [(t, ex.confidence) for t in bindings[short]]
             local = [t for t in by_file[ex.file].get(short, []) if not t.parent]

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Ledger</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem; max-width: 56rem; }
+    table { border-collapse: collapse; width: 100%; }
+    td, th { border-bottom: 1px solid #ddd; padding: .4rem; text-align: left; }
+    td.amount { text-align: right; font-variant-numeric: tabular-nums; }
+    form { display: flex; gap: .5rem; flex-wrap: wrap; margin: 1rem 0; }
+    pre { background: #f6f6f6; padding: .75rem; }
+  </style>
+</head>
+<body>
+  <h1>Ledger</h1>
+  <section>
+    <h2>Monthly report</h2>
+    <label>Year <input id="year" type="number" value="2026"></label>
+    <label>Month <input id="month" type="number" min="1" max="12" value="3"></label>
+    <button id="load-report">Load</button>
+    <pre id="report"></pre>
+  </section>
+  <section>
+    <h2>Add transaction</h2>
+    <form id="add">
+      <input name="date" placeholder="YYYY-MM-DD" required>
+      <input name="amount" placeholder="12.50" required>
+      <select name="kind"><option>expense</option><option>income</option></select>
+      <input name="category" placeholder="groceries" required>
+      <input name="description" placeholder="Description" required>
+      <button>Add</button>
+    </form>
+    <p id="error"></p>
+  </section>
+  <section>
+    <h2>Transactions</h2>
+    <table><thead><tr><th>Date</th><th>Kind</th><th>Category</th><th>Description</th><th>Amount</th></tr></thead><tbody id="rows"></tbody></table>
+  </section>
+  <script src="/app.js"></script>
+</body>
+</html>

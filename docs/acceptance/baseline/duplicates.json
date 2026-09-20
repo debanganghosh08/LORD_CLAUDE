@@ -1,0 +1,155 @@
+{
+ "title": "duplicate candidates",
+ "worst_severity": "warn",
+ "meta": {
+  "root": "<root>",
+  "counts": {
+   "duplicate-function": 3,
+   "duplicate-value": 2,
+   "duplicate-logic": 4
+  }
+ },
+ "findings": [
+  {
+   "kind": "duplicate-function",
+   "summary": "function main defined in 2 files",
+   "severity": "warn",
+   "confidence": "inferred",
+   "evidence": [
+    "lord/cli.py:321 main",
+    "lord/hooks.py:329 main"
+   ],
+   "consequence": "parallel definitions drift independently",
+   "recommendation": "confirm whether both are needed; prefer one import path",
+   "data": {}
+  },
+  {
+   "kind": "duplicate-function",
+   "summary": "function record defined in 2 files",
+   "severity": "warn",
+   "confidence": "inferred",
+   "evidence": [
+    "lord/acceptance.py:268 record",
+    "lord/session.py:52 record"
+   ],
+   "consequence": "parallel definitions drift independently",
+   "recommendation": "confirm whether both are needed; prefer one import path",
+   "data": {}
+  },
+  {
+   "kind": "duplicate-function",
+   "summary": "function main defined in 2 files",
+   "severity": "warn",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/app/api/server.py:72 main",
+    "demo/scripts/seed.py:28 main"
+   ],
+   "consequence": "parallel definitions drift independently",
+   "recommendation": "confirm whether both are needed; prefer one import path",
+   "data": {}
+  },
+  {
+   "kind": "duplicate-value",
+   "summary": "constants DOWNSTREAM_KINDS, UPSTREAM_KINDS share the value (\"calls\", \"references\", \"extends\", \"implements\")",
+   "severity": "warn",
+   "confidence": "inferred",
+   "evidence": [
+    "lord/impact.py:27 UPSTREAM_KINDS",
+    "lord/impact.py:28 DOWNSTREAM_KINDS"
+   ],
+   "consequence": "the same literal maintained in several places",
+   "recommendation": "reuse one constant",
+   "data": {}
+  },
+  {
+   "kind": "duplicate-value",
+   "summary": "constants MAX_LINECOUNT_BYTES, MAX_SCAN_BYTES share the value 2_000_000",
+   "severity": "warn",
+   "confidence": "inferred",
+   "evidence": [
+    "lord/inventory.py:67 MAX_LINECOUNT_BYTES",
+    "lord/search.py:18 MAX_SCAN_BYTES"
+   ],
+   "consequence": "the same literal maintained in several places",
+   "recommendation": "reuse one constant",
+   "data": {}
+  },
+  {
+   "kind": "duplicate-logic",
+   "summary": "_run and _run have near-identical bodies (exact similarity 1.00)",
+   "severity": "warn",
+   "confidence": "inferred",
+   "evidence": [
+    "lord_hook.py:19-34 _run (109 tokens)",
+    ".agents/lord_hook.py:19-34 _run (109 tokens)",
+    "exact 1.00, normalised 1.00"
+   ],
+   "consequence": "duplicated logic; a fix in one will be missed in the other",
+   "recommendation": "open both; keep one and have the other call it, or extract the shared part",
+   "data": {
+    "a": "lord_hook.py::_run",
+    "b": ".agents/lord_hook.py::_run",
+    "exact": 1.0,
+    "normalized": 1.0
+   }
+  },
+  {
+   "kind": "duplicate-logic",
+   "summary": "_main and _main have near-identical bodies (exact similarity 1.00)",
+   "severity": "warn",
+   "confidence": "inferred",
+   "evidence": [
+    "lord_hook.py:37-44 _main (73 tokens)",
+    ".agents/lord_hook.py:37-44 _main (73 tokens)",
+    "exact 1.00, normalised 1.00"
+   ],
+   "consequence": "duplicated logic; a fix in one will be missed in the other",
+   "recommendation": "open both; keep one and have the other call it, or extract the shared part",
+   "data": {
+    "a": "lord_hook.py::_main",
+    "b": ".agents/lord_hook.py::_main",
+    "exact": 1.0,
+    "normalized": 1.0
+   }
+  },
+  {
+   "kind": "duplicate-logic",
+   "summary": "_is_code and _is_code_file have near-identical bodies (exact similarity 0.84)",
+   "severity": "warn",
+   "confidence": "inferred",
+   "evidence": [
+    "lord/graph.py:101-103 _is_code (27 tokens)",
+    "lord/reuse.py:106-108 _is_code_file (25 tokens)",
+    "exact 0.84, normalised 0.83"
+   ],
+   "consequence": "duplicated logic; a fix in one will be missed in the other",
+   "recommendation": "open both; keep one and have the other call it, or extract the shared part",
+   "data": {
+    "a": "lord/graph.py::_is_code",
+    "b": "lord/reuse.py::_is_code_file",
+    "exact": 0.84,
+    "normalized": 0.8333333333333334
+   }
+  },
+  {
+   "kind": "duplicate-logic",
+   "summary": "Graph.outgoing and Graph.incoming have near-identical bodies (exact similarity 0.75)",
+   "severity": "warn",
+   "confidence": "inferred",
+   "evidence": [
+    "lord/graph.py:85-87 Graph.outgoing (31 tokens)",
+    "lord/graph.py:89-91 Graph.incoming (31 tokens)",
+    "exact 0.75, normalised 1.00"
+   ],
+   "consequence": "duplicated logic; a fix in one will be missed in the other",
+   "recommendation": "open both; keep one and have the other call it, or extract the shared part",
+   "data": {
+    "a": "lord/graph.py::Graph.outgoing",
+    "b": "lord/graph.py::Graph.incoming",
+    "exact": 0.75,
+    "normalized": 1.0
+   }
+  }
+ ]
+}

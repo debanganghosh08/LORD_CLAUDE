@@ -1,0 +1,51 @@
+{
+ "title": "definition: format_amount",
+ "worst_severity": "info",
+ "meta": {
+  "root": "<root>"
+ },
+ "findings": [
+  {
+   "kind": "definition",
+   "summary": "demo/app/utils/money.py:30 function format_amount (cents, currency)",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "Render cents as \"12.34 EUR\" (negative values keep their sign)."
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {
+    "symbol": {
+     "name": "format_amount",
+     "kind": "function",
+     "file": "demo/app/utils/money.py",
+     "line": 30,
+     "qualname": "format_amount",
+     "language": "python",
+     "confidence": "confirmed",
+     "end_line": 34,
+     "parent": "",
+     "signature": "(cents, currency)",
+     "exported": true,
+     "doc": "Render cents as \"12.34 EUR\" (negative values keep their sign)."
+    }
+   }
+  },
+  {
+   "kind": "analysis-unavailable",
+   "summary": "definitions could not be analysed in some files",
+   "severity": "info",
+   "confidence": "unknown",
+   "evidence": [
+    "html: 1 file(s) without an extractor",
+    "rust: 1 file(s) without an extractor",
+    "shell: 1 file(s) without an extractor",
+    "tests/fixtures/sample_repo/pkg/broken.py: parse error"
+   ],
+   "consequence": "text search still covers these files, but structural facts are unknown there",
+   "recommendation": "",
+   "data": {}
+  }
+ ]
+}

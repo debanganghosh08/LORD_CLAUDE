@@ -1,0 +1,354 @@
+{
+ "title": "references: DEFAULT_PAGE_SIZE",
+ "worst_severity": "info",
+ "meta": {
+  "root": "<root>",
+  "definitions": [
+   "demo/app/config.py:5 constant DEFAULT_PAGE_SIZE 20"
+  ],
+  "confirmed_files": 4,
+  "inferred_files": 11,
+  "callers": [
+   "demo/app/api/handlers.py::list_transactions",
+   "demo/app/services/transactions.py::TransactionService.list",
+   "demo/tests/test_api.py::test_create_and_list",
+   "demo/tests/test_transactions.py::test_list_pages_in_date_order"
+  ]
+ },
+ "findings": [
+  {
+   "kind": "reference",
+   "summary": "demo/app/api/handlers.py: 3 confirmed use(s) in list_transactions",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/app/api/handlers.py:5 import from app.config",
+    "demo/app/api/handlers.py:49 list_transactions",
+    "demo/app/api/handlers.py:52 list_transactions"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {
+    "path": "demo/app/api/handlers.py",
+    "lines": [
+     49,
+     52,
+     5
+    ],
+    "scopes": [
+     "list_transactions"
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "demo/app/services/transactions.py: 2 confirmed use(s) in TransactionService.list",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/app/services/transactions.py:5 import from app.config",
+    "demo/app/services/transactions.py:31 TransactionService.list"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {
+    "path": "demo/app/services/transactions.py",
+    "lines": [
+     31,
+     5
+    ],
+    "scopes": [
+     "TransactionService.list"
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "demo/tests/test_api.py: 2 confirmed use(s) in test_create_and_list",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/tests/test_api.py:4 import from app.config",
+    "demo/tests/test_api.py:11 test_create_and_list"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {
+    "path": "demo/tests/test_api.py",
+    "lines": [
+     11,
+     4
+    ],
+    "scopes": [
+     "test_create_and_list"
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "demo/tests/test_transactions.py: 2 confirmed use(s) in test_list_pages_in_date_order",
+   "severity": "ok",
+   "confidence": "confirmed",
+   "evidence": [
+    "demo/tests/test_transactions.py:5 import from app.config",
+    "demo/tests/test_transactions.py:28 test_list_pages_in_date_order"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {
+    "path": "demo/tests/test_transactions.py",
+    "lines": [
+     28,
+     5
+    ],
+    "scopes": [
+     "test_list_pages_in_date_order"
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "docs/acceptance/PHASE-8A-TEST-PLAN.md: 5 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/PHASE-8A-TEST-PLAN.md:30 | shared constants `DEFAULT_PAGE_SIZE`, `MAX_NOTE_LENGTH`, `CURRENCY`, `CATEGORIES`, `KINDS` with 12 dependent files | `demo/app/config.py` |",
+    "docs/acceptance/PHASE-8A-TEST-PLAN.md:194 `refs-DEFAULT_PAGE_SIZE.json` is not relevant here, but",
+    "docs/acceptance/PHASE-8A-TEST-PLAN.md:244 EXPECTED LORD/GEMINI BEHAVIOR: finds `DEFAULT_PAGE_SIZE` in `config.py`,",
+    "docs/acceptance/PHASE-8A-TEST-PLAN.md:251 EXPECTED FILE INVESTIGATION: `config.py`, `refs DEFAULT_PAGE_SIZE`.",
+    "docs/acceptance/PHASE-8A-TEST-PLAN.md:264 ORACLE: baseline `refs-DEFAULT_PAGE_SIZE.json` lists the consumers;"
+   ],
+   "consequence": "text match in docs file without confirmed parsing",
+   "recommendation": "",
+   "data": {
+    "path": "docs/acceptance/PHASE-8A-TEST-PLAN.md",
+    "lines": [
+     30,
+     194,
+     244,
+     251,
+     264
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "docs/acceptance/baseline/dependents-config.json: 8 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/dependents-config.json:24 \"summary\": \"demo/app/api/handlers.py imports DEFAULT_PAGE_SIZE\",",
+    "docs/acceptance/baseline/dependents-config.json:35 \"DEFAULT_PAGE_SIZE\"",
+    "docs/acceptance/baseline/dependents-config.json:59 \"summary\": \"demo/app/services/transactions.py imports DEFAULT_PAGE_SIZE\",",
+    "docs/acceptance/baseline/dependents-config.json:70 \"DEFAULT_PAGE_SIZE\"",
+    "docs/acceptance/baseline/dependents-config.json:163 \"summary\": \"demo/tests/test_api.py imports DEFAULT_PAGE_SIZE [test]\",",
+    "docs/acceptance/baseline/dependents-config.json:174 \"DEFAULT_PAGE_SIZE\"",
+    "docs/acceptance/baseline/dependents-config.json:197 \"summary\": \"demo/tests/test_transactions.py imports DEFAULT_PAGE_SIZE [test]\",",
+    "docs/acceptance/baseline/dependents-config.json:208 \"DEFAULT_PAGE_SIZE\""
+   ],
+   "consequence": "text match in config file without confirmed parsing",
+   "recommendation": "",
+   "data": {
+    "path": "docs/acceptance/baseline/dependents-config.json",
+    "lines": [
+     24,
+     35,
+     59,
+     70,
+     163,
+     174,
+     197,
+     208
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json: 10 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json:2 \"title\": \"references: DEFAULT_PAGE_SIZE\",",
+    "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json:7 \"demo/app/config.py:5 constant DEFAULT_PAGE_SIZE 20\"",
+    "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json:115 \"docs/acceptance/PHASE-8A-TEST-PLAN.md:30 | shared constants `DEFAULT_PAGE_SIZE`, `MAX_NOTE_LENGTH`, `CURRENCY`, `CATEGORIES`, `KINDS` with 12 dependent files | `demo/app/config.py` |\",",
+    "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json:116 \"docs/acceptance/PHASE-8A-TEST-PLAN.md:194 `refs-DEFAULT_PAGE_SIZE.json` is not relevant here, but\",",
+    "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json:117 \"docs/acceptance/PHASE-8A-TEST-PLAN.md:244 EXPECTED LORD/GEMINI BEHAVIOR: finds `DEFAULT_PAGE_SIZE` in `config.py`,\",",
+    "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json:118 \"docs/acceptance/PHASE-8A-TEST-PLAN.md:251 EXPECTED FILE INVESTIGATION: `config.py`, `refs DEFAULT_PAGE_SIZE`.\",",
+    "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json:119 \"docs/acceptance/PHASE-8A-TEST-PLAN.md:264 ORACLE: baseline `refs-DEFAULT_PAGE_SIZE.json` lists the consumers;\"",
+    "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json:140 \"lord/acceptance.py:139 \\\"refs-DEFAULT_PAGE_SIZE\\\": lambda: query.references(index, root, \\\"DEFAULT_PAGE_SIZE\\\"),\",",
+    "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json:141 \"lord/acceptance.py:248 expect(\\\"constant\\\", \\\"demo/app/config.py\\\" in files, \\\"DEFAULT_PAGE_SIZE changed in config.py\\\" if \\\"demo/app/config.py\\\" in files else \\\"config.py unchanged\\\", \\\"the value wa",
+    "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json:159 \"tests/test_acceptance.py:63 (\\\"normalize_text\\\", \\\"format_amount\\\", \\\"month_bounds\\\", \\\"require_description\\\", \\\"validate_transaction\\\", \\\"DEFAULT_PAGE_SIZE\\\")}\""
+   ],
+   "consequence": "text match in config file without confirmed parsing",
+   "recommendation": "",
+   "data": {
+    "path": "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json",
+    "lines": [
+     2,
+     7,
+     115,
+     116,
+     117,
+     118,
+     119,
+     140,
+     141,
+     159
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "docs/acceptance/baseline/refs-format_amount.json: 1 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/refs-format_amount.json:261 \"tests/test_acceptance.py:63 (\\\"normalize_text\\\", \\\"format_amount\\\", \\\"month_bounds\\\", \\\"require_description\\\", \\\"validate_transaction\\\", \\\"DEFAULT_PAGE_SIZE\\\")}\","
+   ],
+   "consequence": "text match in config file without confirmed parsing",
+   "recommendation": "",
+   "data": {
+    "path": "docs/acceptance/baseline/refs-format_amount.json",
+    "lines": [
+     261
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "docs/acceptance/baseline/refs-normalize_text.json: 1 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/refs-normalize_text.json:169 \"tests/test_acceptance.py:63 (\\\"normalize_text\\\", \\\"format_amount\\\", \\\"month_bounds\\\", \\\"require_description\\\", \\\"validate_transaction\\\", \\\"DEFAULT_PAGE_SIZE\\\")}\","
+   ],
+   "consequence": "text match in config file without confirmed parsing",
+   "recommendation": "",
+   "data": {
+    "path": "docs/acceptance/baseline/refs-normalize_text.json",
+    "lines": [
+     169
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "docs/acceptance/baseline/refs-validate_transaction.json: 1 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/refs-validate_transaction.json:125 \"tests/test_acceptance.py:63 (\\\"normalize_text\\\", \\\"format_amount\\\", \\\"month_bounds\\\", \\\"require_description\\\", \\\"validate_transaction\\\", \\\"DEFAULT_PAGE_SIZE\\\")}\","
+   ],
+   "consequence": "text match in config file without confirmed parsing",
+   "recommendation": "",
+   "data": {
+    "path": "docs/acceptance/baseline/refs-validate_transaction.json",
+    "lines": [
+     125
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "docs/acceptance/baseline/summary.json: 1 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/summary.json:22 \"refs-DEFAULT_PAGE_SIZE\","
+   ],
+   "consequence": "text match in config file without confirmed parsing",
+   "recommendation": "",
+   "data": {
+    "path": "docs/acceptance/baseline/summary.json",
+    "lines": [
+     22
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "docs/acceptance/baseline/tests-for-format_amount.json: 1 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/tests-for-format_amount.json:35 \"tests/test_acceptance.py:63 (\\\"normalize_text\\\", \\\"format_amount\\\", \\\"month_bounds\\\", \\\"require_description\\\", \\\"validate_transaction\\\", \\\"DEFAULT_PAGE_SIZE\\\")}\","
+   ],
+   "consequence": "text match in config file without confirmed parsing",
+   "recommendation": "",
+   "data": {
+    "path": "docs/acceptance/baseline/tests-for-format_amount.json",
+    "lines": [
+     35
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "docs/acceptance/baseline/tests-for-month_bounds.json: 1 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "docs/acceptance/baseline/tests-for-month_bounds.json:31 \"tests/test_acceptance.py:63 (\\\"normalize_text\\\", \\\"format_amount\\\", \\\"month_bounds\\\", \\\"require_description\\\", \\\"validate_transaction\\\", \\\"DEFAULT_PAGE_SIZE\\\")}\","
+   ],
+   "consequence": "text match in config file without confirmed parsing",
+   "recommendation": "",
+   "data": {
+    "path": "docs/acceptance/baseline/tests-for-month_bounds.json",
+    "lines": [
+     31
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "lord/acceptance.py: 2 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "lord/acceptance.py:140 \"refs-DEFAULT_PAGE_SIZE\": lambda: query.references(index, root, \"DEFAULT_PAGE_SIZE\"),",
+    "lord/acceptance.py:249 expect(\"constant\", \"demo/app/config.py\" in files, \"DEFAULT_PAGE_SIZE changed in config.py\" if \"demo/app/config.py\" in files else \"config.py unchanged\", \"the value was changed somewhere other than the "
+   ],
+   "consequence": "text match in a parsed file (comment, string or attribute)",
+   "recommendation": "",
+   "data": {
+    "path": "lord/acceptance.py",
+    "lines": [
+     140,
+     249
+    ]
+   }
+  },
+  {
+   "kind": "reference",
+   "summary": "tests/test_acceptance.py: 1 text match(es)",
+   "severity": "info",
+   "confidence": "inferred",
+   "evidence": [
+    "tests/test_acceptance.py:78 (\"normalize_text\", \"format_amount\", \"month_bounds\", \"require_description\", \"validate_transaction\", \"DEFAULT_PAGE_SIZE\")}"
+   ],
+   "consequence": "text match in a parsed file (comment, string or attribute)",
+   "recommendation": "",
+   "data": {
+    "path": "tests/test_acceptance.py",
+    "lines": [
+     78
+    ]
+   }
+  },
+  {
+   "kind": "analysis-unavailable",
+   "summary": "references could not be analysed in some files",
+   "severity": "info",
+   "confidence": "unknown",
+   "evidence": [
+    "html: 1 file(s) without an extractor",
+    "rust: 1 file(s) without an extractor",
+    "shell: 1 file(s) without an extractor",
+    "tests/fixtures/sample_repo/pkg/broken.py: parse error"
+   ],
+   "consequence": "text search still covers these files, but structural facts are unknown there",
+   "recommendation": "",
+   "data": {}
+  }
+ ]
+}

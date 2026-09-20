@@ -1,0 +1,5 @@
+# LORD configuration for the LORD repository itself.
+[lord]
+# Acceptance oracles reveal the answers to the demo's planted traps; keep them
+# out of the index so an evaluated agent cannot discover them through LORD.
+extra_exclude_globs = ["docs/acceptance/oracles/"]

@@ -80,6 +80,9 @@ temp/
 Thumbs.db
 desktop.ini
 
+# --- Demo runtime data (created by demo/scripts/seed.py) --------------------
+demo/data/
+
 # --- Test fixtures deliberately contain vendor/build dirs to test exclusions --
 !tests/fixtures/**/node_modules/
 !tests/fixtures/**/build/

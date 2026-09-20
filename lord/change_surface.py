@@ -224,7 +224,9 @@ def measure(config: LordConfig, index: Index, base: str | None = None, staged: b
     for c, s in code_new_symbols:
         if not s.exported:
             continue
-        clashes = [e for e in index.symbols_named(s.name) if e.file != c.path and e.kind == s.kind and not e.parent and _is_code_file(index, e.file)]
+        project = index.inventory.project_root_of(c.path)
+        clashes = [e for e in index.symbols_named(s.name) if e.file != c.path and e.kind == s.kind and not e.parent and _is_code_file(index, e.file)
+                   and index.inventory.project_root_of(e.file) == project]
         if clashes:
             report.add(Finding(kind="name-collision", summary=f"new {s.kind} {s.qualname} in {c.path} has the same name as {len(clashes)} existing definition(s)", severity=WARN, confidence=INFERRED,
                                evidence=[f"{e.file}:{e.line} {e.qualname}" for e in clashes[:5]], consequence="a parallel definition; callers may pick either",

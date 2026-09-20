@@ -1,24 +1,26 @@
 {
-  "doing": "Phases 1-7 complete; next is Phase 8 (portable distribution)",
+  "doing": "Phase 8A acceptance infrastructure complete; the manual Antigravity + Gemini evaluation is the next action",
   "done": [
-    "Phase 6 hooks (26b779a)",
-    "Phase 7 memory, handoff, context (4e20959)"
+    "demo/ ledger app (37 tests), traps and planted month_bounds defect",
+    "test plan, scorecard, manual guide, baseline ground truth, evidence tooling (lord acceptance)",
+    "verify per sub-project; graph/reuse/duplicates precision fixes"
   ],
   "remaining": [
-    "Live-validate hooks in a trusted Antigravity workspace (docs/reports/phase-6-enforcement.md, manual plan)",
-    "Record the observed launcher cwd and drop the unused lord_hook.py copy"
+    "Run docs/acceptance/MANUAL-ANTIGRAVITY-GEMINI.md sections 1-2 (trust the LORD workspace, confirm /hooks lists lord, probe write denied, record hooks.log cwd)",
+    "Run T01-T08 with a Gemini model; record evidence with lord acceptance record; score per SCORECARD.md",
+    "Review the evidence table before starting Phase 8B packaging"
   ],
   "discovered": [
-    "Workspace .agents customisations need a trusted workspace; Google's telemetry plugin PreToolUse hook denies tool calls on Windows"
+    "Dotted receivers and unknown-receiver noise hid the demo's root-cause chain until fixed; verify ran the wrong project's tests for sub-project changes"
   ],
   "decided": [
-    "Hard gates only on facts (no investigation ran; tests failed); heuristics advisory"
+    "Evaluation runs in the LORD workspace against demo/ so .agents applies; oracles excluded from the index"
   ],
   "next": [
-    "Phase 8: plugin.json packaging, lord install/sync, live acceptance test"
+    "Phase 8B: package .agents + lord + launcher as an Antigravity plugin once an evaluation series exists"
   ],
-  "verification": "170 tests pass; verify on a clean tree: verified",
+  "verification": "186 LORD tests pass; demo 37 pass; oracle 3 fail on baseline by design",
   "updated": "2026-09-20",
   "branch": "main",
-  "commit": "4e20959"
+  "commit": "d448684"
 }

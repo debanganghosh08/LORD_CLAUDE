@@ -1,0 +1,29 @@
+{
+ "title": "tests for format_amount",
+ "worst_severity": "ok",
+ "meta": {
+  "root": "<root>",
+  "tests": [
+   "demo/tests/test_money.py"
+  ]
+ },
+ "findings": [
+  {
+   "kind": "test",
+   "summary": "demo/tests/test_money.py (6 mention(s))",
+   "severity": "ok",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/tests/test_money.py:3 from app.utils.money import format_amount, parse_amount",
+    "demo/tests/test_money.py:18 assert format_amount(1234) == \"12.34 EUR\"",
+    "demo/tests/test_money.py:19 assert format_amount(5) == \"0.05 EUR\"",
+    "demo/tests/test_money.py:20 assert format_amount(-1050) == \"-10.50 EUR\"",
+    "demo/tests/test_money.py:21 assert format_amount(100, \"USD\") == \"1.00 USD\"",
+    "demo/tests/test_money.py:25 assert format_amount(parse_amount(\"99.90\")) == \"99.90 EUR\""
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  }
+ ]
+}

@@ -1,0 +1,25 @@
+{
+ "title": "tests for month_bounds",
+ "worst_severity": "ok",
+ "meta": {
+  "root": "<root>",
+  "tests": [
+   "demo/tests/test_dates.py"
+  ]
+ },
+ "findings": [
+  {
+   "kind": "test",
+   "summary": "demo/tests/test_dates.py (2 mention(s))",
+   "severity": "ok",
+   "confidence": "inferred",
+   "evidence": [
+    "demo/tests/test_dates.py:5 from app.utils.dates import in_range, month_bounds, parse_date",
+    "demo/tests/test_dates.py:16 assert month_bounds(2026, 3) == (date(2026, 3, 1), date(2026, 3, 31))"
+   ],
+   "consequence": "",
+   "recommendation": "",
+   "data": {}
+  }
+ ]
+}

@@ -98,6 +98,18 @@ class Inventory:
     def get(self, path: str) -> FileRecord | None:
         return next((f for f in self.files if f.path == path), None)
 
+    def project_root_of(self, path: str) -> str:
+        """Deepest project root (a directory holding a manifest) containing `path`; "." otherwise.
+
+        A monorepo's sub-projects legitimately reuse names; analyses that
+        compare symbols by name stay inside one project root.
+        """
+        best = "."
+        for root in self.project_roots:
+            if root != "." and (path == root or path.startswith(root.rstrip("/") + "/")) and len(root) > len(best):
+                best = root
+        return best
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "root": self.root,

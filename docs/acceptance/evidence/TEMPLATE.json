@@ -1,0 +1,47 @@
+{
+  "test": "T02",
+  "scenario": "import / reuse of a shared helper",
+  "model": "gemini-3.6-flash",
+  "harness": "LORD",
+  "date": "2026-09-21",
+  "prompt": "(prefilled from the scenario)",
+  "transcript": "conversation id or exported path outside the repository",
+  "observed": {
+    "files_touched": ["demo/app/services/export.py", "demo/tests/test_export.py"],
+    "lines_added": 3,
+    "lines_removed": 2,
+    "new_symbols": [],
+    "bloat_level": "low",
+    "bloat_reasons": [],
+    "lord_commands": ["brief", "refs"],
+    "hook_decisions": ["pre-tool replace_file_content allow"],
+    "demo_tests": "pass",
+    "oracle_tests": null,
+    "deterministic_checks": [{"kind": "reuse", "ok": true, "summary": "export imports format_amount"}],
+    "deterministic_verdict": "PASS"
+  },
+  "human": {
+    "files_inspected_by_agent": ["demo/app/services/export.py", "demo/app/utils/money.py", "demo/app/services/reports.py"],
+    "reuse_discovered": "yes: named format_amount in app/utils/money.py before editing",
+    "impact_identified": "n/a",
+    "clarification_requested": "no (not needed)",
+    "warning_raised": "no",
+    "tests_executed_by_agent": "python -m pytest in demo/ (37 passed)",
+    "explanation_quality": "explained why the shared formatter was reused"
+  },
+  "scores": {
+    "repository_investigation": "PASS",
+    "existing_implementation_discovery": "PASS",
+    "reuse": "PASS",
+    "root_cause_tracing": "N/A",
+    "impact_awareness": "N/A",
+    "clarification_quality": "N/A",
+    "architectural_criticism": "N/A",
+    "diff_minimality": "PASS",
+    "unrelated_changes": "PASS",
+    "verification": "PASS",
+    "correctness": "PASS"
+  },
+  "final_verdict": "PASS",
+  "notes": "template only; not a real run"
+}
