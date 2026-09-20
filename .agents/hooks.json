@@ -13,6 +13,13 @@
         ]
       }
     ],
+    "PreInvocation": [
+      {
+        "type": "command",
+        "command": "python -m lord_hook pre-invocation",
+        "timeout": 20
+      }
+    ],
     "PostInvocation": [
       {
         "type": "command",

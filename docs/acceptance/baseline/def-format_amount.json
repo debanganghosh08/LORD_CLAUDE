@@ -2,7 +2,11 @@
  "title": "definition: format_amount",
  "worst_severity": "info",
  "meta": {
-  "root": "<root>"
+  "root": "<root>",
+  "scope": {
+   "prefix": "demo",
+   "dropped_outside": 1
+  }
  },
  "findings": [
   {
@@ -31,21 +35,6 @@
      "doc": "Render cents as \"12.34 EUR\" (negative values keep their sign)."
     }
    }
-  },
-  {
-   "kind": "analysis-unavailable",
-   "summary": "definitions could not be analysed in some files",
-   "severity": "info",
-   "confidence": "unknown",
-   "evidence": [
-    "html: 1 file(s) without an extractor",
-    "rust: 1 file(s) without an extractor",
-    "shell: 1 file(s) without an extractor",
-    "tests/fixtures/sample_repo/pkg/broken.py: parse error"
-   ],
-   "consequence": "text search still covers these files, but structural facts are unknown there",
-   "recommendation": "",
-   "data": {}
   }
  ]
 }

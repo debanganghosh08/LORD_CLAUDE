@@ -9,10 +9,12 @@ a large diff with no bloat reasons is reported as "low".
 
 from __future__ import annotations
 
+import ast
 import subprocess
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 from lord.config import LordConfig
 from lord.extractors import SUPPORTED, extract
@@ -132,6 +134,102 @@ def _symbol_delta(root: Path, change: FileChange, base: str | None, staged: bool
     change.removed_symbols = sorted(old_names - {s.qualname for s in new_ex.symbols})
 
 
+def _inline_guards(stmt: ast.stmt) -> list[tuple[ast.expr, set[ast.AST]]]:
+    """(test, nodes-under-a-conditional-branch) for every ternary or boolean
+    operator inside a statement: the nodes evaluated only when the test allows."""
+    out: list[tuple[ast.expr, set[ast.AST]]] = []
+    for node in ast.walk(stmt):
+        if isinstance(node, ast.IfExp):
+            out.append((node.test, set(ast.walk(node.body)) | set(ast.walk(node.orelse))))
+        elif isinstance(node, ast.BoolOp) and len(node.values) > 1:
+            out.append((node.values[0], {n for v in node.values[1:] for n in ast.walk(v)}))
+    return out
+
+
+def _guarded_calls(tree: ast.AST) -> dict[str, dict[str, set[str] | bool]]:
+    """Per function: call names, whether each is unconditional at the function's
+    top level, and the names tested by the conditions guarding it."""
+    out: dict[str, dict[str, Any]] = {}
+    for node in ast.walk(tree):
+        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            continue
+        calls: dict[str, dict[str, Any]] = {}
+
+        def visit(body: list[ast.stmt], guards: list[ast.expr]) -> None:
+            for stmt in body:
+                for sub in ast.walk(stmt) if not isinstance(stmt, (ast.If, ast.Try, ast.While, ast.For, ast.With)) else [stmt]:
+                    if isinstance(sub, ast.Call):
+                        name = sub.func.id if isinstance(sub.func, ast.Name) else sub.func.attr if isinstance(sub.func, ast.Attribute) else ""
+                        if name:
+                            # a call inside a ternary (`x if flag else call()`) or a short-circuit
+                            # (`flag or call()`) is guarded by that expression's test as well
+                            inline = [t for t, branch in _inline_guards(stmt) if sub in branch]
+                            entry = calls.setdefault(name, {"unconditional": False, "guards": set()})
+                            if not guards and not inline:
+                                entry["unconditional"] = True
+                            for g in guards + inline:
+                                entry["guards"].update(n.id for n in ast.walk(g) if isinstance(n, ast.Name))
+                if isinstance(stmt, ast.If):
+                    visit(stmt.body, guards + [stmt.test])
+                    visit(stmt.orelse, guards + [stmt.test])
+                elif isinstance(stmt, ast.Try):
+                    visit(stmt.body, guards + [ast.Name(id="__try__", ctx=ast.Load())])
+                    for handler in stmt.handlers:
+                        visit(handler.body, guards + [ast.Name(id="__except__", ctx=ast.Load())])
+                    visit(stmt.orelse, guards)
+                    visit(stmt.finalbody, guards)
+                elif isinstance(stmt, (ast.While, ast.For)):
+                    visit(stmt.body, guards)
+                elif isinstance(stmt, ast.With):
+                    visit(stmt.body, guards)
+
+        visit(node.body, [])
+        params = {a.arg for a in node.args.args + node.args.kwonlyargs}
+        out[node.name] = {"calls": calls, "params": params}
+    return out
+
+
+def invariant_bypasses(index: Index, path: str, old_src: str, new_src: str) -> list[Finding]:
+    """Deterministic signals that an existing check was bypassed instead of addressed:
+
+    - a call that was unconditional in a function at HEAD is now guarded by a
+      condition that tests a parameter the function did not have before
+      (`if not skip_validation: validate(...)`, `unless force`);
+    - a call to a workspace symbol with other callers was removed from a
+      function while the symbol still exists.
+    Both are advisory (inferred): a refactor can legitimately do either, but
+    then the plan and the report must say so.
+    """
+    findings: list[Finding] = []
+    try:
+        old = _guarded_calls(ast.parse(old_src)) if old_src else {}
+        new = _guarded_calls(ast.parse(new_src))
+    except (SyntaxError, ValueError):
+        return findings
+    known = {s.name for s in index.symbols() if s.kind in ("function", "method")}
+    for func, after in new.items():
+        before = old.get(func)
+        if not before:
+            continue
+        new_params = after["params"] - before["params"]
+        for name, info in before["calls"].items():
+            if not info["unconditional"] or name not in known:
+                continue
+            now = after["calls"].get(name)
+            if now is None:
+                findings.append(Finding(kind="shared-call-removed", summary=f"{path}::{func} no longer calls {name}", severity=WARN, confidence=INFERRED,
+                                        evidence=[f"{path}: {name}() was called unconditionally in {func} at HEAD"],
+                                        consequence="a check or behaviour other callers still rely on is skipped here", recommendation="state why the call is no longer needed, or keep it"))
+            elif not now["unconditional"]:
+                guards = sorted(now["guards"] & new_params)
+                if guards:
+                    findings.append(Finding(kind="invariant-bypass", summary=f"{path}::{func}: call to {name} is now conditional on new parameter {', '.join(guards)}", severity=WARN,
+                                            confidence=INFERRED, evidence=[f"{path}: {name}() unconditional at HEAD; now guarded by {', '.join(guards)}"],
+                                            consequence="callers can switch the check off; two behaviours exist where one invariant did",
+                                            recommendation="address the need centrally (parameterise the check, extend it) or make the bypass an explicit, justified decision"))
+    return findings
+
+
 def _in_scope(change: FileChange, scope: tuple[str, ...]) -> bool:
     lowered = change.path.lower()
     for item in scope:
@@ -167,14 +265,25 @@ def _components(paths: list[str], index: Index) -> list[set[str]]:
     return sorted(groups.values(), key=len, reverse=True)
 
 
-def measure(config: LordConfig, index: Index, base: str | None = None, staged: bool = False, scope: tuple[str, ...] = ()) -> Report:
+def measure(config: LordConfig, index: Index, base: str | None = None, staged: bool = False, scope: tuple[str, ...] = (), only: tuple[str, ...] = ()) -> Report:
+    """Measure the change surface.
+
+    `scope` says what the task is about (files outside it are reported as
+    potentially unrelated). `only` restricts the *measured set* to paths under
+    the given prefixes: a sub-project's task should not be judged by unrelated
+    dirty files elsewhere in the workspace (evidence records, docs, another
+    project). Both are optional; without them the whole tree is measured.
+    """
     root = config.root.resolve()
-    report = Report(title="change surface", meta={"root": str(root), "base": base or ("staged" if staged else "working tree vs HEAD")})
+    report = Report(title="change surface", meta={"root": str(root), "base": base or ("staged" if staged else "working tree vs HEAD"), "only": list(only)})
     if not _git(root, "rev-parse", "--show-toplevel"):
         report.add(Finding(kind="git", summary="not a Git repository: change surface unavailable", severity=WARN, confidence=CONFIRMED))
         return report
 
     changes = git_changes(root, base, staged)
+    if only:
+        prefixes = tuple(p.replace("\\", "/").strip("/") + "/" for p in only)
+        changes = [c for c in changes if c.path.startswith(prefixes) or c.path in {p.rstrip("/") for p in prefixes}]
     for change in changes:
         _symbol_delta(root, change, base, staged)
 
@@ -250,6 +359,19 @@ def measure(config: LordConfig, index: Index, base: str | None = None, staged: b
                                severity=WARN, confidence=INFERRED, evidence=[f"{new.symbol.file}:{new.symbol.line}", f"{other.symbol.file}:{other.symbol.line}"],
                                consequence="duplicated logic entering the codebase", recommendation="call or extend the existing function instead"))
             reasons.append((level, f"new {new.symbol.qualname} resembles existing {other.symbol.qualname}"))
+
+    # existing calls made conditional or removed: a bypass of an invariant must be explicit
+    for c in changes:
+        if c.language != "python" or c.status not in ("M", "R"):
+            continue
+        old_src = _old_source(root, c.old_path or c.path, base, staged)
+        try:
+            new_src = (root / c.path).read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        for finding in invariant_bypasses(index, c.path, old_src or "", new_src):
+            report.add(finding)
+            reasons.append(("elevated", finding.summary))
 
     # growth shape
     if added - removed >= GROWTH_MIN_LINES and removed > 0 and (added / removed) >= GROWTH_RATIO:

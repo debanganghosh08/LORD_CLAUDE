@@ -6,21 +6,13 @@
   "proposed_names": [
    "clean_description"
   ],
-  "decision": "extend"
+  "decision": "extend",
+  "scope": {
+   "prefix": "demo",
+   "dropped_outside": 5
+  }
  },
  "findings": [
-  {
-   "kind": "exists",
-   "summary": "clean_description appears in 1 code file(s) but has no indexed definition",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "lord/acceptance.py:148 \"reuse-T01\": lambda: reuse_report(index, root, \"clean up a user entered description: trim the ends and collapse repeated whitespace\", names=[\"clean_description\"]),"
-   ],
-   "consequence": "possibly defined in an unsupported language, or only referenced",
-   "recommendation": "open the files before creating a symbol with this name",
-   "data": {}
-  },
   {
    "kind": "candidate-reuse-or-extend",
    "summary": "demo/app/utils/text.py:13 function normalize_text (value)",
@@ -34,7 +26,7 @@
    "consequence": "",
    "recommendation": "open it; if it covers the behaviour, reuse it; if it covers most, extend it with a parameter or branch",
    "data": {
-    "score": 7.5329259228804455,
+    "score": 7.5446353400907755,
     "symbol": {
      "name": "normalize_text",
      "kind": "function",
@@ -53,35 +45,6 @@
   },
   {
    "kind": "candidate-reuse-or-extend",
-   "summary": "lord/session.py:62 function _trim (path)",
-   "severity": "ok",
-   "confidence": "inferred",
-   "evidence": [
-    "matched terms: trim",
-    "score 5.0"
-   ],
-   "consequence": "",
-   "recommendation": "open it; if it covers the behaviour, reuse it; if it covers most, extend it with a parameter or branch",
-   "data": {
-    "score": 5.001742465945556,
-    "symbol": {
-     "name": "_trim",
-     "kind": "function",
-     "file": "lord/session.py",
-     "line": 62,
-     "qualname": "_trim",
-     "language": "python",
-     "confidence": "confirmed",
-     "end_line": 68,
-     "parent": "",
-     "signature": "(path)",
-     "exported": false,
-     "doc": ""
-    }
-   }
-  },
-  {
-   "kind": "candidate-reuse-or-extend",
    "summary": "demo/app/utils/text.py:9 constant _WHITESPACE re.compile(r\"\\s+\")",
    "severity": "ok",
    "confidence": "inferred",
@@ -92,7 +55,7 @@
    "consequence": "",
    "recommendation": "open it; if it covers the behaviour, reuse it; if it covers most, extend it with a parameter or branch",
    "data": {
-    "score": 4.685634496823908,
+    "score": 4.689440861734638,
     "symbol": {
      "name": "_WHITESPACE",
      "kind": "constant",
@@ -122,7 +85,7 @@
    "consequence": "",
    "recommendation": "open it; if it covers the behaviour, reuse it; if it covers most, extend it with a parameter or branch",
    "data": {
-    "score": 4.526754541482704,
+    "score": 4.53853868231686,
     "symbol": {
      "name": "require_description",
      "kind": "function",
@@ -141,65 +104,6 @@
   },
   {
    "kind": "candidate-partial",
-   "summary": "lord/reuse.py:77 function _normalize (tokens)",
-   "severity": "ok",
-   "confidence": "inferred",
-   "evidence": [
-    "matched terms: norma",
-    "score 4.0"
-   ],
-   "consequence": "",
-   "recommendation": "related behaviour; consider composing with it or following its pattern",
-   "data": {
-    "score": 4.013377270741352,
-    "symbol": {
-     "name": "_normalize",
-     "kind": "function",
-     "file": "lord/reuse.py",
-     "line": 77,
-     "qualname": "_normalize",
-     "language": "python",
-     "confidence": "confirmed",
-     "end_line": 78,
-     "parent": "",
-     "signature": "(tokens)",
-     "exported": false,
-     "doc": ""
-    }
-   }
-  },
-  {
-   "kind": "candidate-partial",
-   "summary": "lord/query.py:79 function canonical_keys (terms)",
-   "severity": "ok",
-   "confidence": "inferred",
-   "evidence": [
-    "matched terms: canon, colla",
-    "score 3.9",
-    "Collapse a term and its stem variants (validate / validation / valid) into one key."
-   ],
-   "consequence": "",
-   "recommendation": "related behaviour; consider composing with it or following its pattern",
-   "data": {
-    "score": 3.852301163490574,
-    "symbol": {
-     "name": "canonical_keys",
-     "kind": "function",
-     "file": "lord/query.py",
-     "line": 79,
-     "qualname": "canonical_keys",
-     "language": "python",
-     "confidence": "confirmed",
-     "end_line": 81,
-     "parent": "",
-     "signature": "(terms)",
-     "exported": true,
-     "doc": "Collapse a term and its stem variants (validate / validation / valid) into one key."
-    }
-   }
-  },
-  {
-   "kind": "candidate-partial",
    "summary": "demo/tests/test_text.py:5 function test_normalize_text_trims_and_collapses ()",
    "severity": "ok",
    "confidence": "inferred",
@@ -210,7 +114,7 @@
    "consequence": "",
    "recommendation": "related behaviour; consider composing with it or following its pattern",
    "data": {
-    "score": 3.2803016934043265,
+    "score": 3.2865942457944763,
     "symbol": {
      "name": "test_normalize_text_trims_and_collapses",
      "kind": "function",
@@ -240,21 +144,6 @@
    "data": {
     "decision": "extend"
    }
-  },
-  {
-   "kind": "analysis-unavailable",
-   "summary": "related implementations could not be analysed in some files",
-   "severity": "info",
-   "confidence": "unknown",
-   "evidence": [
-    "html: 1 file(s) without an extractor",
-    "rust: 1 file(s) without an extractor",
-    "shell: 1 file(s) without an extractor",
-    "tests/fixtures/sample_repo/pkg/broken.py: parse error"
-   ],
-   "consequence": "text search still covers these files, but structural facts are unknown there",
-   "recommendation": "",
-   "data": {}
   }
  ]
 }

@@ -34,31 +34,47 @@ automatically; two steps (trust, plugin) are yours to perform.
 
 ## 2. Confirm LORD is loaded
 
-In the agent panel (any model), run these and record the results in the
-evidence notes:
+The IDE and the CLI expose different surfaces (observed live on 2026-09-20).
+Use the section that matches where you are running.
 
-- `/hooks` should list a hook named `lord` with `PreToolUse`
-  (`write_to_file|replace_file_content|multi_replace_file_content`),
-  `PostInvocation` and `Stop`, all `python -m lord_hook ...`.
-- `/skills` should include `lord-critical-review`, `lord-pre-edit-audit`,
-  `lord-reuse-audit`, `lord-impact-analysis`, `lord-memory`.
-- `/agents` (or the subagent picker) should list `lord-investigator`,
-  `lord-reuse-auditor`, `lord-impact-analyst`, `lord-skeptical-reviewer`,
-  `lord-verification-reviewer`.
+### 2a. In the Antigravity IDE (the evaluation environment)
+
+The IDE has no `/hooks`, `/skills` or `/agents` commands; typing them shows
+"no matching results". The Customizations view lists only Rules and
+Workflows. Confirm the load this way and record the results in the evidence
+notes:
+
+- Type `/lord` in the agent panel: the menu lists the five skills
+  (`lord-critical-review`, `lord-pre-edit-audit`, `lord-reuse-audit`,
+  `lord-impact-analysis`, `lord-memory`).
 - Ask the agent: "Which always-on rules apply in this workspace?" It should
   name the LORD operating contract.
-- Ask the agent to create a file `demo/probe.py` containing `X = 1`. Expected:
-  the write is DENIED by the pre-edit gate with a reason naming
-  `python -m lord reuse ...`. Then open `.lord/session/hooks.log`: the last
-  line has `"event": "pre-tool"`, `"decision": "deny"` and a `"cwd"` field.
-  Write that `cwd` value into the evidence notes of your first run: it
-  settles which launcher copy Antigravity uses (repository root or
-  `.agents/`). If the file was created instead, hooks are not active: go
-  back to step 1 (trust) or step 0.2 (plugin).
-  Clean up: delete `demo/probe.py` if it exists.
+- Agents: `@lord` completes files and symbols, not subagents. Whether the
+  IDE loads `.agents/agents/` cannot be confirmed from the UI; record
+  "agents: unconfirmed" unless a transcript shows a specialist being invoked.
+- Hooks (the probe): ask the agent to create a file `demo/probe.py` containing
+  `X = 1`. Expected: the write is DENIED by the pre-edit gate with a reason
+  naming `python -m lord context ...` or `python -m lord reuse ...`. Then
+  open `.lord/session/hooks.log`: the last line has `"event": "pre-tool"`,
+  `"decision": "deny"` and a `"cwd"` field ending in `\.agents` (hooks run
+  from the hooks.json folder; the only launcher is `.agents/lord_hook.py`).
+  If the file was created instead, hooks are not active: go back to step 1
+  (trust) or step 0.2 (plugin). Clean up: delete `demo/probe.py` if it
+  exists, then clear `.lord\session` (the reset line in section 4) so the
+  probe leaves no evidence for the first scenario.
 
-If `/hooks` does not list `lord`, do not run the scenarios; record the
-observation and stop. That is a valid (negative) result for Phase 8A.
+If the probe is not denied, do not run the scenarios; record the observation
+and stop. That is a valid (negative) result.
+
+### 2b. In the Antigravity CLI (`agy`)
+
+The CLI has the slash commands: `/hooks` should list a hook named `lord`
+with `PreToolUse` (`write_to_file|replace_file_content|multi_replace_file_content`),
+`PreInvocation`, `PostInvocation` and `Stop`, all `python -m lord_hook ...`;
+`/skills` lists the five skills; `/agents` lists the five specialists. The
+CLI's print mode (`agy -p`) never trusts a workspace, so hooks do not fire
+there. On this machine the bundled telemetry plugin also denied every tool
+call in the CLI (Phase 6 report); the IDE is unaffected.
 
 ## 3. Select Gemini
 
@@ -75,7 +91,12 @@ For each test T01 to T08, in this order:
    ```
    git checkout -- demo; git clean -fd demo
    python -m lord index --rebuild
-   Remove-Item .lord\session\*.jsonl, .lord\session\*.log -ErrorAction SilentlyContinue
+   Remove-Item .lord\session\*.jsonl, .lord\session\*.log, .lord\session\*.json -ErrorAction SilentlyContinue
+   ```
+   (the `*.json` entry clears the task frame and per-conversation counters;
+   for a re-evaluation add `--series B` to every `record` call so the first
+   series is never overwritten)
+   ```
    ```
 2. Start a new conversation in the agent panel (a fresh conversation per
    scenario keeps the Stop-gate counter and the evidence window clean).
@@ -138,11 +159,16 @@ Does the evidence show `verify` in `lord_commands` or a `stop` decision in
 
 - `.lord/session/hooks.log`: one line per hook decision (event, tool,
   decision, reason, audit, timing, cwd).
-- `.lord/session/activity.jsonl`: every LORD command the agent ran.
+- `.lord/session/activity.jsonl`: every LORD command the agent ran, with the
+  files its output surfaced.
+- `.lord/session/task.json`: the task frame (intent, target, assumptions,
+  questions) if the agent used `lord task`.
 - `git diff` / `git status` in `demo/`: the change itself.
 - `python -m lord diff --scope demo`: change surface and bloat reasons.
 - The Antigravity conversation (export or id) for the transcript reference.
-- `docs/acceptance/evidence/<date>-<model>-<test>.json`: the record.
+- `docs/acceptance/evidence/<date>-<model>-<test>[-<series>].json`: the
+  record. Use `--series B` (or later letters) for a re-evaluation so the
+  first run's records are never overwritten.
 
 ## 7. PASS / PARTIAL / FAIL
 

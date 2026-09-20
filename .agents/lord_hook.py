@@ -1,10 +1,9 @@
 """LORD hook launcher for Antigravity (`python -m lord_hook <event>`).
 
-Antigravity runs hook commands with an undocumented working directory; the
-telemetry plugin's error output shows plugin hooks run from their hooks.json
-folder. This identical launcher therefore lives both at the workspace root
-and in `.agents/`, so `python -m lord_hook` resolves from either directory.
-It finds the LORD package from its own location, never from the cwd, and it
+Antigravity runs workspace hooks with `.agents/` as the working directory
+(confirmed live in Phase 8A from the hook log's cwd field), so this launcher
+lives in `.agents/` and is found by `python -m lord_hook` from there. It
+locates the LORD package from its own location, never from the cwd, and it
 must never fail: any error prints the event's permissive default and exits 0
 (a failing PreToolUse hook denies the tool call).
 """

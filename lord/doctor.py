@@ -201,14 +201,10 @@ def check_hooks(root: Path) -> list[Finding]:
     if missing:
         findings.append(Finding(kind="hooks", summary=f"hook command executable(s) not on PATH: {', '.join(missing)}", severity=ERROR,
                                 consequence="a PreToolUse hook that cannot start denies every matching tool call", recommendation="install it or disable the hook"))
-    launchers = [root / "lord_hook.py", root / ".agents" / "lord_hook.py"]
-    present = [p for p in launchers if p.is_file()]
-    if any("lord_hook" in c for c in commands):
-        if len(present) < 2:
-            findings.append(Finding(kind="hooks", summary="lord_hook.py launcher missing at root or .agents/", severity=ERROR, evidence=[str(p) for p in launchers],
-                                    consequence="the hook command cannot start from one of the two possible working directories"))
-        elif present[0].read_bytes() != present[1].read_bytes():
-            findings.append(Finding(kind="hooks", summary="the two lord_hook.py launcher copies differ", severity=WARN, recommendation="copy lord_hook.py over .agents/lord_hook.py"))
+    launcher = root / ".agents" / "lord_hook.py"
+    if any("lord_hook" in c for c in commands) and not launcher.is_file():
+        findings.append(Finding(kind="hooks", summary=".agents/lord_hook.py launcher missing", severity=ERROR, evidence=[str(launcher)],
+                                consequence="Antigravity runs workspace hooks from .agents/; without the launcher every gated write is denied"))
     if not findings:
         findings.append(Finding(kind="hooks", summary=f"hooks.json valid: {', '.join(sorted({e for h in data.values() for e in h if e != 'enabled'}))}", severity=OK, evidence=[str(path)]))
     return findings

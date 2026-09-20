@@ -97,10 +97,10 @@ def test_shipped_hooks_json_is_valid_and_bounded():
     data = json.loads(_read(HOOKS_JSON))
     assert validate_hooks_config(data) == []
     lord = data["lord"]
-    assert set(lord) == {"enabled", "PreToolUse", "PostInvocation", "Stop"}, "no PostToolUse (it cannot return a message) and no PreInvocation"
+    assert set(lord) == {"enabled", "PreToolUse", "PreInvocation", "PostInvocation", "Stop"}, "no PostToolUse (it cannot return a message)"
     pre = lord["PreToolUse"][0]
     assert pre["matcher"] == hooks.WRITE_TOOL_MATCHER
-    for event in ("PreToolUse", "PostInvocation", "Stop"):
+    for event in ("PreToolUse", "PreInvocation", "PostInvocation", "Stop"):
         handlers = [h for item in lord[event] for h in (item.get("hooks", [item]) if event == "PreToolUse" else [item])]
         for h in handlers:
             assert h["type"] == "command" and h["command"].startswith("python -m lord_hook ") and 0 < h["timeout"] <= 600
@@ -122,8 +122,8 @@ def test_invalid_hooks_configs_are_rejected():
     assert any("non-empty command" in e for e in validate_hooks_config(bad))
 
 
-def test_launcher_copies_are_identical_and_doctor_sees_them():
-    assert _read(ROOT / "lord_hook.py") == _read(ROOT / ".agents" / "lord_hook.py")
+def test_single_launcher_in_agents_and_doctor_sees_it():
+    assert (ROOT / ".agents" / "lord_hook.py").is_file() and not (ROOT / "lord_hook.py").exists(), "Antigravity runs hooks from .agents/; one launcher only"
     findings = check_hooks(ROOT)
     assert [f.severity for f in findings] == ["ok"], [f.summary for f in findings]
 
@@ -167,7 +167,7 @@ def test_meaningful_edit_without_any_investigation_is_denied(repo: Path):
     args = {"TargetFile": "app/validators.py", "TargetContent": "def validate_email(value: str) -> bool:\n    if not value:\n        return False\n    value = value.strip()\n",
             "ReplacementContent": "def validate_email(value: str) -> bool:\n    if not value:\n        return False\n    value = value.strip().lower()\n    log(value)\n"}
     result = hooks.handle("pre-tool", _payload("replace_file_content", args, repo))
-    assert result["decision"] == "deny" and "python -m lord brief app/validators.py" in result["reason"]
+    assert result["decision"] == "deny" and "python -m lord context app/validators.py" in result["reason"]
 
 
 def test_target_level_evidence_allows_and_task_level_asks(repo: Path):
@@ -348,12 +348,11 @@ def test_hooks_never_modify_the_workspace(repo: Path):
     assert (repo / ".lord" / "session" / "hooks.log").is_file()
 
 
-@pytest.mark.parametrize("cwd_rel", [".", ".agents"])
-def test_launcher_contract_from_both_working_directories(repo: Path, cwd_rel: str):
-    """Exactly what Antigravity does: run the command string with the payload
-    on stdin, from either the workspace root or the .agents folder."""
+@pytest.mark.parametrize("cwd_rel", [".agents"])
+def test_launcher_contract_from_the_agents_directory(repo: Path, cwd_rel: str):
+    """Exactly what Antigravity does (confirmed live): run the command string
+    with the payload on stdin, from the workspace's .agents folder."""
     shutil.copytree(ROOT / ".agents", repo / ".agents", dirs_exist_ok=True)
-    shutil.copy(ROOT / "lord_hook.py", repo / "lord_hook.py")
     shutil.copytree(ROOT / "lord", repo / "lord", ignore=shutil.ignore_patterns("__pycache__"))
     payload = _payload("write_to_file", {"TargetFile": "app\\brand_new.py", "CodeContent": "x = 1\n" * 9, "Overwrite": "True"}, repo)
     env = {k: v for k, v in os.environ.items() if k not in ("LORD_HOOK_ACTIVE", "LORD_HOOKS_DISABLED")}

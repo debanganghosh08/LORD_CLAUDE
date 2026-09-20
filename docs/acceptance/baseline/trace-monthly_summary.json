@@ -26,7 +26,11 @@
    "demo/tests/test_reports.py::test_empty_month",
    "demo/tests/test_reports.py::test_monthly_summary_march",
    "demo/tests/test_reports.py::test_render_lines_use_shared_formatting"
-  ]
+  ],
+  "scope": {
+   "prefix": "demo",
+   "dropped_outside": 0
+  }
  },
  "findings": [
   {

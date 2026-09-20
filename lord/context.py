@@ -100,6 +100,9 @@ def assemble(config: LordConfig, index: Index, target: str, intent: str = "", na
     report.meta["sections"]["brief"] = kept
     report.meta["reuse_decision"] = detail.meta.get("reuse_decision")
     report.meta["overall_confidence"] = detail.meta.get("overall_confidence")
+    for key in ("direct_callers", "dependents", "tests"):
+        if detail.meta.get(key):
+            report.meta[key] = detail.meta[key]
 
     skills = matching_skills(root, intent, SECTION_LIMITS["skills"])
     if skills:

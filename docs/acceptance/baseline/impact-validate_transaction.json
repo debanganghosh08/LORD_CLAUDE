@@ -44,13 +44,16 @@
    "docs/acceptance/baseline/refs-validate_transaction.json",
    "docs/acceptance/baseline/reuse-T04.json",
    "docs/acceptance/baseline/summary.json",
-   "docs/acceptance/baseline/tests-for-format_amount.json",
-   "docs/acceptance/baseline/tests-for-month_bounds.json"
+   "docs/acceptance/evidence/2026-09-20-gemini-3.1-pro-high-T04.json"
   ],
   "directories": [
    "demo"
   ],
-  "overall_confidence": "inferred"
+  "overall_confidence": "inferred",
+  "scope": {
+   "prefix": "demo",
+   "dropped_outside": 12
+  }
  },
  "findings": [
   {
@@ -444,140 +447,6 @@
    "data": {}
   },
   {
-   "kind": "config",
-   "summary": "docs/acceptance/baseline/dependents-validation.json mentions it (validate_transaction)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/dependents-validation.json:33",
-    "docs/acceptance/baseline/dependents-validation.json:45",
-    "docs/acceptance/baseline/dependents-validation.json:68",
-    "docs/acceptance/baseline/dependents-validation.json:80"
-   ],
-   "consequence": "a rename or signature change may need a configuration update",
-   "recommendation": "",
-   "data": {}
-  },
-  {
-   "kind": "config",
-   "summary": "docs/acceptance/baseline/impact-validate_transaction.json mentions it (validate_transaction)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/impact-validate_transaction.json:2",
-    "docs/acceptance/baseline/impact-validate_transaction.json:47",
-    "docs/acceptance/baseline/impact-validate_transaction.json:99",
-    "docs/acceptance/baseline/impact-validate_transaction.json:111",
-    "docs/acceptance/baseline/impact-validate_transaction.json:123"
-   ],
-   "consequence": "a rename or signature change may need a configuration update",
-   "recommendation": "",
-   "data": {}
-  },
-  {
-   "kind": "config",
-   "summary": "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json mentions it (validate_transaction)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json:159"
-   ],
-   "consequence": "a rename or signature change may need a configuration update",
-   "recommendation": "",
-   "data": {}
-  },
-  {
-   "kind": "config",
-   "summary": "docs/acceptance/baseline/refs-format_amount.json mentions it (validate_transaction)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/refs-format_amount.json:261"
-   ],
-   "consequence": "a rename or signature change may need a configuration update",
-   "recommendation": "",
-   "data": {}
-  },
-  {
-   "kind": "config",
-   "summary": "docs/acceptance/baseline/refs-normalize_text.json mentions it (validate_transaction)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/refs-normalize_text.json:169"
-   ],
-   "consequence": "a rename or signature change may need a configuration update",
-   "recommendation": "",
-   "data": {}
-  },
-  {
-   "kind": "config",
-   "summary": "docs/acceptance/baseline/refs-validate_transaction.json mentions it (validate_transaction)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/refs-validate_transaction.json:2",
-    "docs/acceptance/baseline/refs-validate_transaction.json:7",
-    "docs/acceptance/baseline/refs-validate_transaction.json:77",
-    "docs/acceptance/baseline/refs-validate_transaction.json:78",
-    "docs/acceptance/baseline/refs-validate_transaction.json:79"
-   ],
-   "consequence": "a rename or signature change may need a configuration update",
-   "recommendation": "",
-   "data": {}
-  },
-  {
-   "kind": "config",
-   "summary": "docs/acceptance/baseline/reuse-T04.json mentions it (validate_transaction)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/reuse-T04.json:26",
-    "docs/acceptance/baseline/reuse-T04.json:39",
-    "docs/acceptance/baseline/reuse-T04.json:43"
-   ],
-   "consequence": "a rename or signature change may need a configuration update",
-   "recommendation": "",
-   "data": {}
-  },
-  {
-   "kind": "config",
-   "summary": "docs/acceptance/baseline/summary.json mentions it (validate_transaction)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/summary.json:21",
-    "docs/acceptance/baseline/summary.json:28"
-   ],
-   "consequence": "a rename or signature change may need a configuration update",
-   "recommendation": "",
-   "data": {}
-  },
-  {
-   "kind": "config",
-   "summary": "docs/acceptance/baseline/tests-for-format_amount.json mentions it (validate_transaction)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/tests-for-format_amount.json:35"
-   ],
-   "consequence": "a rename or signature change may need a configuration update",
-   "recommendation": "",
-   "data": {}
-  },
-  {
-   "kind": "config",
-   "summary": "docs/acceptance/baseline/tests-for-month_bounds.json mentions it (validate_transaction)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/tests-for-month_bounds.json:31"
-   ],
-   "consequence": "a rename or signature change may need a configuration update",
-   "recommendation": "",
-   "data": {}
-  },
-  {
    "kind": "boundary",
    "summary": "affects 12 file(s) across 1 top-level directory: demo",
    "severity": "ok",
@@ -628,27 +497,6 @@
   },
   {
    "kind": "consequence",
-   "summary": "10 configuration file(s) name it; renames must update them",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/dependents-validation.json",
-    "docs/acceptance/baseline/impact-validate_transaction.json",
-    "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json",
-    "docs/acceptance/baseline/refs-format_amount.json",
-    "docs/acceptance/baseline/refs-normalize_text.json",
-    "docs/acceptance/baseline/refs-validate_transaction.json",
-    "docs/acceptance/baseline/reuse-T04.json",
-    "docs/acceptance/baseline/summary.json",
-    "docs/acceptance/baseline/tests-for-format_amount.json",
-    "docs/acceptance/baseline/tests-for-month_bounds.json"
-   ],
-   "consequence": "",
-   "recommendation": "",
-   "data": {}
-  },
-  {
-   "kind": "consequence",
    "summary": "callers in unsupported languages are invisible to this analysis: html (1), rust (1), shell (1)",
    "severity": "info",
    "confidence": "unknown",
@@ -664,30 +512,6 @@
    "confidence": "inferred",
    "evidence": [
     "matched terms: trans"
-   ],
-   "consequence": "",
-   "recommendation": "",
-   "data": {}
-  },
-  {
-   "kind": "reuse-candidate",
-   "summary": "lord/acceptance.py:184 function check (config, index, test_id)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "matched terms: check"
-   ],
-   "consequence": "",
-   "recommendation": "",
-   "data": {}
-  },
-  {
-   "kind": "reuse-candidate",
-   "summary": "lord/review.py:153 function verify (config, index, scope, run, base, staged, timeout)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "matched terms: verif"
    ],
    "consequence": "",
    "recommendation": "",

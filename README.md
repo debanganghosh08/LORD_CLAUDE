@@ -68,6 +68,7 @@ python -m lord graph pkg/users.py        # inspect one node's edges
 python -m lord brief validate_email --intent "..."   # one-call pre-edit synthesis
 python -m lord verify --run --scope <path>            # completion check with real test results
 python -m lord context validate_email --intent "..."  # handoff + memory + brief + skills + rules, capped
+python -m lord task ask "..." | assume "..." --material | resolve "..." --answer "..." | confirm "..." | show   # task frame: questions block edits, assumptions are surfaced
 python -m lord memory query --path src/users.py       # durable decisions, traps, conventions for an area
 python -m lord memory add --category trap --statement "..." --evidence "file:line"   # record what must outlive the session
 python -m lord handoff write --doing "..." --remaining "..." --from-verify           # resume point for unfinished work
@@ -86,10 +87,13 @@ Inside Antigravity, opening this workspace activates
 `lord-impact-analysis`, and five read-only specialist subagents:
 `lord-investigator`, `lord-reuse-auditor`, `lord-impact-analyst`,
 `lord-skeptical-reviewer`, `lord-verification-reviewer`. In a trusted
-workspace `.agents/hooks.json` also installs three hooks: a pre-edit gate on
-code-file writes (denies when no LORD investigation ran, asks when only a
-task-level one did), a completion gate that blocks "done" while a detected
-test step fails, and a change-surface advisory when the bloat signal rises.
+workspace `.agents/hooks.json` also installs four hooks: a once-per-conversation
+reminder, a pre-edit gate on code-file writes (denies when no LORD
+investigation ran or a recorded question is open, asks when only a
+task-level investigation ran), a completion gate that blocks "done" while a
+detected test step fails, and post-step advisories (change surface, bypass
+signals, unconfirmed assumptions). Interventions are tiered: information,
+advisory, ask, block (docs/ARCHITECTURE.md section 7).
 
 ## Repository layout
 
@@ -103,7 +107,7 @@ docs/acceptance/    evaluation: test plan, scorecard, manual Antigravity/Gemini 
 demo/               small ledger application used as the evaluation environment (reuse traps, a planted root-cause bug)
 AGENTS.md           cross-tool pointer to the contract; CLAUDE.md imports it
 lord.toml           optional per-project configuration (exclusions)
-lord_hook.py        hook launcher (identical copy in .agents/); docs/ARCHITECTURE.md section 7
+                    (.agents/lord_hook.py is the hook launcher; docs/ARCHITECTURE.md section 7)
 .lord/              generated machine-local state (index, caches); ignored by Git
 ```
 

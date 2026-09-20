@@ -6,21 +6,13 @@
   "proposed_names": [
    "format_money"
   ],
-  "decision": "extend"
+  "decision": "extend",
+  "scope": {
+   "prefix": "demo",
+   "dropped_outside": 3
+  }
  },
  "findings": [
-  {
-   "kind": "exists",
-   "summary": "format_money appears in 1 code file(s) but has no indexed definition",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "lord/acceptance.py:149 \"reuse-T02\": lambda: reuse_report(index, root, \"format an amount in cents with two decimals and the currency for the CSV export\", names=[\"format_money\"]),"
-   ],
-   "consequence": "possibly defined in an unsupported language, or only referenced",
-   "recommendation": "open the files before creating a symbol with this name",
-   "data": {}
-  },
   {
    "kind": "candidate-reuse-or-extend",
    "summary": "demo/web/app.js:12 function formatCents",
@@ -33,7 +25,7 @@
    "consequence": "",
    "recommendation": "open it; if it covers the behaviour, reuse it; if it covers most, extend it with a parameter or branch",
    "data": {
-    "score": 9.506969863782224,
+    "score": 9.531101646372493,
     "symbol": {
      "name": "formatCents",
      "kind": "function",
@@ -57,13 +49,13 @@
    "confidence": "inferred",
    "evidence": [
     "matched terms: amoun, cent, cents, forma, rende",
-    "score 9.1",
+    "score 9.2",
     "Render cents as \"12.34 EUR\" (negative values keep their sign)."
    ],
    "consequence": "",
    "recommendation": "open it; if it covers the behaviour, reuse it; if it covers most, extend it with a parameter or branch",
    "data": {
-    "score": 9.14911320317355,
+    "score": 9.177577945399179,
     "symbol": {
      "name": "format_amount",
      "kind": "function",
@@ -92,7 +84,7 @@
    "consequence": "",
    "recommendation": "open it; if it covers the behaviour, reuse it; if it covers most, extend it with a parameter or branch",
    "data": {
-    "score": 6.725766309047964,
+    "score": 6.7472488852099275,
     "symbol": {
      "name": "export_csv",
      "kind": "function",
@@ -121,7 +113,7 @@
    "consequence": "",
    "recommendation": "open it; if it covers the behaviour, reuse it; if it covers most, extend it with a parameter or branch",
    "data": {
-    "score": 6.051716376203953,
+    "score": 6.075306364121975,
     "symbol": {
      "name": "monthly_csv",
      "kind": "method",
@@ -151,7 +143,7 @@
    "consequence": "",
    "recommendation": "open it; if it covers the behaviour, reuse it; if it covers most, extend it with a parameter or branch",
    "data": {
-    "score": 5.355205273399834,
+    "score": 5.369066547723175,
     "symbol": {
      "name": "parse_amount",
      "kind": "function",
@@ -180,7 +172,7 @@
    "consequence": "",
    "recommendation": "open it; if it covers the behaviour, reuse it; if it covers most, extend it with a parameter or branch",
    "data": {
-    "score": 5.326246328079801,
+    "score": 5.342879857267811,
     "symbol": {
      "name": "test_format_amount_uses_two_decimals_and_currency",
      "kind": "function",
@@ -209,7 +201,7 @@
    "consequence": "",
    "recommendation": "related behaviour; consider composing with it or following its pattern",
    "data": {
-    "score": 4.003484931891112,
+    "score": 4.015550823186246,
     "symbol": {
      "name": "CURRENCY",
      "kind": "constant",
@@ -227,36 +219,6 @@
    }
   },
   {
-   "kind": "candidate-partial",
-   "summary": "lord/extractors/js_ts.py:93 function _strip_strings_and_comments (line)",
-   "severity": "ok",
-   "confidence": "inferred",
-   "evidence": [
-    "matched terms: strin",
-    "score 3.9",
-    "Crude removal of string literal contents and line comments."
-   ],
-   "consequence": "",
-   "recommendation": "related behaviour; consider composing with it or following its pattern",
-   "data": {
-    "score": 3.852301163490574,
-    "symbol": {
-     "name": "_strip_strings_and_comments",
-     "kind": "function",
-     "file": "lord/extractors/js_ts.py",
-     "line": 93,
-     "qualname": "_strip_strings_and_comments",
-     "language": "python",
-     "confidence": "confirmed",
-     "end_line": 96,
-     "parent": "",
-     "signature": "(line)",
-     "exported": false,
-     "doc": "Crude removal of string literal contents and line comments."
-    }
-   }
-  },
-  {
    "kind": "decision",
    "summary": "EXTEND: strong candidates cover most of this behaviour. Extend one before writing a parallel implementation.",
    "severity": "warn",
@@ -269,21 +231,6 @@
    "data": {
     "decision": "extend"
    }
-  },
-  {
-   "kind": "analysis-unavailable",
-   "summary": "related implementations could not be analysed in some files",
-   "severity": "info",
-   "confidence": "unknown",
-   "evidence": [
-    "html: 1 file(s) without an extractor",
-    "rust: 1 file(s) without an extractor",
-    "shell: 1 file(s) without an extractor",
-    "tests/fixtures/sample_repo/pkg/broken.py: parse error"
-   ],
-   "consequence": "text search still covers these files, but structural facts are unknown there",
-   "recommendation": "",
-   "data": {}
   }
  ]
 }

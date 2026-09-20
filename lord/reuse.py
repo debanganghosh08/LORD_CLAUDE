@@ -33,6 +33,8 @@ MIN_BODY_TOKENS = 25
 MIN_SHARED_SHINGLES = 3
 DUPLICATE_SIMILARITY = 0.7      # exact-token Jaccard at or above this: duplicate logic
 STRUCTURAL_SIMILARITY = 0.8     # normalised Jaccard at or above this: same structure, renamed identifiers
+COPY_CONTAINMENT = 0.75         # exact-token containment at or above this: a copy that was then modified
+COPY_MIN_TOKENS = 40            # ... only for bodies large enough that shared exact 4-grams are not coincidence
 # `related` scores are rarity-weighted (Phase 8A): strong behavioural matches land
 # between roughly 5 and 8, noise below 4. Calibrated on the fixtures and the demo.
 STRONG_REUSE_SCORE = 4.5        # at or above this: reuse/extend before creating
@@ -82,6 +84,19 @@ def jaccard(a: set[int], b: set[int]) -> float:
     if not a or not b:
         return 0.0
     return len(a & b) / len(a | b)
+
+
+def containment(a: set[int], b: set[int]) -> float:
+    """Share of the smaller body's shingles present in the larger one.
+
+    A copy that was then edited (lines added, a check changed) keeps most of
+    the original's shingles, so its containment stays high while Jaccard
+    drops with every added line. Independent functions that merely look alike
+    share structure, not exact tokens, so exact-token containment stays low.
+    """
+    if not a or not b:
+        return 0.0
+    return len(a & b) / min(len(a), len(b))
 
 
 def function_body(root: Path, symbol: Symbol, source_lines: list[str] | None = None) -> str:
@@ -160,8 +175,28 @@ def similar_pairs(bodies: list[Body], targets: list[Body] | None = None) -> list
             exact, norm = jaccard(a.exact, b.exact), jaccard(a.normalized, b.normalized)
             if exact >= DUPLICATE_SIMILARITY or norm >= STRUCTURAL_SIMILARITY:
                 pairs.append((a, b, exact, norm))
+            elif min(a.tokens, b.tokens) >= COPY_MIN_TOKENS and not _nested(a, b) and containment(a.exact, b.exact) >= COPY_CONTAINMENT:
+                pairs.append((a, b, exact, norm))  # modified copy: classified by `classify_pair`
     pairs.sort(key=lambda p: (-p[2], -p[3]))
     return pairs
+
+
+def _nested(a: Body, b: Body) -> bool:
+    """True when one symbol encloses the other (same file, qualname prefix): an
+    inner function's tokens are contained in its parent's by construction."""
+    if a.symbol.file != b.symbol.file:
+        return False
+    qa, qb = a.symbol.qualname, b.symbol.qualname
+    return qa.startswith(qb + ".") or qb.startswith(qa + ".")
+
+
+def classify_pair(a: Body, b: Body, exact: float, norm: float) -> tuple[str, str]:
+    """(kind, description) for a similar pair: duplicate | structural | modified-copy."""
+    if exact >= DUPLICATE_SIMILARITY:
+        return "duplicate", f"near-identical bodies (exact similarity {exact:.2f})"
+    if norm >= STRUCTURAL_SIMILARITY:
+        return "structural", f"same structure with renamed identifiers (structural similarity {norm:.2f})"
+    return "modified-copy", f"one contains most of the other's body (exact containment {containment(a.exact, b.exact):.2f}); a copy that was then edited"
 
 
 def thin_wrappers(index: Index, root: Path) -> list[tuple[Symbol, str]]:
@@ -238,17 +273,17 @@ def duplicates_report(index: Index, root: Path, include_tests: bool = False) -> 
 
     # near-duplicate function bodies
     bodies = collect_bodies(index, root, include_tests=include_tests)
+    consequences = {"duplicate": "duplicated logic; a fix in one will be missed in the other",
+                    "structural": "likely a copy with renames; verify before consolidating",
+                    "modified-copy": "a diverging copy; the original's future fixes will not reach it"}
     for a, b, exact, norm in similar_pairs(bodies):
-        if exact >= DUPLICATE_SIMILARITY:
-            summary, conf, cons = f"{a.symbol.qualname} and {b.symbol.qualname} have near-identical bodies (exact similarity {exact:.2f})", INFERRED, "duplicated logic; a fix in one will be missed in the other"
-        else:
-            summary, conf, cons = f"{a.symbol.qualname} and {b.symbol.qualname} share the same structure with renamed identifiers (structural similarity {norm:.2f})", INFERRED, "likely a copy with renames; verify before consolidating"
-        report.add(Finding(kind="duplicate-logic", summary=summary, severity=WARN, confidence=conf,
+        kind, description = classify_pair(a, b, exact, norm)
+        report.add(Finding(kind="duplicate-logic", summary=f"{a.symbol.qualname} and {b.symbol.qualname}: {description}", severity=WARN, confidence=INFERRED,
                            evidence=[f"{a.symbol.file}:{a.symbol.line}-{a.symbol.end_line} {a.symbol.qualname} ({a.tokens} tokens)",
                                      f"{b.symbol.file}:{b.symbol.line}-{b.symbol.end_line} {b.symbol.qualname} ({b.tokens} tokens)",
-                                     f"exact {exact:.2f}, normalised {norm:.2f}"],
-                           consequence=cons, recommendation="open both; keep one and have the other call it, or extract the shared part",
-                           data={"a": a.symbol.id, "b": b.symbol.id, "exact": exact, "normalized": norm}))
+                                     f"exact {exact:.2f}, normalised {norm:.2f}, containment {containment(a.exact, b.exact):.2f}"],
+                           consequence=consequences[kind], recommendation="open both; keep one and have the other call it, or extract the shared part",
+                           data={"a": a.symbol.id, "b": b.symbol.id, "exact": exact, "normalized": norm, "containment": containment(a.exact, b.exact), "kind": kind}))
 
     # thin wrappers
     for symbol, callee in thin_wrappers(index, root):

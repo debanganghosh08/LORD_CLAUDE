@@ -7,12 +7,16 @@
    "demo/app/utils/text.py:13 function normalize_text (value)"
   ],
   "confirmed_files": 2,
-  "inferred_files": 14,
+  "inferred_files": 19,
   "callers": [
    "demo/app/utils/text.py::slugify",
    "demo/app/utils/text.py::truncate_note",
    "demo/tests/test_text.py::test_normalize_text_trims_and_collapses"
-  ]
+  ],
+  "scope": {
+   "prefix": "demo",
+   "dropped_outside": 13
+  }
  },
  "findings": [
   {
@@ -89,23 +93,6 @@
   },
   {
    "kind": "reference",
-   "summary": "docs/acceptance/MANUAL-ANTIGRAVITY-GEMINI.md: 1 text match(es)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/MANUAL-ANTIGRAVITY-GEMINI.md:103 name `normalize_text`? Did it create any new cleaning function? Which files"
-   ],
-   "consequence": "text match in docs file without confirmed parsing",
-   "recommendation": "",
-   "data": {
-    "path": "docs/acceptance/MANUAL-ANTIGRAVITY-GEMINI.md",
-    "lines": [
-     103
-    ]
-   }
-  },
-  {
-   "kind": "reference",
    "summary": "docs/acceptance/PHASE-8A-TEST-PLAN.md: 7 text match(es)",
    "severity": "info",
    "confidence": "inferred",
@@ -158,41 +145,7 @@
   },
   {
    "kind": "reference",
-   "summary": "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json: 1 text match(es)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json:159 \"tests/test_acceptance.py:63 (\\\"normalize_text\\\", \\\"format_amount\\\", \\\"month_bounds\\\", \\\"require_description\\\", \\\"validate_transaction\\\", \\\"DEFAULT_PAGE_SIZE\\\")}\""
-   ],
-   "consequence": "text match in config file without confirmed parsing",
-   "recommendation": "",
-   "data": {
-    "path": "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json",
-    "lines": [
-     159
-    ]
-   }
-  },
-  {
-   "kind": "reference",
-   "summary": "docs/acceptance/baseline/refs-format_amount.json: 1 text match(es)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/refs-format_amount.json:261 \"tests/test_acceptance.py:63 (\\\"normalize_text\\\", \\\"format_amount\\\", \\\"month_bounds\\\", \\\"require_description\\\", \\\"validate_transaction\\\", \\\"DEFAULT_PAGE_SIZE\\\")}\","
-   ],
-   "consequence": "text match in config file without confirmed parsing",
-   "recommendation": "",
-   "data": {
-    "path": "docs/acceptance/baseline/refs-format_amount.json",
-    "lines": [
-     261
-    ]
-   }
-  },
-  {
-   "kind": "reference",
-   "summary": "docs/acceptance/baseline/refs-normalize_text.json: 21 text match(es)",
+   "summary": "docs/acceptance/baseline/refs-normalize_text.json: 49 text match(es)",
    "severity": "info",
    "confidence": "inferred",
    "evidence": [
@@ -223,33 +176,44 @@
      117,
      118,
      119,
+     138,
      142,
      143,
      144,
      145,
-     146,
-     147,
-     169,
-     170,
-     171,
-     172
-    ]
-   }
-  },
-  {
-   "kind": "reference",
-   "summary": "docs/acceptance/baseline/refs-validate_transaction.json: 1 text match(es)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/refs-validate_transaction.json:125 \"tests/test_acceptance.py:63 (\\\"normalize_text\\\", \\\"format_amount\\\", \\\"month_bounds\\\", \\\"require_description\\\", \\\"validate_transaction\\\", \\\"DEFAULT_PAGE_SIZE\\\")}\","
-   ],
-   "consequence": "text match in config file without confirmed parsing",
-   "recommendation": "",
-   "data": {
-    "path": "docs/acceptance/baseline/refs-validate_transaction.json",
-    "lines": [
-     125
+     150,
+     165,
+     182,
+     195,
+     199,
+     200,
+     201,
+     202,
+     203,
+     204,
+     205,
+     206,
+     207,
+     208,
+     213,
+     245,
+     262,
+     263,
+     264,
+     283,
+     284,
+     302,
+     319,
+     336,
+     337,
+     338,
+     339,
+     340,
+     341,
+     363,
+     364,
+     365,
+     366
     ]
    }
   },
@@ -276,54 +240,20 @@
   },
   {
    "kind": "reference",
-   "summary": "docs/acceptance/baseline/summary.json: 2 text match(es)",
+   "summary": "docs/acceptance/evidence/2026-09-20-gemini-3.1-pro-high-T01.json: 2 text match(es)",
    "severity": "info",
    "confidence": "inferred",
    "evidence": [
-    "docs/acceptance/baseline/summary.json:15 \"def-normalize_text\",",
-    "docs/acceptance/baseline/summary.json:20 \"refs-normalize_text\","
+    "docs/acceptance/evidence/2026-09-20-gemini-3.1-pro-high-T01.json:54 \"summary\": \"normalize_text is now used by the transaction service\"",
+    "docs/acceptance/evidence/2026-09-20-gemini-3.1-pro-high-T01.json:69 \"reuse_discovered\": \"yes, but only after the pre-edit gate denied two edit attempts; final reply named normalize_text in demo/app/utils/text.py and explained the reuse\","
    ],
    "consequence": "text match in config file without confirmed parsing",
    "recommendation": "",
    "data": {
-    "path": "docs/acceptance/baseline/summary.json",
+    "path": "docs/acceptance/evidence/2026-09-20-gemini-3.1-pro-high-T01.json",
     "lines": [
-     15,
-     20
-    ]
-   }
-  },
-  {
-   "kind": "reference",
-   "summary": "docs/acceptance/baseline/tests-for-format_amount.json: 1 text match(es)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/tests-for-format_amount.json:35 \"tests/test_acceptance.py:63 (\\\"normalize_text\\\", \\\"format_amount\\\", \\\"month_bounds\\\", \\\"require_description\\\", \\\"validate_transaction\\\", \\\"DEFAULT_PAGE_SIZE\\\")}\","
-   ],
-   "consequence": "text match in config file without confirmed parsing",
-   "recommendation": "",
-   "data": {
-    "path": "docs/acceptance/baseline/tests-for-format_amount.json",
-    "lines": [
-     35
-    ]
-   }
-  },
-  {
-   "kind": "reference",
-   "summary": "docs/acceptance/baseline/tests-for-month_bounds.json: 1 text match(es)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/tests-for-month_bounds.json:31 \"tests/test_acceptance.py:63 (\\\"normalize_text\\\", \\\"format_amount\\\", \\\"month_bounds\\\", \\\"require_description\\\", \\\"validate_transaction\\\", \\\"DEFAULT_PAGE_SIZE\\\")}\","
-   ],
-   "consequence": "text match in config file without confirmed parsing",
-   "recommendation": "",
-   "data": {
-    "path": "docs/acceptance/baseline/tests-for-month_bounds.json",
-    "lines": [
-     31
+     54,
+     69
     ]
    }
   },
@@ -333,64 +263,26 @@
    "severity": "info",
    "confidence": "inferred",
    "evidence": [
-    "lord/acceptance.py:61 \"expected_reuse\": [\"demo/app/utils/text.py::normalize_text\"],",
-    "lord/acceptance.py:133 \"def-normalize_text\": lambda: query.definition(index, \"normalize_text\"),",
-    "lord/acceptance.py:138 \"refs-normalize_text\": lambda: query.references(index, root, \"normalize_text\"),",
-    "lord/acceptance.py:224 refs = _confirmed_ref_files(index, root, \"normalize_text\")",
-    "lord/acceptance.py:225 expect(\"reuse\", \"demo/app/services/transactions.py\" in refs, \"normalize_text is now used by the transaction service\" if \"demo/app/services/transactions.py\" in refs else \"normalize_text is not referenc",
-    "lord/acceptance.py:227 expect(\"duplication\", not new_funcs, \"no new cleaning helper was introduced\" if not new_funcs else f\"new helper(s) introduced: {', '.join(new_funcs)}\", \"a parallel implementation of normalize_text\")"
+    "lord/acceptance.py:62 \"expected_reuse\": [\"demo/app/utils/text.py::normalize_text\"],",
+    "lord/acceptance.py:134 \"def-normalize_text\": lambda: query.definition(index, \"normalize_text\"),",
+    "lord/acceptance.py:139 \"refs-normalize_text\": lambda: query.references(index, root, \"normalize_text\"),",
+    "lord/acceptance.py:243 refs = _confirmed_ref_files(index, root, \"normalize_text\")",
+    "lord/acceptance.py:244 expect(\"reuse\", \"demo/app/services/transactions.py\" in refs, \"normalize_text is now used by the transaction service\" if \"demo/app/services/transactions.py\" in refs else \"normalize_text is not referenc",
+    "lord/acceptance.py:246 expect(\"duplication\", not new_funcs, \"no new cleaning helper was introduced\" if not new_funcs else f\"new helper(s) introduced: {', '.join(new_funcs)}\", \"a parallel implementation of normalize_text\")"
    ],
    "consequence": "text match in a parsed file (comment, string or attribute)",
    "recommendation": "",
    "data": {
     "path": "lord/acceptance.py",
     "lines": [
-     61,
-     133,
-     138,
-     224,
-     225,
-     227
+     62,
+     134,
+     139,
+     243,
+     244,
+     246
     ]
    }
-  },
-  {
-   "kind": "reference",
-   "summary": "tests/test_acceptance.py: 4 text match(es)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "tests/test_acceptance.py:78 (\"normalize_text\", \"format_amount\", \"month_bounds\", \"require_description\", \"validate_transaction\", \"DEFAULT_PAGE_SIZE\")}",
-    "tests/test_acceptance.py:84 norm = query.references(index, ROOT, \"normalize_text\")",
-    "tests/test_acceptance.py:93 assert any(\"normalize_text\" in f.summary for f in t01.findings if f.kind == \"candidate-reuse-or-extend\")",
-    "tests/test_acceptance.py:141 target.write_text(original + \"\\n\\ndef shout(value: str) -> str:\\n    return normalize_text(value).upper()\\n\", encoding=\"utf-8\", newline=\"\\n\")"
-   ],
-   "consequence": "text match in a parsed file (comment, string or attribute)",
-   "recommendation": "",
-   "data": {
-    "path": "tests/test_acceptance.py",
-    "lines": [
-     78,
-     84,
-     93,
-     141
-    ]
-   }
-  },
-  {
-   "kind": "analysis-unavailable",
-   "summary": "references could not be analysed in some files",
-   "severity": "info",
-   "confidence": "unknown",
-   "evidence": [
-    "html: 1 file(s) without an extractor",
-    "rust: 1 file(s) without an extractor",
-    "shell: 1 file(s) without an extractor",
-    "tests/fixtures/sample_repo/pkg/broken.py: parse error"
-   ],
-   "consequence": "text search still covers these files, but structural facts are unknown there",
-   "recommendation": "",
-   "data": {}
   }
  ]
 }

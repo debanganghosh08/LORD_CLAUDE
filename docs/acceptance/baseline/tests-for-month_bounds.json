@@ -5,7 +5,11 @@
   "root": "<root>",
   "tests": [
    "demo/tests/test_dates.py"
-  ]
+  ],
+  "scope": {
+   "prefix": "demo",
+   "dropped_outside": 0
+  }
  },
  "findings": [
   {

@@ -51,14 +51,19 @@
    "docs/acceptance/baseline/refs-normalize_text.json",
    "docs/acceptance/baseline/refs-validate_transaction.json",
    "docs/acceptance/baseline/summary.json",
-   "docs/acceptance/baseline/tests-for-format_amount.json",
    "docs/acceptance/baseline/tests-for-month_bounds.json",
-   "docs/acceptance/baseline/trace-monthly_summary.json"
+   "docs/acceptance/baseline/trace-monthly_summary.json",
+   "docs/acceptance/evidence/2026-09-20-gemini-3.1-pro-high-T03.json",
+   "docs/acceptance/evidence/2026-09-20-gemini-3.1-pro-high-T05.json"
   ],
   "directories": [
    "demo"
   ],
-  "overall_confidence": "inferred"
+  "overall_confidence": "inferred",
+  "scope": {
+   "prefix": "demo",
+   "dropped_outside": 14
+  }
  },
  "findings": [
   {
@@ -463,158 +468,6 @@
    "data": {}
   },
   {
-   "kind": "config",
-   "summary": "docs/acceptance/baseline/def-month_bounds.json mentions it (month_bounds)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/def-month_bounds.json:2",
-    "docs/acceptance/baseline/def-month_bounds.json:10",
-    "docs/acceptance/baseline/def-month_bounds.json:20",
-    "docs/acceptance/baseline/def-month_bounds.json:24"
-   ],
-   "consequence": "a rename or signature change may need a configuration update",
-   "recommendation": "",
-   "data": {}
-  },
-  {
-   "kind": "config",
-   "summary": "docs/acceptance/baseline/dependents-dates.json mentions it (month_bounds)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/dependents-dates.json:15",
-    "docs/acceptance/baseline/dependents-dates.json:27",
-    "docs/acceptance/baseline/dependents-dates.json:51",
-    "docs/acceptance/baseline/dependents-dates.json:63"
-   ],
-   "consequence": "a rename or signature change may need a configuration update",
-   "recommendation": "",
-   "data": {}
-  },
-  {
-   "kind": "config",
-   "summary": "docs/acceptance/baseline/impact-month_bounds.json mentions it (month_bounds)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/impact-month_bounds.json:2",
-    "docs/acceptance/baseline/impact-month_bounds.json:54",
-    "docs/acceptance/baseline/impact-month_bounds.json:94",
-    "docs/acceptance/baseline/impact-month_bounds.json:106",
-    "docs/acceptance/baseline/impact-month_bounds.json:118"
-   ],
-   "consequence": "a rename or signature change may need a configuration update",
-   "recommendation": "",
-   "data": {}
-  },
-  {
-   "kind": "config",
-   "summary": "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json mentions it (month_bounds)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json:159"
-   ],
-   "consequence": "a rename or signature change may need a configuration update",
-   "recommendation": "",
-   "data": {}
-  },
-  {
-   "kind": "config",
-   "summary": "docs/acceptance/baseline/refs-format_amount.json mentions it (month_bounds)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/refs-format_amount.json:261",
-    "docs/acceptance/baseline/refs-format_amount.json:265"
-   ],
-   "consequence": "a rename or signature change may need a configuration update",
-   "recommendation": "",
-   "data": {}
-  },
-  {
-   "kind": "config",
-   "summary": "docs/acceptance/baseline/refs-normalize_text.json mentions it (month_bounds)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/refs-normalize_text.json:169"
-   ],
-   "consequence": "a rename or signature change may need a configuration update",
-   "recommendation": "",
-   "data": {}
-  },
-  {
-   "kind": "config",
-   "summary": "docs/acceptance/baseline/refs-validate_transaction.json mentions it (month_bounds)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/refs-validate_transaction.json:125"
-   ],
-   "consequence": "a rename or signature change may need a configuration update",
-   "recommendation": "",
-   "data": {}
-  },
-  {
-   "kind": "config",
-   "summary": "docs/acceptance/baseline/summary.json mentions it (month_bounds)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/summary.json:17",
-    "docs/acceptance/baseline/summary.json:26",
-    "docs/acceptance/baseline/summary.json:33"
-   ],
-   "consequence": "a rename or signature change may need a configuration update",
-   "recommendation": "",
-   "data": {}
-  },
-  {
-   "kind": "config",
-   "summary": "docs/acceptance/baseline/tests-for-format_amount.json mentions it (month_bounds)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/tests-for-format_amount.json:35",
-    "docs/acceptance/baseline/tests-for-format_amount.json:39"
-   ],
-   "consequence": "a rename or signature change may need a configuration update",
-   "recommendation": "",
-   "data": {}
-  },
-  {
-   "kind": "config",
-   "summary": "docs/acceptance/baseline/tests-for-month_bounds.json mentions it (month_bounds)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/tests-for-month_bounds.json:2",
-    "docs/acceptance/baseline/tests-for-month_bounds.json:18",
-    "docs/acceptance/baseline/tests-for-month_bounds.json:19",
-    "docs/acceptance/baseline/tests-for-month_bounds.json:31",
-    "docs/acceptance/baseline/tests-for-month_bounds.json:32"
-   ],
-   "consequence": "a rename or signature change may need a configuration update",
-   "recommendation": "",
-   "data": {}
-  },
-  {
-   "kind": "config",
-   "summary": "docs/acceptance/baseline/trace-monthly_summary.json mentions it (month_bounds)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/trace-monthly_summary.json:16",
-    "docs/acceptance/baseline/trace-monthly_summary.json:142",
-    "docs/acceptance/baseline/trace-monthly_summary.json:146"
-   ],
-   "consequence": "a rename or signature change may need a configuration update",
-   "recommendation": "",
-   "data": {}
-  },
-  {
    "kind": "boundary",
    "summary": "affects 16 file(s) across 1 top-level directory: demo",
    "severity": "ok",
@@ -663,46 +516,12 @@
   },
   {
    "kind": "consequence",
-   "summary": "11 configuration file(s) name it; renames must update them",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/def-month_bounds.json",
-    "docs/acceptance/baseline/dependents-dates.json",
-    "docs/acceptance/baseline/impact-month_bounds.json",
-    "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json",
-    "docs/acceptance/baseline/refs-format_amount.json",
-    "docs/acceptance/baseline/refs-normalize_text.json",
-    "docs/acceptance/baseline/refs-validate_transaction.json",
-    "docs/acceptance/baseline/summary.json",
-    "docs/acceptance/baseline/tests-for-format_amount.json",
-    "docs/acceptance/baseline/tests-for-month_bounds.json",
-    "docs/acceptance/baseline/trace-monthly_summary.json"
-   ],
-   "consequence": "",
-   "recommendation": "",
-   "data": {}
-  },
-  {
-   "kind": "consequence",
    "summary": "callers in unsupported languages are invisible to this analysis: html (1), rust (1), shell (1)",
    "severity": "info",
    "confidence": "unknown",
    "evidence": [],
    "consequence": "",
    "recommendation": "search those files by name before concluding nothing else is affected",
-   "data": {}
-  },
-  {
-   "kind": "reuse-candidate",
-   "summary": "lord/paths.py:22 class BoundaryError (RuntimeError)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "matched terms: bound"
-   ],
-   "consequence": "",
-   "recommendation": "",
    "data": {}
   },
   {

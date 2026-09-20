@@ -46,13 +46,18 @@
    "docs/acceptance/baseline/reuse-T02.json",
    "docs/acceptance/baseline/summary.json",
    "docs/acceptance/baseline/tests-for-format_amount.json",
-   "docs/acceptance/baseline/tests-for-month_bounds.json",
+   "docs/acceptance/evidence/2026-09-20-gemini-3.1-pro-high-T02.json",
+   "docs/acceptance/evidence/2026-09-20-gemini-3.1-pro-high-T07.json",
    "docs/acceptance/evidence/TEMPLATE.json"
   ],
   "directories": [
    "demo"
   ],
-  "overall_confidence": "inferred"
+  "overall_confidence": "inferred",
+  "scope": {
+   "prefix": "demo",
+   "dropped_outside": 15
+  }
  },
  "findings": [
   {
@@ -391,160 +396,6 @@
    "data": {}
   },
   {
-   "kind": "config",
-   "summary": "docs/acceptance/baseline/def-format_amount.json mentions it (format_amount)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/def-format_amount.json:2",
-    "docs/acceptance/baseline/def-format_amount.json:10",
-    "docs/acceptance/baseline/def-format_amount.json:20",
-    "docs/acceptance/baseline/def-format_amount.json:24"
-   ],
-   "consequence": "a rename or signature change may need a configuration update",
-   "recommendation": "",
-   "data": {}
-  },
-  {
-   "kind": "config",
-   "summary": "docs/acceptance/baseline/impact-format_amount.json mentions it (format_amount)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/impact-format_amount.json:2",
-    "docs/acceptance/baseline/impact-format_amount.json:50",
-    "docs/acceptance/baseline/impact-format_amount.json:121",
-    "docs/acceptance/baseline/impact-format_amount.json:133",
-    "docs/acceptance/baseline/impact-format_amount.json:145"
-   ],
-   "consequence": "a rename or signature change may need a configuration update",
-   "recommendation": "",
-   "data": {}
-  },
-  {
-   "kind": "config",
-   "summary": "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json mentions it (format_amount)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json:159"
-   ],
-   "consequence": "a rename or signature change may need a configuration update",
-   "recommendation": "",
-   "data": {}
-  },
-  {
-   "kind": "config",
-   "summary": "docs/acceptance/baseline/refs-format_amount.json mentions it (format_amount)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/refs-format_amount.json:2",
-    "docs/acceptance/baseline/refs-format_amount.json:7",
-    "docs/acceptance/baseline/refs-format_amount.json:138",
-    "docs/acceptance/baseline/refs-format_amount.json:155",
-    "docs/acceptance/baseline/refs-format_amount.json:172"
-   ],
-   "consequence": "a rename or signature change may need a configuration update",
-   "recommendation": "",
-   "data": {}
-  },
-  {
-   "kind": "config",
-   "summary": "docs/acceptance/baseline/refs-normalize_text.json mentions it (format_amount)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/refs-normalize_text.json:169"
-   ],
-   "consequence": "a rename or signature change may need a configuration update",
-   "recommendation": "",
-   "data": {}
-  },
-  {
-   "kind": "config",
-   "summary": "docs/acceptance/baseline/refs-validate_transaction.json mentions it (format_amount)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/refs-validate_transaction.json:125"
-   ],
-   "consequence": "a rename or signature change may need a configuration update",
-   "recommendation": "",
-   "data": {}
-  },
-  {
-   "kind": "config",
-   "summary": "docs/acceptance/baseline/reuse-T02.json mentions it (format_amount)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/reuse-T02.json:55",
-    "docs/acceptance/baseline/reuse-T02.json:68",
-    "docs/acceptance/baseline/reuse-T02.json:72"
-   ],
-   "consequence": "a rename or signature change may need a configuration update",
-   "recommendation": "",
-   "data": {}
-  },
-  {
-   "kind": "config",
-   "summary": "docs/acceptance/baseline/summary.json mentions it (format_amount)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/summary.json:16",
-    "docs/acceptance/baseline/summary.json:19",
-    "docs/acceptance/baseline/summary.json:27",
-    "docs/acceptance/baseline/summary.json:34"
-   ],
-   "consequence": "a rename or signature change may need a configuration update",
-   "recommendation": "",
-   "data": {}
-  },
-  {
-   "kind": "config",
-   "summary": "docs/acceptance/baseline/tests-for-format_amount.json mentions it (format_amount)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/tests-for-format_amount.json:2",
-    "docs/acceptance/baseline/tests-for-format_amount.json:18",
-    "docs/acceptance/baseline/tests-for-format_amount.json:19",
-    "docs/acceptance/baseline/tests-for-format_amount.json:20",
-    "docs/acceptance/baseline/tests-for-format_amount.json:21"
-   ],
-   "consequence": "a rename or signature change may need a configuration update",
-   "recommendation": "",
-   "data": {}
-  },
-  {
-   "kind": "config",
-   "summary": "docs/acceptance/baseline/tests-for-month_bounds.json mentions it (format_amount)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/tests-for-month_bounds.json:31",
-    "docs/acceptance/baseline/tests-for-month_bounds.json:36"
-   ],
-   "consequence": "a rename or signature change may need a configuration update",
-   "recommendation": "",
-   "data": {}
-  },
-  {
-   "kind": "config",
-   "summary": "docs/acceptance/evidence/TEMPLATE.json mentions it (format_amount)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/evidence/TEMPLATE.json:20",
-    "docs/acceptance/evidence/TEMPLATE.json:25"
-   ],
-   "consequence": "a rename or signature change may need a configuration update",
-   "recommendation": "",
-   "data": {}
-  },
-  {
    "kind": "boundary",
    "summary": "affects 15 file(s) across 1 top-level directory: demo",
    "severity": "ok",
@@ -595,28 +446,6 @@
   },
   {
    "kind": "consequence",
-   "summary": "11 configuration file(s) name it; renames must update them",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "docs/acceptance/baseline/def-format_amount.json",
-    "docs/acceptance/baseline/impact-format_amount.json",
-    "docs/acceptance/baseline/refs-DEFAULT_PAGE_SIZE.json",
-    "docs/acceptance/baseline/refs-format_amount.json",
-    "docs/acceptance/baseline/refs-normalize_text.json",
-    "docs/acceptance/baseline/refs-validate_transaction.json",
-    "docs/acceptance/baseline/reuse-T02.json",
-    "docs/acceptance/baseline/summary.json",
-    "docs/acceptance/baseline/tests-for-format_amount.json",
-    "docs/acceptance/baseline/tests-for-month_bounds.json",
-    "docs/acceptance/evidence/TEMPLATE.json"
-   ],
-   "consequence": "",
-   "recommendation": "",
-   "data": {}
-  },
-  {
-   "kind": "consequence",
    "summary": "callers in unsupported languages are invisible to this analysis: html (1), rust (1), shell (1)",
    "severity": "info",
    "confidence": "unknown",
@@ -627,35 +456,11 @@
   },
   {
    "kind": "reuse-candidate",
-   "summary": "lord/extractors/js_ts.py:93 function _strip_strings_and_comments (line)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "matched terms: strin"
-   ],
-   "consequence": "",
-   "recommendation": "",
-   "data": {}
-  },
-  {
-   "kind": "reuse-candidate",
    "summary": "demo/app/utils/money.py:8 function parse_amount (value)",
    "severity": "info",
    "confidence": "inferred",
    "evidence": [
     "matched terms: amoun"
-   ],
-   "consequence": "",
-   "recommendation": "",
-   "data": {}
-  },
-  {
-   "kind": "reuse-candidate",
-   "summary": "lord/memory.py:325 function write_handoff (root, fields, replace, today)",
-   "severity": "info",
-   "confidence": "inferred",
-   "evidence": [
-    "matched terms: strin, write"
    ],
    "consequence": "",
    "recommendation": "",

@@ -3,7 +3,7 @@
 Contract (antigravity.google/docs/hooks, confirmed against live payloads):
 stdin is camelCase JSON; stdout must be JSON. PreToolUse returns
 `{"decision": "allow|deny|ask|force_ask|deny_unless_prior_grant", "reason"}`,
-PostInvocation may return `{"injectSteps": [{"ephemeralMessage": ...}]}`,
+PreInvocation/PostInvocation may return `{"injectSteps": [{"ephemeralMessage": ...}]}`,
 Stop returns `{"decision": "continue", "reason"}` to block completion or
 anything else to allow it.
 
@@ -16,15 +16,12 @@ malformed JSON DENIES the tool call):
   append diagnostics under `.lord/session/`;
 - `LORD_HOOKS_DISABLED=1` or `LORD_HOOK_ACTIVE=1` (recursion guard) -> default.
 
-Enforcement tiers:
-  PreToolUse on write_to_file / replace_file_content / multi_replace_file_content
-    non-code file, trivial edit, outside workspace ........ allow (audit)
-    code file, investigated target in this session ........ allow (audit)
-    code file, only task-level investigation .............. ask  (user decides)
-    code file, no investigation at all ..................... deny (run brief/reuse first)
-    new code file, no reuse/brief this session ............. deny
-  Stop (fullyIdle, code changed, verification failed) ...... continue (bounded)
-  PostInvocation (bloat signal rose to HIGH) ................ ephemeral warning
+Intervention levels (docs/ARCHITECTURE.md section 7):
+  LEVEL 0 information   hook log, verify report block
+  LEVEL 1 advisory      PreInvocation nudge (once), change-surface and assumption messages
+  LEVEL 2 ask           code edit with only task-level evidence
+  LEVEL 3 block         no investigation at all; new code file without reuse/brief;
+                        self-declared open question; failing verification step (bounded)
 """
 
 from __future__ import annotations
@@ -58,6 +55,13 @@ EVIDENCE_WINDOW_SECONDS = 45 * 60
 TRIVIAL_EDIT_LINES = 3
 MAX_STOP_CONTINUATIONS = 2
 STOP_VERIFY_BUDGET_SECONDS = 540
+
+NUDGE = (
+    "LORD: this workspace gates code edits. Before the first edit of a code file run "
+    "`python -m lord context <file-or-symbol> --intent \"<goal>\"` (or `lord brief`); a new code file needs `lord reuse` or `brief` first. "
+    "If the request has more than one reading that changes behaviour, data or API, record it with `python -m lord task ask \"<question>\"` and ask the user "
+    "before editing; state cosmetic assumptions with `lord task assume`. Finish with the Verification block that `lord verify --run` prints."
+)
 
 
 def matcher_matches(matcher: str, tool: str) -> bool:
@@ -153,6 +157,16 @@ def decide_pre_tool(payload: dict[str, Any], root: Path, now: float | None = Non
     if shape == "edit" and 0 < lines <= TRIVIAL_EDIT_LINES:
         return {"decision": "allow", "_audit": f"{tool} {rel}: trivial edit ({lines} line(s))"}
 
+    # LEVEL 3: the model itself recorded open questions for this task and has not resolved them
+    questions = session.open_questions(session.load_task(root))
+    if questions:
+        listed = "; ".join(q[:120] for q in questions[:3])
+        return {
+            "decision": "deny",
+            "reason": (f"LORD task gate: the task frame has {len(questions)} open question(s) you recorded ({listed}). Ask the user, then "
+                       f"`python -m lord task resolve \"<question text>\" --answer \"<answer>\"` before a consequential edit of {rel}."),
+        }
+
     symbol_names: set[str] = set()
     if exists:
         try:
@@ -167,11 +181,11 @@ def decide_pre_tool(payload: dict[str, Any], root: Path, now: float | None = Non
     label = f"{shape} of {rel} ({lines} line(s))" if lines else f"{shape} of {rel}"
 
     if shape == "new-file":
-        if entry is not None and entry.get("command") in ("reuse", "brief"):
-            return {"decision": "allow", "_audit": f"{label}: reuse/brief evidence `{entry['command']} {entry.get('target', '')}`"}
+        if entry is not None and entry.get("command") in ("reuse", "brief", "context"):
+            return {"decision": "allow", "_audit": f"{label}: reuse/brief/context evidence `{entry['command']} {entry.get('target', '')}`"}
         return {
             "decision": "deny",
-            "reason": (f"LORD pre-edit gate: {rel} is a new code file and no `lord reuse` or `lord brief` ran in this session. "
+            "reason": (f"LORD pre-edit gate: {rel} is a new code file and no `lord reuse`, `brief` or `context` ran in this session. "
                        f"Run `python -m lord reuse \"<behaviour>\" --name <Name>` (reuse -> extend -> refactor -> create), then retry."),
         }
     if level == "target":
@@ -185,8 +199,25 @@ def decide_pre_tool(payload: dict[str, Any], root: Path, now: float | None = Non
     return {
         "decision": "deny",
         "reason": (f"LORD pre-edit gate: no LORD investigation ran in this session before a {shape} of {rel}. "
-                   f"Run `python -m lord brief {rel} --intent \"<goal>\"` (or `lord refs`/`lord impact` on the symbol), then retry."),
+                   f"Run `python -m lord context {rel} --intent \"<goal>\"` (or `lord brief`, `lord refs`, `lord impact` on the symbol), then retry."),
     }
+
+
+# --- PreInvocation -----------------------------------------------------------------------
+
+def decide_pre_invocation(payload: dict[str, Any], root: Path) -> dict[str, Any]:
+    """LEVEL 1: once per conversation, before the model plans, say how this
+    workspace works. Silent when investigation evidence already exists."""
+    conversation = str(payload.get("conversationId") or "default")
+    key = f"nudge-{conversation}"
+    state = session.load_state(root, key)
+    if state.get("nudged"):
+        return {"_audit": "already nudged"}
+    if session.recent(root, EVIDENCE_WINDOW_SECONDS):
+        session.save_state(root, key, {"nudged": True, "reason": "evidence present"})
+        return {"_audit": "investigation evidence present; no nudge"}
+    session.save_state(root, key, {"nudged": True})
+    return {"injectSteps": [{"ephemeralMessage": NUDGE}], "_audit": "nudged"}
 
 
 # --- Stop ------------------------------------------------------------------------------
@@ -244,6 +275,7 @@ def decide_stop(payload: dict[str, Any], root: Path, budget_seconds: float = STO
             "verdict": meta.get("verdict"), "outstanding": meta.get("outstanding", []), "step_results": meta.get("step_results", {}),
             "failing": [{"summary": f.summary, "tail": f.evidence[-3:]} for f in failing],
             "bloat_level": meta.get("bloat_level"), "elapsed": round(time.time() - started, 1),
+            "assumptions": meta.get("unconfirmed_material", []),
         }
         if time.time() - started > budget_seconds:
             session.save_state(root, key, {"signature": signature, "verify": cached, "continuations": continuations})
@@ -255,10 +287,12 @@ def decide_stop(payload: dict[str, Any], root: Path, budget_seconds: float = STO
         return {
             "decision": "continue",
             "reason": (f"LORD completion gate: deterministic verification failed ({lines}). Fix it, re-run `python -m lord verify --run`, "
-                       f"and only then report completion. Continuation {continuations}/{MAX_STOP_CONTINUATIONS}."),
+                       f"and only then report completion with its Verification block. Continuation {continuations}/{MAX_STOP_CONTINUATIONS}."),
         }
     session.save_state(root, key, {"signature": signature, "verify": cached, "continuations": continuations})
     warnings = [o for o in cached.get("outstanding", []) if "not executed" not in o]
+    if cached.get("assumptions"):
+        warnings.append(f"unconfirmed material assumptions: {len(cached['assumptions'])}")
     return {"_audit": f"verdict {cached.get('verdict')}; advisory: {warnings}" if warnings else f"verdict {cached.get('verdict')}"}
 
 
@@ -282,12 +316,22 @@ def decide_post_invocation(payload: dict[str, Any], root: Path) -> dict[str, Any
     level = report.meta.get("bloat_level", "low")
     reasons = report.meta.get("bloat_reasons", [])
     previous = state.get("level", "low")
-    session.save_state(root, key, {"signature": signature, "level": level, "reasons": reasons})
+    messages: list[str] = []
+    bypasses = [f.summary for f in report.findings if f.kind == "invariant-bypass"]
+    if bypasses and not state.get("bypass_warned"):
+        messages.append("LORD invariant signal: " + "; ".join(bypasses[:3]) + ". A bypass of an existing check must be an explicit, justified decision, not an implementation shortcut; say so in the plan and the final report, or address the check centrally.")
     if level == "high" or (level == "elevated" and previous == "low"):
         summary = report.findings[0].summary
-        message = (f"LORD change-surface {level.upper()}: {summary}. Reasons: " + "; ".join(reasons[:5]) +
-                   ". Did this become larger than the task requires? Check `python -m lord diff --scope <task>` before continuing.")
-        return {"injectSteps": [{"ephemeralMessage": message}], "_audit": f"level {level} (was {previous}); warned"}
+        messages.append(f"LORD change-surface {level.upper()}: {summary}. Reasons: " + "; ".join(reasons[:5]) +
+                        ". Did this become larger than the task requires? Check `python -m lord diff --scope <task>` before continuing.")
+    assumptions = session.unconfirmed_material(session.load_task(root))
+    if assumptions and not state.get("assumptions_warned"):
+        messages.append("LORD task frame: you are implementing under unconfirmed material assumption(s): " + "; ".join(a[:100] for a in assumptions[:3]) +
+                        ". Confirm with the user (`lord task confirm`) or state them explicitly in the final report.")
+    session.save_state(root, key, {"signature": signature, "level": level, "reasons": reasons,
+                                   "bypass_warned": state.get("bypass_warned") or bool(bypasses), "assumptions_warned": state.get("assumptions_warned") or bool(assumptions)})
+    if messages:
+        return {"injectSteps": [{"ephemeralMessage": " ".join(messages)}], "_audit": f"level {level} (was {previous}); warned: {len(messages)} message(s)"}
     return {"_audit": f"level {level} (was {previous}); no warning"}
 
 
@@ -306,6 +350,8 @@ def handle(event: str, payload: dict[str, Any], root: Path | None = None, now: f
     try:
         if event == "pre-tool":
             result = decide_pre_tool(payload, resolved, now)
+        elif event == "pre-invocation":
+            result = decide_pre_invocation(payload, resolved)
         elif event == "stop":
             result = decide_stop(payload, resolved, budget_seconds=budget_seconds, run_steps=run_steps)
         elif event == "post-invocation":

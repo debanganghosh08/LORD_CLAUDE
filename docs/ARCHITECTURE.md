@@ -73,9 +73,9 @@ no model API. Exposed through one stable boundary: `python -m lord <command>`
 | `graph.py` | relationship graph over the index: defines, imports, calls, references, extends, implements, tests, configures; per-edge confidence | 4 |
 | `impact.py` | impact report (callers, indirect chains, callees, dependents, types, tests, config, boundary, consequences) and root-cause trace worksheet | 4 |
 | `review.py` | `brief` (one-call pre-edit synthesis) and `verify` (change surface, test coverage of the change, unresolved markers, detected test/lint/build steps with real results, verdict) | 5 |
-| `session.py` | transient session state in `.lord/session/`: investigation activity log, per-conversation counters and caches, hook diagnostics | 6 |
-| `hooks.py` | Antigravity hook decisions (pre-edit gate, completion gate, change-surface advisory) with fail-safe dispatch | 6 |
-| `lord_hook.py` (root and `.agents/`) | identical launchers: `python -m lord_hook <event>` from either working directory; never exits non-zero | 6 |
+| `session.py` | transient session state in `.lord/session/`: investigation activity log (with the files each command surfaced), the task frame (`task.json`: request, intent, target, assumptions, questions), per-conversation counters and caches, hook diagnostics | 6, 8A.1 |
+| `hooks.py` | Antigravity hook decisions (pre-edit gate, task gate, completion gate, once-per-conversation reminder, change-surface / bypass / assumption advisories) with fail-safe dispatch | 6, 8A.1 |
+| `.agents/lord_hook.py` | the single launcher: `python -m lord_hook <event>`; Antigravity runs workspace hooks from `.agents/` (confirmed live); locates the `lord` package from its own file; never exits non-zero | 6, 8A.1 |
 | `memory.py` | durable memory store (`docs/state/memory.jsonl`): schema and trust validation, supersession, key conflicts, deterministic retrieval; handoff (`docs/state/handoff.json`) | 7 |
 | `context.py` | capped context assembly: handoff, relevant memory, brief, matching skills, always-on rules | 7 |
 | `acceptance.py` | demo evaluation: baseline ground truth, per-scenario deterministic checks, evidence records with validation | 8A |
@@ -178,22 +178,44 @@ layer is `lord/hooks.py` plus a 40-line launcher, and it reuses the session
 activity log written by `brief`, `reuse` and the other investigation
 commands, plus `verify` and `diff`, unchanged.
 
-| Hook | Situation | Evidence | Tier | Decision |
+Intervention tiers (Phase 8A.1 made them explicit):
+
+| Level | Name | Mechanism | Used for |
+|---|---|---|---|
+| 0 | information | command output; the once-per-conversation PreInvocation reminder (silent when the conversation already investigated) | what LORD knows; how to start |
+| 1 | advisory | PostInvocation `injectSteps` ephemeral message, each once | unconfirmed material assumption; bypass signal; change larger than the task |
+| 2 | ask | PreToolUse `ask` | task-level evidence only: the user decides at the edit |
+| 3 | block | PreToolUse `deny`; Stop `continue` (capped) | no investigation at all; an open question; a failing test |
+
+| Hook | Situation | Evidence | Level | Decision |
 |---|---|---|---|---|
+| PreInvocation | first step of a conversation with no LORD investigation in the window | activity log, per-conversation marker | 0 | one ephemeral reminder naming `context` and `task ask`; nothing afterwards |
 | PreToolUse on `write_to_file`, `replace_file_content`, `multi_replace_file_content` | non-code file (docs, config, tests); edit of at most 3 lines; path outside the workspace | file kind and edit size from the tool arguments | audit | `allow` |
-| | code file whose path or symbols were named by a LORD investigation command in the last 45 minutes | `.lord/session/activity.jsonl` | audit | `allow` |
-| | code file, only task-level investigation (`reuse`, `brief`, `impact` on something else) | activity log | soft | `ask` (user decides; the reason names the file) |
-| | code file, no LORD investigation at all in the window | activity log | hard | `deny` with the exact command to run |
-| | new code file without a `reuse` or `brief` in the window | activity log | hard | `deny` (reuse -> extend -> refactor -> create) |
-| Stop (fully idle, code files changed) | a detected verification step FAILED, for example pytest exit 1 | `verify --run` with real exit codes, cached per working-tree signature | hard, bounded | `continue` with the failing output, at most 2 consecutive times per conversation |
+| | consequential code edit while the task frame has an open question | `.lord/session/task.json` | 3 | `deny` naming the question and `lord task resolve` |
+| | code file whose path or symbols were named by a LORD investigation command in the last 45 minutes, or surfaced by its output (callers, dependents, tests of a `context`/`brief` target) | `.lord/session/activity.jsonl` (`files`) | audit | `allow` |
+| | code file, only task-level investigation (`reuse`, `brief`, `context` on something else, `context` on a directory) | activity log | 2 | `ask` (user decides; the reason names the file) |
+| | code file, no LORD investigation at all in the window | activity log | 3 | `deny` with the exact command to run |
+| | new code file without a `context`, `reuse` or `brief` in the window | activity log | 3 | `deny` (reuse -> extend -> refactor -> create) |
+| Stop (fully idle, code files changed) | a detected verification step FAILED, for example pytest exit 1 | `verify --run` with real exit codes, cached per working-tree signature | 3, bounded | `continue` with the failing output, at most 2 consecutive times per conversation |
 | | untested change, TODO markers, bloat signal, unavailable tools | heuristic or advisory | audit | allow, logged |
-| PostInvocation (code files changed, tree changed since last check) | bloat signal HIGH, or the first rise to ELEVATED | `diff` reasons | soft | `injectSteps` ephemeral message asking whether the change became larger than the task |
+| PostInvocation (code files changed, tree changed since last check) | bloat signal HIGH, or the first rise to ELEVATED | `diff` reasons | 1 | ephemeral message asking whether the change became larger than the task |
+| | a call that was unconditional at HEAD is now guarded by a new parameter, or a shared call was removed (`invariant-bypass`, `shared-call-removed`) | AST comparison of the modified Python file against HEAD | 1 | ephemeral message, once per finding |
+| | the task frame holds a material assumption the user has not confirmed | `task.json` | 1 | ephemeral message, once per conversation |
 
 Why these tiers: a `deny` is issued only when the evidence is a plain fact
-(no investigation command ran; the test suite failed). Everything heuristic
-(resemblance, unrelated files, import-based coverage) is surfaced, never
-enforced, because hard gates that fire on heuristics train agents to ignore
-them.
+(no investigation command ran; a question the agent itself recorded is
+unanswered; the test suite failed). Everything heuristic (resemblance,
+modified copies, bypass shapes, unrelated files, import-based coverage) is
+surfaced, never enforced, because hard gates that fire on heuristics train
+agents to ignore them.
+
+Evidence semantics: a command's evidence is its target plus the workspace
+files its output named. `context pkg/validators.py` therefore makes the
+validator, its dependents and its tests editable; `context pkg` (a
+directory) is task-level only, because a directory brief names nothing
+specific. `context` is an investigation command (it contains the brief);
+before Phase 8A.1 it was not counted, which denied a correctly investigated
+edit in the live evaluation.
 
 Failure handling: every code path ends in valid JSON and exit code 0. An
 internal error returns the event's permissive default (`allow` or `{}`) and
@@ -206,11 +228,12 @@ recursion, Stop has a time budget and a continuation cap, and Antigravity
 itself caps consecutive Stop continuations (CLI changelog).
 
 Windows execution: Antigravity tokenises the command string itself and keeps
-literal quotes (observed), so hook commands contain no quotes. The working
-directory is undocumented and plugin hooks demonstrably run from their
-hooks.json folder, so the launcher exists at both the workspace root and
-`.agents/` and locates the `lord` package from its own file, never from the
-cwd. The launcher logs the cwd it was started from.
+literal quotes (observed), so hook commands contain no quotes. Workspace
+hooks run from the hooks.json folder (`<workspace>\.agents`, confirmed
+live in the Phase 8A evaluation), so the single launcher lives at
+`.agents/lord_hook.py` and locates the `lord` package from its own file,
+never from the cwd. The launcher logs the cwd it was started from; `doctor`
+reports an error if the launcher is missing.
 
 Trust: workspace `.agents/hooks.json` (and rules, skills, agents) load only in
 a trusted workspace. CLI print mode never trusts, so `agy -p` cannot exercise
@@ -295,13 +318,25 @@ LORD's own symbols.
   bindings and same-file definitions are confirmed. Dynamic dispatch,
   reflection and string-based lookups are invisible.
 - Duplicate detection is token-based (exact and identifier-normalised
-  shingles); it finds copies and renamed copies, not semantic equivalents.
+  shingles, plus a containment measure for copies that were then edited:
+  shared shingles over the smaller body, at least 60% with at least 40
+  tokens); it finds copies, renamed copies and modified copies, not semantic
+  equivalents. A copy rewritten beyond that overlap is invisible.
+- Bypass detection is AST-based and Python-only: a call unconditional at
+  HEAD that becomes conditional on a new parameter (statement, ternary or
+  short-circuit guard), or a shared call removed. A check disabled through
+  data, configuration or a different function is not seen.
 - The `related` search and memory retrieval are lexical; they find
   candidates, they do not prove equivalence or bridge synonyms.
-- Hooks are validated locally against live-captured payload shapes; they
-  have not yet fired inside a trusted Antigravity session (the Phase 6
-  report lists the exact blockers and the manual test plan). The launcher
-  working directory is hedged with two copies.
+- Hooks fired live inside a trusted Antigravity IDE session (Phase 8A:
+  PreToolUse deny/allow, PostInvocation advisory, Stop continuation
+  observed; cwd `.agents`). PreInvocation is validated against the
+  documented payload shape and fires live only from Phase 8A.1's Baseline B
+  onwards. Whether the IDE loads `.agents/agents/` remains unconfirmed.
+- The task frame is filled by the model (`lord task ask/assume`) or by
+  `context --intent`; LORD cannot detect an ambiguity the model never
+  records. The open-question gate enforces the model's own question, not
+  the existence of one.
 - Import-based test coverage cannot credit tests that drive code through
   subprocesses.
 - Nothing writes memory automatically; the write policy is a judgement

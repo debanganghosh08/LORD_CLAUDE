@@ -8,8 +8,25 @@ place where that boundary is defined.
 
 from __future__ import annotations
 
+import re
 import subprocess
 from pathlib import Path
+
+# A workspace-relative path with at least one directory and an extension, not
+# glued to a longer token (so `a/b.py::func` yields `a/b.py`, URLs and version
+# numbers do not match).
+PATH_RE = re.compile(r"(?<![\w./-])((?:[\w.-]+/)+[\w.-]+\.[A-Za-z0-9]{1,8})")
+
+
+def mentioned_paths(text: str) -> list[str]:
+    """Workspace-relative paths a piece of text names, in order, deduplicated."""
+    out: list[str] = []
+    for match in PATH_RE.findall(text):
+        rel = match.replace("\\\\", "/").split("::")[0]
+        if rel.startswith("<") or rel in out:
+            continue
+        out.append(rel)
+    return out
 
 # Files/directories whose presence marks a LORD workspace root. Checked in
 # order while walking upward from the starting directory.

@@ -23,6 +23,7 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from lord import session
 from lord.change_surface import git_changes, measure
 from lord.config import LordConfig
 from lord.impact import impact_report, resolve_target
@@ -219,11 +220,27 @@ def verify(config: LordConfig, index: Index, scope: tuple[str, ...] = (), run: b
         outstanding.append("verification steps not executed (use --run)")
 
     verdict = "verified" if not outstanding else "not verified"
+    task = session.load_task(root)
+    assumptions = session.unconfirmed_material(task)
     report.meta.update({"verdict": verdict, "outstanding": outstanding, "steps": [s.name for s in steps],
-                        "step_results": {s.name: s.status for s in steps if s.status}, "bloat_level": level, "tests_to_run": tests_to_run, "uncovered": uncovered})
+                        "step_results": {s.name: s.status for s in steps if s.status}, "bloat_level": level, "tests_to_run": tests_to_run, "uncovered": uncovered,
+                        "unconfirmed_material": assumptions, "open_questions": session.open_questions(task)})
     report.add(Finding(kind="verdict", summary=f"{verdict.upper()}" + (": " + "; ".join(outstanding) if outstanding else ": all detected steps passed, nothing outstanding"),
                        severity=OK if verdict == "verified" else WARN, confidence=CONFIRMED if run else INFERRED,
                        consequence="" if verdict == "verified" else "do not report the task as done; report what remains"))
+    # LORD-determined results in the form the final report must carry; a model may
+    # paste this block but cannot "declare" a result the command did not produce
+    block = ["Verification:"]
+    for step in steps:
+        status = step.status.upper() if step.status else "NOT RUN"
+        block.append(f"  {' '.join(step.argv[1:4]) if step.argv[0].endswith(('python', 'python.exe')) else step.argv[0]}" + (f" ({step.cwd})" if step.cwd else "") + f" - {status}")
+    if not steps:
+        block.append("  no automated verification detected - state how the change was verified")
+    block.append(f"  LORD verify - {verdict.upper()}" + (" (" + "; ".join(outstanding) + ")" if outstanding else ""))
+    if assumptions:
+        block.append("Assumptions (unconfirmed, material): " + "; ".join(assumptions))
+    report.meta["report_block"] = "\n".join(block)
+    report.add(Finding(kind="report-block", summary="paste this into the final report", severity=INFO, confidence=CONFIRMED if run else INFERRED, evidence=block))
     return report
 
 
@@ -237,7 +254,7 @@ def brief(config: LordConfig, index: Index, target: str, intent: str = "", names
                            recommendation="use `lord related` to find the right name; the target may live in an unsupported language"))
     else:
         impact = impact_report(index, root, target, depth=depth)
-        keep = {"definition": 3, "ambiguity": 1, "direct-reference": 8, "indirect-reference": 4, "related-type": 4, "test": 5, "config": 3, "boundary": 1, "consequence": 8}
+        keep = {"definition": 3, "ambiguity": 1, "direct-reference": 8, "indirect-reference": 4, "dependent": 8, "related-type": 4, "test": 5, "config": 3, "boundary": 1, "consequence": 8}
         counts: dict[str, int] = {}
         for f in impact.findings:
             limit = keep.get(f.kind)

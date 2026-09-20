@@ -1,26 +1,28 @@
 {
-  "doing": "Phase 8A live evaluation with Gemini 3.1 Pro High completed (8 scenarios recorded); next is the review of evidence and the small LORD fixes it exposed, then Phase 8B packaging",
+  "doing": "Phase 8A.1 remediation implemented and committed; next is the live Baseline B re-evaluation (Gemini 3.1 Pro High, IDE, fresh conversations, record --series B) for T01, T03, T04, T05, T07, T08 (+T02, T06), then sections 14-15 of the remediation report",
   "done": [
-    "Environment proven: trusted workspace loads rules, 5 skills, 3 hooks; gate deny/ask/allow, Stop block and recovery, advisory injection all observed live",
-    "T01-T08 recorded in docs/acceptance/evidence (1 PASS, 6 PARTIAL, 1 FAIL)"
+    "context counts as evidence; surfaced files are evidence; task frame with open-question gate and assumption advisory; PreInvocation reminder; containment copy detection; AST bypass signals; measure(only=); verify report block; T04 check; series label; single launcher; docs/skills/contract updated; 199 tests"
   ],
   "remaining": [
-    "Fix: count lord context as investigation evidence and record it",
-    "Fix: manual guide's /hooks,/skills,/agents instructions are CLI-only; document the IDE path",
-    "Consider: containment-based copy detection; T04 check cannot see a bypass flag; acceptance check should scope bloat to demo",
-    "Drop the root lord_hook.py copy (cwd is .agents) in Phase 8B"
+    "Run Baseline B live and record with --series B",
+    "Fill report sections 14 and 15 (Baseline B results, before/after matrix) and score with the unchanged scorecard",
+    "Decide whether the Verification block becomes a scorecard requirement"
   ],
   "discovered": [
-    "Gemini investigates on its own for bugs and impact but attempts edits before running any LORD command; the gate forces the command; it never asks clarification on an ambiguous request"
+    "The brief on a file dropped dependent findings, so a file-level context could not surface its callers; kept now (keep['dependent']=8)",
+    "Containment at 0.60 flags nested functions (containment 1.0 by construction) and many small-method pairs; 0.75 plus the enclosing-symbol exclusion leaves only plausible copies",
+    "The old baseline contained self-referential text matches (84 in refs-format_amount.json); baseline artefacts are now scoped to demo/"
   ],
   "decided": [
-    "Phase 8B may start; the harness infrastructure is proven, reasoning quality is model-dependent as expected"
+    "Bypass and copy signals are advisories (Level 1), never blocks; the open-question gate is a block because the question is the model's own recorded fact",
+    "load_task/load_handoff similarity (0.81) left as is: a shared loader would couple the session store to the versioned memory store"
   ],
   "next": [
-    "Apply the small fixes above with tests, then Phase 8B"
+    "Reset demo, index and .lord/session before each Baseline B scenario (manual guide section 4)",
+    "After Baseline B: compare A vs B per dimension, update the report, commit, push"
   ],
-  "verification": "LORD suite to be run before commit; demo 37 pass; oracle 3 fail on baseline",
+  "verification": "python -m pytest: 199 passed; demo: 37 passed; oracle on unfixed demo: 3 fail (expected)",
   "updated": "2026-09-20",
   "branch": "main",
-  "commit": "49791eb"
+  "commit": "4cb5eaa"
 }

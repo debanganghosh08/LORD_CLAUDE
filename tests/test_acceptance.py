@@ -38,7 +38,7 @@ def _pytest(cwd: Path, *args: str) -> subprocess.CompletedProcess:
 def lord_clone(tmp_path_factory) -> Path:
     """A committed copy of the repository: checks that compare the working tree with HEAD need a clean base."""
     repo = tmp_path_factory.mktemp("clone") / "lord"
-    for item in ("lord", "demo", "docs", "tests", "pyproject.toml", "lord.toml", ".gitignore", "lord_hook.py", ".agents"):
+    for item in ("lord", "demo", "docs", "tests", "pyproject.toml", "lord.toml", ".gitignore", ".agents"):
         src = ROOT / item
         if src.is_dir():
             shutil.copytree(src, repo / item, ignore=shutil.ignore_patterns("__pycache__", ".pytest_cache", "evidence-test"))

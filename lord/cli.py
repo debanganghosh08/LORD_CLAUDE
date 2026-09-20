@@ -12,11 +12,12 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import sys
 from pathlib import Path
 
 from lord import __version__
-from lord.paths import find_workspace_root
+from lord.paths import find_workspace_root, mentioned_paths
 from lord.report import Report
 
 
@@ -61,6 +62,7 @@ COMMANDS: tuple[tuple[str, str, str | None], ...] = (
 )
 
 MEMORY_ACTIONS = ("query", "add", "supersede", "update", "check", "list")
+TASK_ACTIONS = ("show", "start", "assume", "ask", "resolve", "confirm", "clear")
 HANDOFF_ACTIONS = ("show", "write", "clear")
 ACCEPTANCE_ACTIONS = ("baseline", "check", "record", "prompts")
 
@@ -137,6 +139,14 @@ def build_parser() -> argparse.ArgumentParser:
     handoff.add_argument("--from-verify", action="store_true", help="attach the current `verify` verdict and outstanding items")
     handoff.add_argument("--replace", action="store_true", help="replace the record instead of merging")
 
+    task = sub.add_parser("task", help="task frame: request, interpreted intent, assumptions (cosmetic or material), open questions")
+    _add_common(task)
+    task.add_argument("action", choices=TASK_ACTIONS)
+    task.add_argument("text", nargs="?", default="", help="request / assumption / question text, or the text to resolve/confirm")
+    task.add_argument("--intent", default="", help="interpreted intent (start)")
+    task.add_argument("--material", action="store_true", help="the assumption changes semantics, API, data or architecture (assume)")
+    task.add_argument("--answer", default="", help="the user's answer (resolve)")
+
     acceptance = sub.add_parser("acceptance", help="demo acceptance evaluation: baseline ground truth, deterministic checks, evidence records")
     _add_common(acceptance)
     acceptance.add_argument("action", choices=ACCEPTANCE_ACTIONS)
@@ -144,6 +154,7 @@ def build_parser() -> argparse.ArgumentParser:
     acceptance.add_argument("--model", default="", help="model label for the evidence record, e.g. gemini-3.6-flash")
     acceptance.add_argument("--transcript", default="", help="conversation id or exported transcript path")
     acceptance.add_argument("--notes", default="", help="free-text observations")
+    acceptance.add_argument("--series", default="", help="evaluation series label, e.g. A or B")
     return parser
 
 
@@ -221,6 +232,8 @@ def run(args: argparse.Namespace, root: Path) -> Report:
         return _memory(args, root)
     if args.command == "handoff":
         return _handoff(args, root, config, index)
+    if args.command == "task":
+        return _task(args, root)
     if args.command == "acceptance":
         from lord import acceptance
         from lord.report import CONFIRMED, ERROR, OK, Finding
@@ -238,7 +251,7 @@ def run(args: argparse.Namespace, root: Path) -> Report:
             return acceptance.check(config, index, args.test)
         if not args.model:
             return Report(title="acceptance", findings=[Finding(kind="usage", summary="--model is required for record", severity=ERROR, confidence=CONFIRMED)])
-        return acceptance.record(config, index, args.test, args.model, transcript=args.transcript, notes=args.notes)
+        return acceptance.record(config, index, args.test, args.model, transcript=args.transcript, notes=args.notes, series=args.series)
     if args.command == "verify":
         from lord.review import verify
 
@@ -326,13 +339,27 @@ def main(argv: list[str] | None = None) -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     report = run(args, root)
-    _record_activity(args, root)
+    _record_activity(args, root, report)
     return _emit(report, args.json)
 
 
-def _record_activity(args: argparse.Namespace, root: Path) -> None:
-    """Investigation commands leave evidence for the pre-edit hook."""
-    from lord.session import INVESTIGATION_COMMANDS, record
+def surfaced_files(report: Report, root: Path) -> list[str]:
+    """Workspace files a report's output names: the evidence the model was shown."""
+    found: set[str] = set()
+    for rel in mentioned_paths(report.to_json(indent=None))[:200]:
+        try:
+            if (root / rel).is_file():
+                found.add(rel)
+        except OSError:
+            continue
+    return sorted(found)
+
+
+def _record_activity(args: argparse.Namespace, root: Path, report: Report) -> None:
+    """Investigation commands leave evidence for the pre-edit hook: the command,
+    its target, and the files its output surfaced. `brief`/`context --intent`
+    also set the task frame's interpreted intent."""
+    from lord.session import INVESTIGATION_COMMANDS, record, update_task
 
     if args.command not in INVESTIGATION_COMMANDS or os.environ.get("LORD_HOOK_ACTIVE") == "1":
         return
@@ -343,4 +370,44 @@ def _record_activity(args: argparse.Namespace, root: Path) -> None:
             target = value
             break
     names = getattr(args, "name", None)
-    record(root, args.command, target, {"names": names} if isinstance(names, list) and names else None)
+    extra = {"names": names} if isinstance(names, list) and names else None
+    record(root, args.command, target, extra, files=surfaced_files(report, root))
+    intent = getattr(args, "intent", "")
+    if isinstance(intent, str) and intent and args.command in ("brief", "context"):
+        update_task(root, intent=intent, target=target)
+
+
+def _task(args: argparse.Namespace, root: Path) -> Report:
+    from lord.report import CONFIRMED, ERROR, INFO, OK, WARN, Finding
+    from lord.session import clear_task, load_task, open_questions, unconfirmed_material, update_task
+
+    if args.action == "clear":
+        cleared = clear_task(root)
+        return Report(title="task", findings=[Finding(kind="task", summary="task frame cleared" if cleared else "no task frame", severity=OK, confidence=CONFIRMED)])
+    if args.action != "show":
+        if not args.text and not (args.action == "start" and args.intent):
+            return Report(title="task", findings=[Finding(kind="task", summary=f"{args.action} needs text", severity=ERROR, confidence=CONFIRMED)])
+        kwargs = {
+            "start": {"request": args.text, "intent": args.intent},
+            "assume": {"assumption": args.text, "material": args.material},
+            "ask": {"question": args.text},
+            "resolve": {"resolve": args.text, "answer": args.answer},
+            "confirm": {"confirm": args.text},
+        }[args.action]
+        update_task(root, **kwargs)
+    task = load_task(root)
+    report = Report(title="task frame", meta={"root": str(root), "present": bool(task)})
+    if not task:
+        report.add(Finding(kind="task", summary="no task frame; run `lord task start <request> --intent <interpretation>` or `lord context <target> --intent ...`", severity=INFO, confidence=CONFIRMED))
+        return report
+    report.add(Finding(kind="request", summary=task.get("request") or "(not stated)", severity=INFO, confidence=CONFIRMED,
+                       evidence=[f"intent: {task.get('intent') or '(not stated)'}", f"target: {task.get('target') or '(none)'}"]))
+    for a in task.get("assumptions", []):
+        label = ("material" if a.get("material") else "cosmetic") + (", confirmed" if a.get("confirmed") else ", unconfirmed")
+        report.add(Finding(kind="assumption", summary=f"[{label}] {a['text']}", severity=WARN if (a.get("material") and not a.get("confirmed")) else INFO, confidence=CONFIRMED))
+    for q in task.get("questions", []):
+        report.add(Finding(kind="question", summary=("[resolved] " if q.get("resolved") else "[OPEN] ") + q["text"], severity=INFO if q.get("resolved") else WARN,
+                           confidence=CONFIRMED, evidence=[f"answer: {q['answer']}"] if q.get("answer") else [],
+                           consequence="" if q.get("resolved") else "consequential code edits are denied until this is resolved or the user answers"))
+    report.meta.update({"open_questions": open_questions(task), "unconfirmed_material": unconfirmed_material(task)})
+    return report
