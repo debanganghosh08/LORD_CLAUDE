@@ -13,7 +13,7 @@ different things. This protocol turns that posture into steps.
 | Step | What you do | Tooling / delegate |
 |---|---|---|
 | 1. Understand intent | Restate the goal and the proposed solution as two separate sentences. | |
-| 2. Inspect current codebase | Get the facts in one call. | `python -m lord brief <target> --intent "<goal>" [--name <Proposed>]`, or delegate to `lord-investigator` |
+| 2. Inspect current codebase | Get the facts in one call: unfinished work, durable memory (decisions, traps, conventions), the brief. | `python -m lord context <target> --intent "<goal>" [--name <Proposed>]`, or `python -m lord brief <target> --intent "<goal>"` when no memory or handoff exists, or delegate to `lord-investigator` |
 | 3. Validate user assumptions | Check every claim in the request against what exists ("we don't validate this anywhere"). | `def`, `refs`, `related`; open the files |
 | 4. Search existing solutions | Before any new symbol or file: reuse -> extend -> refactor -> create. | `reuse`, or delegate to `lord-reuse-auditor` |
 | 5. Trace root cause / impact | For bugs: trace from the symptom. For shared code: blast radius. | `trace`, `impact`, or delegate to `lord-impact-analyst` |
@@ -24,7 +24,7 @@ different things. This protocol turns that posture into steps.
 | 10. Implement | Keep to the plan; stop and say why if the diff must grow. | |
 | 11. Verify | Real results, not claims. | `verify --run`, or delegate to `lord-verification-reviewer` |
 | 12. Review diff | Files, lines, new symbols, bloat reasons, out-of-scope files. | `diff --scope` |
-| 13. Report | What was reused, what was new and why, what the user should double-check, what remains. | |
+| 13. Report | What was reused, what was new and why, what the user should double-check, what remains. Record durable discoveries; write a handoff if work remains. | `lord memory add`, `lord handoff write` (`lord-memory` skill) |
 
 Trivial, single-line, unambiguous edits compress steps 1-9 into one short
 pass. Step 3 (search) is never skipped for anything that touches a symbol

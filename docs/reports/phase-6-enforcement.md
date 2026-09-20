@@ -269,8 +269,8 @@ Manual test plan for the user (IDE or CLI, 10 minutes):
 
 ## Git
 
-Commit and push recorded in the Phase 7 report and the consolidated
-summary.
+Commit: `26b779a` "Phase 6: deterministic enforcement through Antigravity
+hooks" on `main`. Push: succeeded (`837e3fb..26b779a main -> main`).
 
 ## Next-phase readiness
 

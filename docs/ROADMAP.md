@@ -11,7 +11,7 @@ and a push. A phase is never marked complete if it is not.
 | 4 | Impact / root cause | relationship graph over the index; impact traversal (callers, callees, dependents, tests, config); root-cause chain report with explicit confidence |
 | 5 | Senior-engineer behaviour | specialist agents (reuse auditor, impact analyst, skeptical reviewer, verification reviewer); critical-review protocol; skills that bind the tooling to the workflow |
 | 6 | Enforcement | `.agents/hooks.json`: pre-edit gate (deny/ask/allow from session evidence), completion gate on failed verification (bounded), change-surface advisory; fail-safe launcher; hook test suite; live Antigravity findings |
-| 7 | Durable memory | structured `docs/state/`: decisions, discoveries, unresolved issues, conventions; session onboarding summary; compaction-friendly artifacts |
+| 7 | Durable memory | `docs/state/memory.jsonl` (7 categories, trust statuses, evidence, supersession, key conflicts, deterministic retrieval), `docs/state/handoff.json`, `lord context` assembly interface, `lord-memory` skill |
 | 8 | Distribution | Antigravity plugin (`plugin.json`), global installation/synchronisation, versioning, per-project bootstrap |
 | 9 | Benchmarking | repeatable task suite comparing models with and without LORD on bloat, reuse, root-cause accuracy and pushback quality |
 

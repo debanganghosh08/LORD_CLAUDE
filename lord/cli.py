@@ -11,6 +11,7 @@ Exit codes: 0 = ok/info, 1 = report contains an error finding, 2 = usage error.
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from pathlib import Path
 
@@ -56,7 +57,11 @@ COMMANDS: tuple[tuple[str, str, str | None], ...] = (
     ("graph", "inspect one node's edges in the relationship graph", "target"),
     ("brief", "one-call pre-edit synthesis: definition, callers, dependents, tests, config, consequences, reuse decision", "target"),
     ("verify", "completion check: change surface, tests covering the change, unresolved markers, project test/lint/build steps", None),
+    ("context", "high-signal context for a target and intent: handoff, memory, brief, matching skills, rules", "target"),
 )
+
+MEMORY_ACTIONS = ("query", "add", "supersede", "update", "check", "list")
+HANDOFF_ACTIONS = ("show", "write", "clear")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -97,6 +102,39 @@ def build_parser() -> argparse.ArgumentParser:
             p.add_argument("--base", default=None, help="compare against this ref")
             p.add_argument("--staged", action="store_true", help="verify the staged set only")
             p.add_argument("--timeout", type=int, default=600, help="seconds per step")
+        if name == "context":
+            p.add_argument("--intent", default="", help="what the task wants to achieve, in words")
+            p.add_argument("--name", action="append", default=[], help="proposed new symbol name (repeatable)")
+
+    memory = sub.add_parser("memory", help="durable engineering memory in docs/state/memory.jsonl")
+    _add_common(memory)
+    memory.add_argument("action", choices=MEMORY_ACTIONS)
+    memory.add_argument("id", nargs="?", default="", help="item id for supersede/update")
+    memory.add_argument("--text", default="", help="free-text terms to match")
+    memory.add_argument("--path", default="", help="related file or directory")
+    memory.add_argument("--symbol", default="", help="related symbol")
+    memory.add_argument("--category", default="", help="one of decision, fact, discovery, trap, convention, unresolved, verification")
+    memory.add_argument("--tag", action="append", default=[], help="tag (repeatable)")
+    memory.add_argument("--status", default="", help="filter (query) or set (add/update)")
+    memory.add_argument("--statement", default="", help="the fact, one line, at most 300 characters")
+    memory.add_argument("--evidence", action="append", default=[], help="file:line, command, commit, document (repeatable)")
+    memory.add_argument("--paths", action="append", default=[], help="related path (repeatable)")
+    memory.add_argument("--symbols", action="append", default=[], help="related symbol (repeatable)")
+    memory.add_argument("--key", default="", help="subject key; two current items with one key are a conflict")
+    memory.add_argument("--expires", default="", help="expiry date for temporary items (YYYY-MM-DD)")
+    memory.add_argument("--context", default="", help="owner or task context")
+    memory.add_argument("--all", action="store_true", help="include superseded, deprecated and expired items")
+    memory.add_argument("--limit", type=int, default=10)
+
+    handoff = sub.add_parser("handoff", help="compact record of unfinished work in docs/state/handoff.json")
+    _add_common(handoff)
+    handoff.add_argument("action", choices=HANDOFF_ACTIONS)
+    for field in ("doing", "verification"):
+        handoff.add_argument(f"--{field}", default="", help=f"{field} (string)")
+    for field in ("done", "remaining", "discovered", "decided", "next"):
+        handoff.add_argument(f"--{field}", action="append", default=[], help=f"{field} entry (repeatable)")
+    handoff.add_argument("--from-verify", action="store_true", help="attach the current `verify` verdict and outstanding items")
+    handoff.add_argument("--replace", action="store_true", help="replace the record instead of merging")
     return parser
 
 
@@ -166,6 +204,14 @@ def run(args: argparse.Namespace, root: Path) -> Report:
         from lord.review import brief
 
         return brief(config, index, args.target, intent=args.intent, names=args.name, depth=args.depth)
+    if args.command == "context":
+        from lord.context import assemble
+
+        return assemble(config, index, args.target, intent=args.intent, names=args.name)
+    if args.command == "memory":
+        return _memory(args, root)
+    if args.command == "handoff":
+        return _handoff(args, root, config, index)
     if args.command == "verify":
         from lord.review import verify
 
@@ -196,6 +242,55 @@ def _norm(path: str) -> str:
     return path.replace("\\", "/").removeprefix("./")
 
 
+def _memory(args: argparse.Namespace, root: Path) -> Report:
+    from lord.memory import Store
+    from lord.report import CONFIRMED, ERROR, OK, Finding
+
+    store = Store(root).load()
+    if args.action == "check":
+        return store.check()
+    if args.action in ("query", "list"):
+        return store.query(text=args.text, path=args.path, symbol=args.symbol, category=args.category, tag=args.tag[0] if args.tag else "",
+                           status=args.status, include_all=args.all or args.action == "list", limit=args.limit if args.action == "query" else 500)
+    report = Report(title=f"memory {args.action}", meta={"file": str(store.path)})
+    try:
+        if args.action == "add":
+            item = store.add(args.category, args.statement, args.status or "evidenced", evidence=args.evidence, paths=args.paths, symbols=args.symbols,
+                             tags=args.tag, key=args.key, expires=args.expires, context=args.context)
+        elif args.action == "supersede":
+            old = store.items.get(args.id)
+            item = store.add(args.category or (old.category if old else ""), args.statement, args.status or "evidenced", evidence=args.evidence,
+                             paths=args.paths, symbols=args.symbols, tags=args.tag, key=args.key, expires=args.expires, context=args.context, supersedes=args.id)
+        else:
+            item = store.update(args.id, status=args.status or None, evidence=args.evidence, statement=args.statement or None)
+    except ValueError as exc:
+        report.add(Finding(kind="memory", summary=f"rejected: {exc}", severity=ERROR, confidence=CONFIRMED))
+        return report
+    store.save()
+    report.add(Finding(kind=item.category, summary=f"{item.id} [{item.status}] {item.statement}", severity=OK, confidence=CONFIRMED, evidence=item.evidence,
+                       data={"id": item.id, "supersedes": item.supersedes}))
+    return report
+
+
+def _handoff(args: argparse.Namespace, root: Path, config, index) -> Report:
+    from lord.memory import clear_handoff, handoff_report, write_handoff
+    from lord.report import CONFIRMED, OK, Finding
+
+    if args.action == "show":
+        return handoff_report(root)
+    if args.action == "clear":
+        cleared = clear_handoff(root)
+        return Report(title="handoff", findings=[Finding(kind="handoff", summary="handoff cleared" if cleared else "no handoff to clear", severity=OK, confidence=CONFIRMED)])
+    fields = {name: getattr(args, name) for name in ("doing", "done", "remaining", "discovered", "decided", "next", "verification")}
+    if args.from_verify:
+        from lord.review import verify
+
+        meta = verify(config, index).to_dict()["meta"]
+        fields["verification"] = {"verdict": meta["verdict"], "outstanding": meta["outstanding"], "steps": meta["steps"]}
+    write_handoff(root, fields, replace=args.replace)
+    return handoff_report(root)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -212,7 +307,7 @@ def _record_activity(args: argparse.Namespace, root: Path) -> None:
     """Investigation commands leave evidence for the pre-edit hook."""
     from lord.session import INVESTIGATION_COMMANDS, record
 
-    if args.command not in INVESTIGATION_COMMANDS:
+    if args.command not in INVESTIGATION_COMMANDS or os.environ.get("LORD_HOOK_ACTIVE") == "1":
         return
     target = ""
     for attr in ("target", "name", "path", "query", "description"):

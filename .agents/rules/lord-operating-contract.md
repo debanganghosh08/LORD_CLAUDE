@@ -12,7 +12,10 @@ sequence), `lord-pre-edit-audit` (the checklist), `lord-reuse-audit`,
 `lord-impact-analysis`. Specialists (read-only, return structured findings):
 `lord-investigator`, `lord-reuse-auditor`, `lord-impact-analyst`,
 `lord-skeptical-reviewer`, `lord-verification-reviewer`. Start any non-trivial
-task with `python -m lord brief <target> --intent "<goal>"`.
+task with `python -m lord context <target> --intent "<goal>"` (unfinished
+work, durable memory, brief); record durable discoveries with `lord memory
+add` and leave `lord handoff` before stopping with work unfinished
+(`lord-memory` skill).
 
 ## 1. Exploration before edit
 - Never edit on an assumption about what a symbol does. Open its definition.
