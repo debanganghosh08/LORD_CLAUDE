@@ -226,4 +226,6 @@ after at least one recorded evaluation series exists and has been reviewed.
 
 ## Git
 
-Commit and push recorded in the final response and the next report.
+Commit: `a74a171` "Phase 8A: acceptance and dogfooding environment" on
+`main`. Push: succeeded (`d448684..a74a171 main -> main`). Nothing outside
+the repository was modified; no Antigravity configuration was changed.
