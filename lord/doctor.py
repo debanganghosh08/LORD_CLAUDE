@@ -99,6 +99,8 @@ def run_doctor(root: Path) -> Report:
         )
     )
 
+    report.extend(check_hooks(root))
+
     sd = state_dir(root)
     writable = os.access(root, os.W_OK)
     report.add(
@@ -121,3 +123,92 @@ def run_doctor(root: Path) -> Report:
         )
     )
     return report
+
+
+HOOK_EVENTS = ("PreToolUse", "PostToolUse", "PreInvocation", "PostInvocation", "Stop")
+TOOL_EVENTS = ("PreToolUse", "PostToolUse")
+MAX_HOOK_TIMEOUT = 600
+
+
+def validate_hooks_config(data: object) -> list[str]:
+    """Structural validation of a hooks.json document against the documented schema."""
+    errors: list[str] = []
+    if not isinstance(data, dict) or not data:
+        return ["hooks.json must be a non-empty object mapping hook names to configurations"]
+    for name, hook in data.items():
+        if not isinstance(hook, dict):
+            errors.append(f"{name}: must be an object")
+            continue
+        if "enabled" in hook and not isinstance(hook["enabled"], bool):
+            errors.append(f"{name}.enabled must be a boolean")
+        for event, value in hook.items():
+            if event == "enabled":
+                continue
+            if event not in HOOK_EVENTS:
+                errors.append(f"{name}: unknown event {event!r}")
+                continue
+            if not isinstance(value, list):
+                errors.append(f"{name}.{event} must be a list")
+                continue
+            handlers = []
+            for item in value:
+                if event in TOOL_EVENTS:
+                    if not isinstance(item, dict) or "hooks" not in item:
+                        errors.append(f"{name}.{event}: entries need a matcher and a hooks list")
+                        continue
+                    if not isinstance(item.get("matcher", ""), str):
+                        errors.append(f"{name}.{event}: matcher must be a string")
+                    handlers.extend(item.get("hooks") or [])
+                else:
+                    handlers.append(item)
+            for handler in handlers:
+                if not isinstance(handler, dict) or not isinstance(handler.get("command"), str) or not handler.get("command"):
+                    errors.append(f"{name}.{event}: handler needs a non-empty command string")
+                    continue
+                if handler.get("type", "command") != "command":
+                    errors.append(f"{name}.{event}: only type 'command' is supported")
+                timeout = handler.get("timeout", 30)
+                if not isinstance(timeout, int) or timeout <= 0 or timeout > MAX_HOOK_TIMEOUT:
+                    errors.append(f"{name}.{event}: timeout must be an integer in 1..{MAX_HOOK_TIMEOUT} seconds")
+    return errors
+
+
+def check_hooks(root: Path) -> list[Finding]:
+    """Findings about `.agents/hooks.json`: schema, resolvable commands, launcher copies."""
+    import json
+
+    path = root / ".agents" / "hooks.json"
+    if not path.is_file():
+        return [Finding(kind="hooks", summary="no .agents/hooks.json (enforcement not installed)", severity=INFO)]
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except ValueError as exc:
+        return [Finding(kind="hooks", summary=f"hooks.json is not valid JSON: {exc}", severity=ERROR, evidence=[str(path)],
+                        consequence="Antigravity will ignore or reject the file", recommendation="fix the JSON")]
+    errors = validate_hooks_config(data)
+    findings = []
+    if errors:
+        findings.append(Finding(kind="hooks", summary=f"hooks.json has {len(errors)} schema problem(s)", severity=ERROR, evidence=errors[:10]))
+    commands = []
+    for hook in data.values() if isinstance(data, dict) else []:
+        for event, value in (hook.items() if isinstance(hook, dict) else []):
+            if event == "enabled" or not isinstance(value, list):
+                continue
+            for item in value:
+                handlers = item.get("hooks", []) if event in TOOL_EVENTS and isinstance(item, dict) else [item]
+                commands.extend(h.get("command", "") for h in handlers if isinstance(h, dict))
+    missing = sorted({c.split()[0] for c in commands if c and shutil.which(c.split()[0]) is None})
+    if missing:
+        findings.append(Finding(kind="hooks", summary=f"hook command executable(s) not on PATH: {', '.join(missing)}", severity=ERROR,
+                                consequence="a PreToolUse hook that cannot start denies every matching tool call", recommendation="install it or disable the hook"))
+    launchers = [root / "lord_hook.py", root / ".agents" / "lord_hook.py"]
+    present = [p for p in launchers if p.is_file()]
+    if any("lord_hook" in c for c in commands):
+        if len(present) < 2:
+            findings.append(Finding(kind="hooks", summary="lord_hook.py launcher missing at root or .agents/", severity=ERROR, evidence=[str(p) for p in launchers],
+                                    consequence="the hook command cannot start from one of the two possible working directories"))
+        elif present[0].read_bytes() != present[1].read_bytes():
+            findings.append(Finding(kind="hooks", summary="the two lord_hook.py launcher copies differ", severity=WARN, recommendation="copy lord_hook.py over .agents/lord_hook.py"))
+    if not findings:
+        findings.append(Finding(kind="hooks", summary=f"hooks.json valid: {', '.join(sorted({e for h in data.values() for e in h if e != 'enabled'}))}", severity=OK, evidence=[str(path)]))
+    return findings

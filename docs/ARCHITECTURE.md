@@ -73,6 +73,9 @@ no model API. Exposed through one stable boundary: `python -m lord <command>`
 | `graph.py` | relationship graph over the index: defines, imports, calls, references, extends, implements, tests, configures; per-edge confidence | 4 |
 | `impact.py` | impact report (callers, indirect chains, callees, dependents, types, tests, config, boundary, consequences) and root-cause trace worksheet | 4 |
 | `review.py` | `brief` (one-call pre-edit synthesis) and `verify` (change surface, test coverage of the change, unresolved markers, detected test/lint/build steps with real results, verdict) | 5 |
+| `session.py` | transient session state in `.lord/session/`: investigation activity log, per-conversation counters and caches, hook diagnostics | 6 |
+| `hooks.py` | Antigravity hook decisions (pre-edit gate, completion gate, change-surface advisory) with fail-safe dispatch | 6 |
+| `lord_hook.py` (root and `.agents/`) | identical launchers: `python -m lord_hook <event>` from either working directory; never exits non-zero | 6 |
 
 Design rules for the core: prefer the standard library; deterministic and
 reproducible; Windows-first via `pathlib`; every analysis distinguishes
@@ -89,7 +92,7 @@ mechanisms (documented at antigravity.google/docs):
 | Rules | `.agents/rules/*.md` (frontmatter `trigger`, `description`; 12k chars max) | the always-on operating contract |
 | Skills | `.agents/skills/<name>/SKILL.md` (+ `scripts/`, `resources/`) | executable procedures: pre-edit audit, later reuse audit, impact, verification |
 | Custom subagents | `.agents/agents/<name>.md` (frontmatter `name`, `description`, `tools`, `model`, `subagent`) | narrowly scoped specialists returning structured findings |
-| Hooks | `.agents/hooks.json` (`PreToolUse`, `PostToolUse`, `PreInvocation`, `PostInvocation`, `Stop`; command handlers with JSON on stdin/stdout) | Phase 6 enforcement and quality gates |
+| Hooks | `.agents/hooks.json` (`PreToolUse`, `PostToolUse`, `PreInvocation`, `PostInvocation`, `Stop`; command handlers with JSON on stdin/stdout) | pre-edit gate, completion gate, change-surface advisory (section 7) |
 | Plugins | `.agents/plugins/<name>/plugin.json` or `~/.gemini/config/plugins/` | Phase 8 portable distribution |
 
 Rules hold principles and stay short. Skills hold procedures. Agents hold
@@ -175,7 +178,6 @@ replaces reading the source.
   equivalence.
 - Python call resolution is by name, not by type: `service.create` matches
   every `create`, and reports say so through scope/evidence lines.
-- Enforcement is advisory: no hooks are installed yet (Phase 6).
 - Antigravity behaviour is taken from its public documentation; the adapter
   has not been exercised inside a live Antigravity session in this phase.
 - Windows compatibility of Antigravity hooks (shell used for `command`

@@ -172,12 +172,25 @@ class _Visitor(ast.NodeVisitor):
     def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
         module = node.module or ""
         resolved = resolve_module(self.root, self.rel, module, node.level)
-        names = [a.name for a in node.names]
-        aliases = [a.asname or a.name for a in node.names]
-        self.out.imports.append(
-            Import(module=("." * node.level) + module, names=names, aliases=aliases, line=node.lineno,
-                   resolved=resolved, confidence=CONFIRMED if resolved else INFERRED, is_relative=node.level > 0)
-        )
+        names: list[str] = []
+        aliases: list[str] = []
+        for alias in node.names:
+            # `from pkg import submodule`: bind the submodule file itself, so
+            # dependents/coverage see pkg/submodule.py, not only pkg/__init__.py
+            sub = resolve_module(self.root, self.rel, f"{module}.{alias.name}" if module else alias.name, node.level)
+            if sub and sub != resolved and alias.name != "*":
+                self.out.imports.append(
+                    Import(module=("." * node.level) + (f"{module}.{alias.name}" if module else alias.name), names=[], aliases=[alias.asname or alias.name],
+                           line=node.lineno, resolved=sub, confidence=CONFIRMED, is_relative=node.level > 0)
+                )
+                continue
+            names.append(alias.name)
+            aliases.append(alias.asname or alias.name)
+        if names or not node.names:
+            self.out.imports.append(
+                Import(module=("." * node.level) + module, names=names, aliases=aliases, line=node.lineno,
+                       resolved=resolved, confidence=CONFIRMED if resolved else INFERRED, is_relative=node.level > 0)
+            )
 
     # -- uses ------------------------------------------------------------------
     def visit_Call(self, node: ast.Call) -> None:

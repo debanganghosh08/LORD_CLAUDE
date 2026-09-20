@@ -65,10 +65,15 @@ def test_graph_resolves_calls_through_import_bindings_and_same_file(graph):
     assert _edges(graph, sym_node("web/app.js::render"), "out", "calls") == {(sym_node("web/lib/helper.js::helper"), INFERRED)}
 
 
-def test_graph_resolution_is_receiver_aware(graph):
+def test_graph_resolution_is_receiver_aware(graph, index):
     execute = sym_node("pkg/jobs.py::execute")
-    # `r.run(cmd)` through a module alias is confirmed; `subprocess.run(cmd)` must not link to pkg/runner.py::run
+    # `r.run(cmd)` and `runner.run(cmd)` through module aliases are confirmed; `subprocess.run(cmd)` must not link to pkg/runner.py::run
     assert _edges(graph, execute, "out", "calls") == {(sym_node("pkg/runner.py::run"), CONFIRMED)}
+    assert len(graph.outgoing(execute, ("calls",))) == 2
+    # `from pkg import runner` binds the submodule file, not only pkg/__init__.py
+    resolved = {i.module: i.resolved for i in index.extraction_for("pkg/jobs.py").imports}
+    assert resolved["pkg.runner"] == "pkg/runner.py" and "pkg" not in resolved
+    assert [f for f, _ in index.importers_of("pkg/runner.py")] == ["pkg/jobs.py", "pkg/jobs.py"]
     # `service.create(...)` with an unknown receiver may only match methods named create (inferred)
     handler = sym_node("pkg/users.py::handler")
     assert (sym_node("pkg/users.py::UserService.create"), INFERRED) in _edges(graph, handler, "out", "calls")

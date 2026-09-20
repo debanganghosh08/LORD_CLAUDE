@@ -1,0 +1,31 @@
+{
+  "lord": {
+    "enabled": true,
+    "PreToolUse": [
+      {
+        "matcher": "write_to_file|replace_file_content|multi_replace_file_content",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python -m lord_hook pre-tool",
+            "timeout": 20
+          }
+        ]
+      }
+    ],
+    "PostInvocation": [
+      {
+        "type": "command",
+        "command": "python -m lord_hook post-invocation",
+        "timeout": 30
+      }
+    ],
+    "Stop": [
+      {
+        "type": "command",
+        "command": "python -m lord_hook stop --timeout 540",
+        "timeout": 600
+      }
+    ]
+  }
+}

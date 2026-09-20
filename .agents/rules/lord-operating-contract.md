@@ -20,6 +20,10 @@ task with `python -m lord brief <target> --intent "<goal>"`.
   caller across the whole repository, not just the open file.
 - Use `python -m lord <command>` where available and ripgrep otherwise. Keep a
   short evidence trail: what you searched, what you found.
+- The pre-edit gate enforces this: writing a code file is denied until a LORD
+  investigation (`brief`, `refs`, `impact`, `reuse`) named that file or its
+  symbols in this session; a new code file needs a `reuse` or `brief` first.
+  Edits of three lines or fewer, tests, docs and config are not gated.
 
 ## 2. Reuse before creation
 Strict decision order: REUSE existing -> EXTEND existing -> REFACTOR into the

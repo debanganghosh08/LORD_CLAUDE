@@ -22,7 +22,10 @@ from lord.paths import state_dir
 from lord.report import INFO, OK, WARN, Finding, Report
 from lord.symbols import Extraction, Symbol
 
-INDEX_VERSION = 2  # 2: Ref.receiver added (Phase 4); older indexes are rebuilt
+# Bump whenever an extractor's output changes: cached extractions are reused by
+# content hash, so only a version change forces re-extraction of unchanged files.
+# 2: Ref.receiver (Phase 4); 3: `from pkg import submodule` binds the submodule file (Phase 6)
+INDEX_VERSION = 3
 INDEX_FILENAME = "index.json"
 
 

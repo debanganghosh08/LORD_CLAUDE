@@ -17,13 +17,20 @@ LORD tooling reads and writes only inside the resolved workspace root
 (`~/.gemini`, `~/.claude`) or sibling directories. Reports contain
 workspace-relative paths and tool availability, never environment dumps.
 
-## Hooks and enforcement (from Phase 6)
+## Hooks and enforcement
 
-- Hooks may block, warn or inject guidance. They never delete, revert or
-  rewrite user code.
-- Every hook has a bounded timeout and a defined failure mode: on internal
-  error it logs and allows, it never silently blocks work or fakes a pass.
-- Hooks run local scripts only; no network.
+- Hooks may deny, ask, warn or inject guidance. They never delete, revert or
+  rewrite user code; they read state and append diagnostics under
+  `.lord/session/`.
+- Every hook has a bounded timeout (20 s pre-edit, 30 s advisory, 600 s
+  completion with an internal budget) and a defined failure mode: on any
+  internal error it prints the permissive default, exits 0 and logs the
+  exception. A LORD bug must never prevent the user from editing.
+- `LORD_HOOKS_DISABLED=1` turns decisions off; `"enabled": false` in
+  `.agents/hooks.json` turns the hooks off entirely.
+- Hooks run local Python only; no network, no credentials.
+- Hard denials fire only on plain facts (no investigation ran; tests
+  failed). Heuristic signals are advisory.
 
 ## Provider and IDE state
 

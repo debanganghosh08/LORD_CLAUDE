@@ -10,7 +10,7 @@ and a push. A phase is never marked complete if it is not.
 | 3 | Reuse-first / anti-bloat | reuse discovery by name, behaviour and structure; duplicate candidates with evidence; change-surface measurement (files, lines, new files, new symbols, unrelated changes); bloat signal, not a size limit |
 | 4 | Impact / root cause | relationship graph over the index; impact traversal (callers, callees, dependents, tests, config); root-cause chain report with explicit confidence |
 | 5 | Senior-engineer behaviour | specialist agents (reuse auditor, impact analyst, skeptical reviewer, verification reviewer); critical-review protocol; skills that bind the tooling to the workflow |
-| 6 | Enforcement | `.agents/hooks.json` quality gates (pre-edit audit evidence, change-surface check on stop, verification before completion); safe failure behaviour; Windows verification |
+| 6 | Enforcement | `.agents/hooks.json`: pre-edit gate (deny/ask/allow from session evidence), completion gate on failed verification (bounded), change-surface advisory; fail-safe launcher; hook test suite; live Antigravity findings |
 | 7 | Durable memory | structured `docs/state/`: decisions, discoveries, unresolved issues, conventions; session onboarding summary; compaction-friendly artifacts |
 | 8 | Distribution | Antigravity plugin (`plugin.json`), global installation/synchronisation, versioning, per-project bootstrap |
 | 9 | Benchmarking | repeatable task suite comparing models with and without LORD on bloat, reuse, root-cause accuracy and pushback quality |

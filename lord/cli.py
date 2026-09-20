@@ -203,4 +203,22 @@ def main(argv: list[str] | None = None) -> int:
     # Windows consoles default to a legacy code page; reports are UTF-8.
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-    return _emit(run(args, root), args.json)
+    report = run(args, root)
+    _record_activity(args, root)
+    return _emit(report, args.json)
+
+
+def _record_activity(args: argparse.Namespace, root: Path) -> None:
+    """Investigation commands leave evidence for the pre-edit hook."""
+    from lord.session import INVESTIGATION_COMMANDS, record
+
+    if args.command not in INVESTIGATION_COMMANDS:
+        return
+    target = ""
+    for attr in ("target", "name", "path", "query", "description"):
+        value = getattr(args, attr, None)
+        if isinstance(value, str) and value:
+            target = value
+            break
+    names = getattr(args, "name", None)
+    record(root, args.command, target, {"names": names} if isinstance(names, list) and names else None)

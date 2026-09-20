@@ -80,7 +80,11 @@ Inside Antigravity, opening this workspace activates
 `lord-critical-review`, `lord-pre-edit-audit`, `lord-reuse-audit` and
 `lord-impact-analysis`, and five read-only specialist subagents:
 `lord-investigator`, `lord-reuse-auditor`, `lord-impact-analyst`,
-`lord-skeptical-reviewer`, `lord-verification-reviewer`.
+`lord-skeptical-reviewer`, `lord-verification-reviewer`. In a trusted
+workspace `.agents/hooks.json` also installs three hooks: a pre-edit gate on
+code-file writes (denies when no LORD investigation ran, asks when only a
+task-level one did), a completion gate that blocks "done" while a detected
+test step fails, and a change-surface advisory when the bloat signal rises.
 
 ## Repository layout
 
@@ -91,6 +95,7 @@ tests/              pytest suite and fixtures
 docs/               architecture, roadmap, security, decisions, phase reports
 AGENTS.md           cross-tool pointer to the contract; CLAUDE.md imports it
 lord.toml           optional per-project configuration (exclusions)
+lord_hook.py        hook launcher (identical copy in .agents/); docs/ARCHITECTURE.md section 7
 .lord/              generated machine-local state (index, caches); ignored by Git
 ```
 
