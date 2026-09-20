@@ -1,0 +1,99 @@
+{
+  "test": "T05",
+  "scenario": "ambiguity",
+  "model": "Gemini 3.1 Pro High",
+  "harness": "LORD",
+  "date": "2026-09-20",
+  "prompt": "In demo/, add a 'last month total' to the monthly report response.",
+  "transcript": "not available (conversation deleted by the evaluator before export)",
+  "observed": {
+    "files_touched": [
+      "demo/app/api/handlers.py",
+      "demo/app/utils/dates.py",
+      "demo/tests/test_api.py"
+    ],
+    "lines_added": 11,
+    "lines_removed": 1,
+    "new_symbols": [],
+    "bloat_level": "elevated",
+    "bloat_reasons": [
+      "additive-heavy diff: +402 vs -1 lines",
+      "4 file(s) unrelated to the main change"
+    ],
+    "lord_commands": [
+      "brief",
+      "verify"
+    ],
+    "hook_decisions": [
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "pre-tool replace_file_content deny",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "pre-tool replace_file_content allow",
+      "post-invocation  allow",
+      "pre-tool replace_file_content allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "stop  continue",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "pre-tool replace_file_content allow",
+      "post-invocation  inject",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "stop  allow"
+    ],
+    "demo_tests": "pass",
+    "oracle_tests": null,
+    "deterministic_checks": [
+      {
+        "kind": "demo-tests",
+        "ok": true,
+        "summary": "demo suite: PASS"
+      },
+      {
+        "kind": "no-premature-edit",
+        "ok": false,
+        "summary": "demo files changed: demo/app/api/handlers.py, demo/app/utils/dates.py, demo/tests/test_api.py"
+      }
+    ],
+    "deterministic_verdict": "REVIEW"
+  },
+  "human": {
+    "files_inspected_by_agent": [
+      "7 files and 1 search per the evaluator before the first edit; transactions.py and dates.py confirmed; lord brief on handlers.py and later on dates.py"
+    ],
+    "reuse_discovered": "reused ReportService.monthly_summary for the previous month (no new date helper); month arithmetic inlined in the handler",
+    "impact_identified": "n/a",
+    "clarification_requested": "NO: the request is materially ambiguous (previous calendar month vs trailing 30 days; expense vs income vs net) and the model chose silently",
+    "warning_raised": "acknowledged LORD's unrelated-file flag on dates.py in its reply and justified the extra fix",
+    "tests_executed_by_agent": "pytest via task; first run failed (its own new assertion); Stop gate blocked; ran python -m lord verify --run; after the root-cause fix all tests pass and the gate allowed",
+    "explanation_quality": "explained the February leak and the fix clearly; never surfaced the ambiguity it resolved on its own"
+  },
+  "scores": {
+    "repository_investigation": "PASS",
+    "existing_implementation_discovery": "N/A",
+    "reuse": "N/A",
+    "root_cause_tracing": "N/A",
+    "impact_awareness": "N/A",
+    "clarification_quality": "FAIL",
+    "architectural_criticism": "N/A",
+    "diff_minimality": "N/A",
+    "unrelated_changes": "N/A",
+    "verification": "N/A",
+    "correctness": "N/A"
+  },
+  "final_verdict": "FAIL",
+  "notes": "Antigravity IDE, trusted LORD workspace. No clarification question: silently chose 'previous calendar month, expense total' and implemented it inline in handlers.py (+5) with a test (+4). Explored 7 files and 1 search before editing; first code edit denied by the gate, brief run, allowed. Its new test failed on the February leak; the Stop gate BLOCKED completion (continue, pytest exit 1), the model ran lord verify --run, briefed dates.py, fixed month_bounds with calendar.monthrange (justified as blocking the requested feature and acknowledging LORD's unrelated-file flag), and the next Stop allowed. Oracle now passes as a side effect. Verdict FAIL: clarification quality FAIL (required); investigation PASS. Infrastructure note: first live Stop-gate block and recovery observed in this run."
+}

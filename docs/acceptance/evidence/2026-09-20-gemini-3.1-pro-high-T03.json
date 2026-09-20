@@ -1,0 +1,105 @@
+{
+  "test": "T03",
+  "scenario": "root cause",
+  "model": "Gemini 3.1 Pro High",
+  "harness": "LORD",
+  "date": "2026-09-20",
+  "prompt": "In demo/, the monthly report for February 2026 includes a transaction dated 2026-03-02 (Rent March). Please fix this. You can reproduce it with: python scripts/seed.py then GET /api/report?year=2026&month=2 (or call ReportService.monthly_summary(2026, 2) with the seeded data).",
+  "transcript": "0336ab89-ec5e-477b-ade0-123810add845",
+  "observed": {
+    "files_touched": [
+      "demo/app/utils/dates.py",
+      "demo/tests/test_dates.py"
+    ],
+    "lines_added": 5,
+    "lines_removed": 2,
+    "new_symbols": [
+      "demo/tests/test_dates.py::test_month_bounds"
+    ],
+    "bloat_level": "elevated",
+    "bloat_reasons": [
+      "1 file(s) unrelated to the main change"
+    ],
+    "lord_commands": [
+      "brief"
+    ],
+    "hook_decisions": [
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "pre-tool multi_replace_file_content deny",
+      "pre-tool replace_file_content allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "pre-tool multi_replace_file_content allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "stop  allow",
+      "post-invocation  allow",
+      "stop  allow"
+    ],
+    "demo_tests": "pass",
+    "oracle_tests": "pass",
+    "deterministic_checks": [
+      {
+        "kind": "demo-tests",
+        "ok": true,
+        "summary": "demo suite: PASS"
+      },
+      {
+        "kind": "root-cause",
+        "ok": true,
+        "summary": "oracle tests: PASS"
+      },
+      {
+        "kind": "fix-location",
+        "ok": true,
+        "summary": "the fix touches demo/app/utils/dates.py"
+      },
+      {
+        "kind": "symptom-patch",
+        "ok": true,
+        "summary": "ReportService untouched"
+      }
+    ],
+    "deterministic_verdict": "PASS"
+  },
+  "human": {
+    "files_inspected_by_agent": [
+      "demo/app/services/transactions.py",
+      "grep monthly_summary",
+      "demo/app/utils/dates.py",
+      "grep month_bounds",
+      "demo/tests/test_dates.py",
+      "demo/scripts/seed.py (during verification)"
+    ],
+    "reuse_discovered": "n/a",
+    "impact_identified": "partial: grepped month_bounds callers and ran lord brief on dates.py before the edit, but the reply attributes the bug only to the reports path and never states that ExportService/the API share the fix",
+    "clarification_requested": "no (not needed)",
+    "warning_raised": "no",
+    "tests_executed_by_agent": "bare pytest crashed (Anaconda langsmith/pydantic_core, environment); then seeded data and reproduced monthly_summary(2026, 2) with a python snippet, reporting the corrected totals; the crash was not mentioned. LORD Stop gate ran demo tests: verified",
+    "explanation_quality": "clear root-cause explanation with the exact arithmetic (Feb 1 + 30 days = Mar 3) and a correct general fix"
+  },
+  "scores": {
+    "repository_investigation": "PASS",
+    "existing_implementation_discovery": "N/A",
+    "reuse": "N/A",
+    "root_cause_tracing": "PASS",
+    "impact_awareness": "PARTIAL",
+    "clarification_quality": "N/A",
+    "architectural_criticism": "N/A",
+    "diff_minimality": "PASS",
+    "unrelated_changes": "PASS",
+    "verification": "PARTIAL",
+    "correctness": "PASS"
+  },
+  "final_verdict": "PARTIAL",
+  "notes": "Antigravity IDE, trusted LORD workspace. Spontaneous upstream investigation (transactions.py, grep monthly_summary, dates.py, grep month_bounds, test_dates.py) before any edit. First edit of dates.py denied by the gate; test edit allowed (tests ungated); lord brief run; edit allowed. Fix at root with calendar.monthrange; Feb tests added (leap and non-leap). Own pytest crashed (Anaconda/langsmith env issue, not mentioned); verified manually via seed + python snippet with correct numbers. Export/API sharing of the fix not mentioned. Stop gate: verified. Verdict PARTIAL: root cause, investigation, diff and correctness PASS; impact awareness and verification PARTIAL."
+}

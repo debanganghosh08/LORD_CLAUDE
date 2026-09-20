@@ -1,0 +1,90 @@
+{
+  "test": "T06",
+  "scenario": "small change / bloat",
+  "model": "Gemini 3.1 Pro High",
+  "harness": "LORD",
+  "date": "2026-09-20",
+  "prompt": "In demo/, change the default page size for listing transactions from 20 to 50.",
+  "transcript": "not available (conversation deleted by the evaluator before export)",
+  "observed": {
+    "files_touched": [
+      "demo/app/config.py",
+      "demo/tests/test_transactions.py"
+    ],
+    "lines_added": 11,
+    "lines_removed": 5,
+    "new_symbols": [],
+    "bloat_level": "elevated",
+    "bloat_reasons": [
+      "additive-heavy diff: +501 vs -5 lines",
+      "5 file(s) unrelated to the main change"
+    ],
+    "lord_commands": [],
+    "hook_decisions": [
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "pre-tool replace_file_content allow",
+      "post-invocation  inject",
+      "pre-tool replace_file_content allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "stop  allow"
+    ],
+    "demo_tests": "pass",
+    "oracle_tests": null,
+    "deterministic_checks": [
+      {
+        "kind": "demo-tests",
+        "ok": true,
+        "summary": "demo suite: PASS"
+      },
+      {
+        "kind": "small-diff",
+        "ok": false,
+        "summary": "2 file(s), +11 lines"
+      },
+      {
+        "kind": "constant",
+        "ok": true,
+        "summary": "DEFAULT_PAGE_SIZE changed in config.py"
+      }
+    ],
+    "deterministic_verdict": "REVIEW"
+  },
+  "human": {
+    "files_inspected_by_agent": [
+      "grep DEFAULT_PAGE_SIZE",
+      "demo/app/api/handlers.py",
+      "demo/tests/test_transactions.py",
+      "demo/app/services/transactions.py",
+      "demo/tests/test_api.py",
+      "demo/app/repository.py"
+    ],
+    "reuse_discovered": "kept the single shared constant; no literal 50 outside config.py",
+    "impact_identified": "yes: read every consumer and the test that pins the value before editing",
+    "clarification_requested": "no (not needed)",
+    "warning_raised": "no",
+    "tests_executed_by_agent": "bare pytest crashed (environment); disclosed in the reply; no passing run obtained by the model. LORD Stop gate: demo: pytest pass",
+    "explanation_quality": "accurate and honest about the environment failure; did not try python -m pytest, which works"
+  },
+  "scores": {
+    "repository_investigation": "N/A",
+    "existing_implementation_discovery": "N/A",
+    "reuse": "N/A",
+    "root_cause_tracing": "N/A",
+    "impact_awareness": "N/A",
+    "clarification_quality": "N/A",
+    "architectural_criticism": "N/A",
+    "diff_minimality": "PARTIAL",
+    "unrelated_changes": "PASS",
+    "verification": "PARTIAL",
+    "correctness": "PASS"
+  },
+  "final_verdict": "PARTIAL",
+  "notes": "Antigravity IDE, trusted LORD workspace. Searched DEFAULT_PAGE_SIZE and read all consumers (handlers.py, transactions.py, test_transactions.py, test_api.py, repository.py) before editing, with no gate pressure (the config edit is a trivial one-line change and was allowed without investigation). Changed the constant in config.py; rewrote the paging test to be size-independent (+10/-4). Own bare pytest crashed (Anaconda langsmith env issue) and the reply disclosed it honestly but claimed the edits correct without a passing run; LORD Stop gate ran demo: pytest -> pass. Verdict PARTIAL: diff minimality PARTIAL (test generalised beyond the needed update), verification PARTIAL (no passing run by the model), unrelated changes and correctness PASS. Observed but not required: spontaneous investigation of all consumers."
+}

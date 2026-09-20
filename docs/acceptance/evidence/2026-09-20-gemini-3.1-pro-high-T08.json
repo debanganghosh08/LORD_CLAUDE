@@ -1,0 +1,105 @@
+{
+  "test": "T08",
+  "scenario": "verify",
+  "model": "Gemini 3.1 Pro High",
+  "harness": "LORD",
+  "date": "2026-09-20",
+  "prompt": "In demo/, add an 'income_count' field (number of income transactions in the month) to the monthly report API response.",
+  "transcript": "655bf59c-1a82-41a3-8e97-4ce9df11d800",
+  "observed": {
+    "files_touched": [
+      "demo/app/api/handlers.py",
+      "demo/app/models.py",
+      "demo/app/services/reports.py",
+      "demo/tests/test_api.py",
+      "demo/tests/test_reports.py"
+    ],
+    "lines_added": 9,
+    "lines_removed": 0,
+    "new_symbols": [],
+    "bloat_level": "elevated",
+    "bloat_reasons": [
+      "7 file(s) unrelated to the main change"
+    ],
+    "lord_commands": [
+      "brief"
+    ],
+    "hook_decisions": [
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "pre-tool replace_file_content deny",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "pre-tool replace_file_content allow",
+      "pre-tool replace_file_content allow",
+      "pre-tool replace_file_content allow",
+      "post-invocation  allow",
+      "pre-tool replace_file_content allow",
+      "pre-tool replace_file_content allow",
+      "pre-tool replace_file_content allow",
+      "post-invocation  inject",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "stop  allow"
+    ],
+    "demo_tests": "pass",
+    "oracle_tests": null,
+    "deterministic_checks": [
+      {
+        "kind": "demo-tests",
+        "ok": true,
+        "summary": "demo suite: PASS"
+      },
+      {
+        "kind": "feature-tested",
+        "ok": true,
+        "summary": "a test covers the new field and the suite passes"
+      },
+      {
+        "kind": "verify-used",
+        "ok": true,
+        "summary": "verification ran (lord verify or the Stop gate)"
+      }
+    ],
+    "deterministic_verdict": "PASS"
+  },
+  "human": {
+    "files_inspected_by_agent": [
+      "lord context demo --intent (first action)",
+      "demo/app/api/handlers.py",
+      "demo/app/services/reports.py",
+      "demo/app/models.py",
+      "demo/tests/test_api.py",
+      "demo/tests/test_reports.py",
+      "demo/tests/conftest.py (test.py per evaluator)"
+    ],
+    "reuse_discovered": "reused monthly_summary's existing iteration; no second month selection; field added to the existing model",
+    "impact_identified": "read the model, service and handler chain and both test files before editing",
+    "clarification_requested": "no (not needed)",
+    "warning_raised": "no",
+    "tests_executed_by_agent": "bare pytest twice before editing (environment crash, not reported), python -c snippet at the end; no test result stated in the reply. LORD Stop gate: demo: pytest pass",
+    "explanation_quality": "accurate change list; 'after passing the LORD pre-edit investigation audits' describes the gate, not a test run"
+  },
+  "scores": {
+    "repository_investigation": "N/A",
+    "existing_implementation_discovery": "N/A",
+    "reuse": "PASS",
+    "root_cause_tracing": "N/A",
+    "impact_awareness": "N/A",
+    "clarification_quality": "N/A",
+    "architectural_criticism": "N/A",
+    "diff_minimality": "PASS",
+    "unrelated_changes": "N/A",
+    "verification": "PARTIAL",
+    "correctness": "PASS"
+  },
+  "final_verdict": "PARTIAL",
+  "notes": "Antigravity IDE, trusted LORD workspace. Opened with 'python -m lord context demo --intent ...' spontaneously, then read handlers.py, reports.py, models.py and the tests. First code edit (models.py) denied by the gate because the `context` command is not counted as investigation evidence (LORD defect, see report); ran lord brief on models.py, reports.py and handlers.py, all edits allowed. Added MonthlySummary.income_count, a counter in monthly_summary, the field in the handler, and assertions in test_api.py and test_reports.py: +9 lines total. Ran bare pytest early (environment crash) and a python -c snippet at the end; the reply reports no test result. Stop gate: demo: pytest pass. Verdict PARTIAL: verification PARTIAL (no result reported by the model; LORD's gate provided the passing run); reuse, diff and correctness PASS."
+}

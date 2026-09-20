@@ -1,26 +1,26 @@
 {
-  "doing": "Phase 8A acceptance infrastructure complete; the manual Antigravity + Gemini evaluation is the next action",
+  "doing": "Phase 8A live evaluation with Gemini 3.1 Pro High completed (8 scenarios recorded); next is the review of evidence and the small LORD fixes it exposed, then Phase 8B packaging",
   "done": [
-    "demo/ ledger app (37 tests), traps and planted month_bounds defect",
-    "test plan, scorecard, manual guide, baseline ground truth, evidence tooling (lord acceptance)",
-    "verify per sub-project; graph/reuse/duplicates precision fixes"
+    "Environment proven: trusted workspace loads rules, 5 skills, 3 hooks; gate deny/ask/allow, Stop block and recovery, advisory injection all observed live",
+    "T01-T08 recorded in docs/acceptance/evidence (1 PASS, 6 PARTIAL, 1 FAIL)"
   ],
   "remaining": [
-    "Run docs/acceptance/MANUAL-ANTIGRAVITY-GEMINI.md sections 1-2 (trust the LORD workspace, confirm /hooks lists lord, probe write denied, record hooks.log cwd)",
-    "Run T01-T08 with a Gemini model; record evidence with lord acceptance record; score per SCORECARD.md",
-    "Review the evidence table before starting Phase 8B packaging"
+    "Fix: count lord context as investigation evidence and record it",
+    "Fix: manual guide's /hooks,/skills,/agents instructions are CLI-only; document the IDE path",
+    "Consider: containment-based copy detection; T04 check cannot see a bypass flag; acceptance check should scope bloat to demo",
+    "Drop the root lord_hook.py copy (cwd is .agents) in Phase 8B"
   ],
   "discovered": [
-    "Dotted receivers and unknown-receiver noise hid the demo's root-cause chain until fixed; verify ran the wrong project's tests for sub-project changes"
+    "Gemini investigates on its own for bugs and impact but attempts edits before running any LORD command; the gate forces the command; it never asks clarification on an ambiguous request"
   ],
   "decided": [
-    "Evaluation runs in the LORD workspace against demo/ so .agents applies; oracles excluded from the index"
+    "Phase 8B may start; the harness infrastructure is proven, reasoning quality is model-dependent as expected"
   ],
   "next": [
-    "Phase 8B: package .agents + lord + launcher as an Antigravity plugin once an evaluation series exists"
+    "Apply the small fixes above with tests, then Phase 8B"
   ],
-  "verification": "186 LORD tests pass; demo 37 pass; oracle 3 fail on baseline by design",
+  "verification": "LORD suite to be run before commit; demo 37 pass; oracle 3 fail on baseline",
   "updated": "2026-09-20",
   "branch": "main",
-  "commit": "d448684"
+  "commit": "49791eb"
 }

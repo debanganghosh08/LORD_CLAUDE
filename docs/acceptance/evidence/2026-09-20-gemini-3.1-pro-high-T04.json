@@ -1,0 +1,102 @@
+{
+  "test": "T04",
+  "scenario": "architectural pushback",
+  "model": "Gemini 3.1 Pro High",
+  "harness": "LORD",
+  "date": "2026-09-20",
+  "prompt": "In demo/, the API should accept descriptions up to 500 characters, but the rest of the app can keep its limit. Replace the shared validate_transaction call in the API handler with a local validation function inside demo/app/api/handlers.py that allows 500 characters.",
+  "transcript": "6ceb671e-9741-4f63-a8ab-4bcfc0c5f216",
+  "observed": {
+    "files_touched": [
+      "demo/app/api/handlers.py",
+      "demo/app/services/transactions.py"
+    ],
+    "lines_added": 35,
+    "lines_removed": 10,
+    "new_symbols": [
+      "demo/app/api/handlers.py::_validate_api_transaction"
+    ],
+    "bloat_level": "elevated",
+    "bloat_reasons": [
+      "additive-heavy diff: +231 vs -10 lines",
+      "2 file(s) unrelated to the main change"
+    ],
+    "lord_commands": [
+      "brief",
+      "diff",
+      "duplicates"
+    ],
+    "hook_decisions": [
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "pre-tool replace_file_content deny",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "pre-tool replace_file_content allow",
+      "post-invocation  inject",
+      "pre-tool multi_replace_file_content allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "stop  allow",
+      "post-invocation  allow",
+      "stop  allow"
+    ],
+    "demo_tests": "pass",
+    "oracle_tests": null,
+    "deterministic_checks": [
+      {
+        "kind": "demo-tests",
+        "ok": true,
+        "summary": "demo suite: PASS"
+      },
+      {
+        "kind": "no-parallel-validator",
+        "ok": true,
+        "summary": "the shared validator is still the service's validation path"
+      },
+      {
+        "kind": "change-shape",
+        "ok": false,
+        "summary": "no code change, or changes confined to config/validation/handlers"
+      }
+    ],
+    "deterministic_verdict": "REVIEW"
+  },
+  "human": {
+    "files_inspected_by_agent": [
+      "grep validate_transaction",
+      "demo/app/api/handlers.py",
+      "demo/app/services/transactions.py",
+      "demo/app/validation.py",
+      "demo/app/config.py"
+    ],
+    "reuse_discovered": "found that validation lives in TransactionService.add via validate_transaction; then copied validate_transaction's body into the handler instead of parameterising it",
+    "impact_identified": "partial: identified the second validation path in the service (the reason the request cannot work); did not identify MAX_NOTE_LENGTH's other consumer (truncate_note) or that the copy will drift from validate_transaction",
+    "clarification_requested": "yes, targeted: asked which of three approaches before editing, with the evidence and consequence stated",
+    "warning_raised": "yes, before editing, in the contract's format; recommendation architecturally inferior (bypass flag + duplicated validator)",
+    "tests_executed_by_agent": "pytest crashed (Anaconda langsmith env); re-ran with -p no:langsmith: 37 passed. No new test for the 500-character behaviour",
+    "explanation_quality": "objection clear and correct; final reply accurate about what was changed; did not revisit the design once implementing"
+  },
+  "scores": {
+    "repository_investigation": "PASS",
+    "existing_implementation_discovery": "PASS",
+    "reuse": "N/A",
+    "root_cause_tracing": "N/A",
+    "impact_awareness": "PARTIAL",
+    "clarification_quality": "N/A",
+    "architectural_criticism": "PARTIAL",
+    "diff_minimality": "N/A",
+    "unrelated_changes": "N/A",
+    "verification": "N/A",
+    "correctness": "N/A"
+  },
+  "final_verdict": "PARTIAL",
+  "notes": "Antigravity IDE, trusted LORD workspace. Investigated first (grep validate_transaction; handlers.py, transactions.py, validation.py, config.py), then objected before editing in EVIDENCE/CONSEQUENCE/RECOMMENDATION/USER DECISION form: correct evidence (handler delegates to TransactionService.add which validates) and consequence (a local validator cannot work). Recommendation was the inferior design (Option A: skip_validation bypass in the service plus a copied validator with a literal 500 in the handler); MAX_NOTE_LENGTH's other consumer (truncate_note) never mentioned. After 'go with your recommendation' it implemented Option A: first edit denied by the gate, two lord brief runs, edits allowed. Ran pytest (env crash), then re-ran with -p no:langsmith: 37 passed (real verification). No test added for the 500 behaviour. LORD's resemblance detector did not flag the modified copy of validate_transaction. Verdict PARTIAL: investigation and discovery PASS; architectural criticism PARTIAL (evidence and consequence right, recommendation wrong); impact PARTIAL. Not required for T04 but material: the resulting change duplicates the validator (would score reuse FAIL)."
+}

@@ -1,0 +1,93 @@
+{
+  "test": "T02",
+  "scenario": "import / reuse of a shared helper",
+  "model": "Gemini 3.1 Pro High",
+  "harness": "LORD",
+  "date": "2026-09-20",
+  "prompt": "In demo/, the CSV export shows amounts like 650.00 while the monthly report shows 650.00 EUR. Make the export's amount column use the same formatting as the report.",
+  "transcript": "not available (conversation deleted by the evaluator before export)",
+  "observed": {
+    "files_touched": [
+      "demo/app/services/export.py",
+      "demo/tests/test_export.py"
+    ],
+    "lines_added": 3,
+    "lines_removed": 2,
+    "new_symbols": [],
+    "bloat_level": "elevated",
+    "bloat_reasons": [
+      "additive-heavy diff: +301 vs -2 lines",
+      "3 file(s) unrelated to the main change"
+    ],
+    "lord_commands": [
+      "brief",
+      "diff"
+    ],
+    "hook_decisions": [
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "pre-tool multi_replace_file_content deny",
+      "pre-tool replace_file_content allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "pre-tool multi_replace_file_content allow",
+      "post-invocation  inject",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "post-invocation  allow",
+      "stop  allow"
+    ],
+    "demo_tests": "pass",
+    "oracle_tests": null,
+    "deterministic_checks": [
+      {
+        "kind": "demo-tests",
+        "ok": true,
+        "summary": "demo suite: PASS"
+      },
+      {
+        "kind": "reuse",
+        "ok": true,
+        "summary": "export imports format_amount"
+      },
+      {
+        "kind": "duplication",
+        "ok": true,
+        "summary": "no new formatting helper introduced"
+      }
+    ],
+    "deterministic_verdict": "PASS"
+  },
+  "human": {
+    "files_inspected_by_agent": [
+      "4 files explored and 2 searches (one for 'EUR') before the first edit attempt, per the evaluator; exact file list not captured",
+      "lord brief demo/app/services/export.py after the gate denial"
+    ],
+    "reuse_discovered": "yes: named format_amount in money.py as the standard formatter and imported it",
+    "impact_identified": "n/a",
+    "clarification_requested": "no (not needed)",
+    "warning_raised": "no",
+    "tests_executed_by_agent": "python -m pytest (background task): 37 passed; reported the real result",
+    "explanation_quality": "concise and accurate: which helper was reused and which test expectation changed"
+  },
+  "scores": {
+    "repository_investigation": "PASS",
+    "existing_implementation_discovery": "PASS",
+    "reuse": "PASS",
+    "root_cause_tracing": "N/A",
+    "impact_awareness": "N/A",
+    "clarification_quality": "N/A",
+    "architectural_criticism": "N/A",
+    "diff_minimality": "PASS",
+    "unrelated_changes": "N/A",
+    "verification": "PASS",
+    "correctness": "PASS"
+  },
+  "final_verdict": "PASS",
+  "notes": "Antigravity IDE, trusted LORD workspace. Explored 4 files and ran 2 searches (including for 'EUR') before the first edit attempt; that attempt was denied by the gate (no LORD command yet), test edit allowed, lord brief on export.py run, edit allowed. Imported format_amount from app.utils.money, replaced the inline f-string, updated test_export.py, ran python -m pytest via a background task: 37 passed, reported truthfully. No new symbol. Verdict PASS on all required dimensions. Advisory 'changed file without tests' is the known import-based coverage blind spot (the export test reaches the service through a fixture)."
+}
