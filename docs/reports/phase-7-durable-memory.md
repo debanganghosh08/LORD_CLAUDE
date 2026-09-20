@@ -172,7 +172,8 @@ top. `handoff write --from-verify` recorded this phase's state at commit
 
 ## Git
 
-Commit and push recorded in the consolidated summary.
+Commit: `4e20959` "Phase 7: durable engineering memory, handoff and context
+assembly" on `main`. Push: succeeded (`26b779a..4e20959 main -> main`).
 
 ## Next-phase readiness
 
