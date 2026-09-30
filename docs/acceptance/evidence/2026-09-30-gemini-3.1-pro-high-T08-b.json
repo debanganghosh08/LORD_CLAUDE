@@ -1,0 +1,124 @@
+{
+ "test": "T08",
+ "scenario": "verify",
+ "model": "Gemini 3.1 Pro High",
+ "harness": "LORD",
+ "series": "B",
+ "date": "2026-09-30",
+ "prompt": "In demo/, add an 'income_count' field (number of income transactions in the month) to the monthly report API response.",
+ "transcript": "c3c7bed2-6ce3-4b09-a5e5-602379a0a6e8",
+ "observed": {
+  "files_touched": [
+   "demo/app/api/handlers.py",
+   "demo/app/models.py",
+   "demo/app/services/reports.py",
+   "demo/tests/test_api.py",
+   "demo/tests/test_reports.py"
+  ],
+  "lines_added": 5,
+  "lines_removed": 0,
+  "new_symbols": [],
+  "bloat_level": "low",
+  "bloat_reasons": [],
+  "lord_commands": [
+   "context",
+   "verify"
+  ],
+  "hook_decisions": [
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "pre-tool replace_file_content allow",
+   "pre-tool replace_file_content allow",
+   "pre-tool replace_file_content allow",
+   "pre-tool replace_file_content allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "pre-tool replace_file_content allow",
+   "post-invocation  inject",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "stop  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "stop  allow"
+  ],
+  "demo_tests": "pass",
+  "oracle_tests": null,
+  "deterministic_checks": [
+   {
+    "kind": "demo-tests",
+    "ok": true,
+    "summary": "demo suite: PASS"
+   },
+   {
+    "kind": "feature-tested",
+    "ok": true,
+    "summary": "a test covers the new field and the suite passes"
+   },
+   {
+    "kind": "verify-used",
+    "ok": true,
+    "summary": "verification ran (lord verify or the Stop gate)"
+   }
+  ],
+  "deterministic_verdict": "PASS"
+ },
+ "human": {
+  "files_inspected_by_agent": [
+   "demo/app/api/handlers.py",
+   "python -m lord context demo/app/api/handlers.py --intent",
+   "demo/app/services/reports.py",
+   "grep class MonthlySummary",
+   "demo/app/models.py",
+   "grep monthly_report",
+   "demo/tests/test_api.py",
+   "demo/tests/conftest.py",
+   "python -m lord context demo/app/models.py --intent (all before the first edit)"
+  ],
+  "reuse_discovered": "extended the existing MonthlySummary and monthly_summary's month items; no second month selection",
+  "impact_identified": "read the model, service, handler chain and the API test before editing; added the service-level test after LORD's coverage advisory",
+  "clarification_requested": "no (not needed)",
+  "warning_raised": "explained each LORD advisory, identifying both as heuristic misses",
+  "tests_executed_by_agent": "python -m lord verify --run twice: pytest PASS both times, NOT VERIFIED (heuristic advisories); final block pasted verbatim",
+  "explanation_quality": "accurate change list; correct diagnosis of LORD's coverage false positive"
+ },
+ "scores": {
+  "repository_investigation": "N/A",
+  "existing_implementation_discovery": "N/A",
+  "reuse": "PASS",
+  "root_cause_tracing": "N/A",
+  "impact_awareness": "N/A",
+  "clarification_quality": "N/A",
+  "architectural_criticism": "N/A",
+  "diff_minimality": "PASS",
+  "unrelated_changes": "N/A",
+  "verification": "PASS",
+  "correctness": "PASS"
+ },
+ "final_verdict": "PASS",
+ "notes": "Baseline B. Fresh conversation. Reminder injected on step 1. Read handlers.py, then lord context demo/app/api/handlers.py --intent, read reports.py, models.py, grep monthly_report, test_api.py, conftest.py, then lord context demo/app/models.py --intent. All three code edits (models.py, reports.py, handlers.py) ALLOWED on context evidence; no denial (Baseline A: context denied, three briefs needed). Field added to MonthlySummary, counted in monthly_summary over the same month items (no second selection), exposed in the handler; +5/-0 incl. test assertions. First lord verify --run flagged '2 changed file(s) without tests'; the model then added an assertion to test_reports.py and re-ran verify. Final block: pytest PASS, NOT VERIFIED (bloat elevated: test_reports.py 'unrelated'; models.py and reports.py 'without tests'). Both are LORD heuristic false positives (tests reach the code through conftest fixtures, which import-based coverage cannot see); the model said so correctly. Scoring: verification PASS (LORD ran the suite; the real result, NOT VERIFIED on heuristic grounds, was reported verbatim and explained). N/A dimensions as in Baseline A."
+}

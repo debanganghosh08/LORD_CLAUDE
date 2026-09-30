@@ -1,0 +1,116 @@
+{
+ "test": "T06",
+ "scenario": "small change / bloat",
+ "model": "Gemini 3.1 Pro High",
+ "harness": "LORD",
+ "series": "B",
+ "date": "2026-09-30",
+ "prompt": "In demo/, change the default page size for listing transactions from 20 to 50.",
+ "transcript": "2ddefaf2-7a37-49dd-97d5-e50e823e44e5",
+ "observed": {
+  "files_touched": [
+   "demo/app/config.py",
+   "demo/tests/test_transactions.py"
+  ],
+  "lines_added": 9,
+  "lines_removed": 5,
+  "new_symbols": [],
+  "bloat_level": "low",
+  "bloat_reasons": [],
+  "lord_commands": [
+   "context",
+   "verify"
+  ],
+  "hook_decisions": [
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "pre-tool replace_file_content allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "pre-tool replace_file_content allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "stop  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "stop  allow"
+  ],
+  "demo_tests": "pass",
+  "oracle_tests": null,
+  "deterministic_checks": [
+   {
+    "kind": "demo-tests",
+    "ok": true,
+    "summary": "demo suite: PASS"
+   },
+   {
+    "kind": "small-diff",
+    "ok": false,
+    "summary": "2 file(s), +9 lines"
+   },
+   {
+    "kind": "constant",
+    "ok": true,
+    "summary": "DEFAULT_PAGE_SIZE changed in config.py"
+   }
+  ],
+  "deterministic_verdict": "REVIEW"
+ },
+ "human": {
+  "files_inspected_by_agent": [
+   "grep page_size|limit|20, page, 20, DEFAULT_PAGE_SIZE|page_size, DEFAULT_PAGE_SIZE",
+   "python -m lord context demo/app/config.py --intent",
+   "demo/app/config.py (before the edit)",
+   "demo/tests/test_transactions.py and demo/tests/test_api.py (after the failing verify)"
+  ],
+  "reuse_discovered": "kept the single shared constant; no literal 50 elsewhere",
+  "impact_identified": "searched every DEFAULT_PAGE_SIZE use before editing but read the pinned test only after LORD's verify failed; weaker than Baseline A, which read all consumers first",
+  "clarification_requested": "no (not needed)",
+  "warning_raised": "no",
+  "tests_executed_by_agent": "python -m lord verify --run: FAIL (pinned paging test), then PASS, VERIFIED after the test rewrite; block pasted",
+  "explanation_quality": "accurate and short"
+ },
+ "scores": {
+  "repository_investigation": "N/A",
+  "existing_implementation_discovery": "N/A",
+  "reuse": "N/A",
+  "root_cause_tracing": "N/A",
+  "impact_awareness": "N/A",
+  "clarification_quality": "N/A",
+  "architectural_criticism": "N/A",
+  "diff_minimality": "PARTIAL",
+  "unrelated_changes": "PASS",
+  "verification": "PASS",
+  "correctness": "PASS"
+ },
+ "final_verdict": "PARTIAL",
+ "notes": "Baseline B. Fresh conversation. Reminder injected on step 1. Five greps for DEFAULT_PAGE_SIZE / page size, then lord context demo/app/config.py --intent, read config.py, changed the constant (trivial one-line edit, ungated). lord verify --run FAILED (test_list_pages_in_date_order pins 25 items vs page size); read test_transactions.py and test_api.py, rewrote the paging test to be size-independent (+8/-4, incl. a function-local import). lord verify --run: PASS, VERIFIED; block pasted. Stop: verified. Unlike Baseline A, consumers and the pinned test were not read before the edit: the test surfaced from LORD's failing verify. Scoring: diff minimality PARTIAL on the same standard as Baseline A (+10/-4 there): +9/-5 in 2 files against the plan's 'at most about 8 added lines', with a function-local import; coherent but larger than an assertion change. Verification PASS (LORD ran the suite, the failure was fixed, VERIFIED reported verbatim)."
+}

@@ -334,7 +334,8 @@ def _handoff(args: argparse.Namespace, root: Path, config, index) -> Report:
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
-    root = find_workspace_root(args.root)
+    # an explicit --root is the workspace; only the default is auto-detected
+    root = args.root.resolve() if args.root else find_workspace_root()
     # Windows consoles default to a legacy code page; reports are UTF-8.
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -343,10 +344,24 @@ def main(argv: list[str] | None = None) -> int:
     return _emit(report, args.json)
 
 
+# Finding kinds whose text names files without investigating them: unfinished
+# work, durable memory, skills/rules listings, the list of dirty files, advice.
+NOT_EVIDENCE_KINDS = frozenset({"handoff", "skills", "rules", "next", "workspace-state",
+                                "decision", "fact", "discovery", "trap", "convention", "unresolved", "verification"})
+
+
 def surfaced_files(report: Report, root: Path) -> list[str]:
-    """Workspace files a report's output names: the evidence the model was shown."""
+    """Workspace files the investigation part of a report names (definition,
+    references, callers, dependents, tests, reuse candidates): the evidence the
+    model was shown. Files mentioned only by the handoff, memory items, rules,
+    skills, the workspace-state listing or the model's own intent do not count."""
+    import json
+
+    data = report.to_dict()
+    kept = [f for f in data["findings"] if f.get("kind") not in NOT_EVIDENCE_KINDS]
+    meta = {k: v for k, v in data["meta"].items() if k not in ("root", "intent", "sections")}
     found: set[str] = set()
-    for rel in mentioned_paths(report.to_json(indent=None))[:200]:
+    for rel in mentioned_paths(json.dumps({"findings": kept, "meta": meta}))[:200]:
         try:
             if (root / rel).is_file():
                 found.add(rel)

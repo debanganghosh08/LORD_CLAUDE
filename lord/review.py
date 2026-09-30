@@ -24,7 +24,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from lord import session
-from lord.change_surface import git_changes, measure
+from lord.change_surface import git_changes, measure, project_scope
 from lord.config import LordConfig
 from lord.impact import impact_report, resolve_target
 from lord.index import Index
@@ -151,25 +151,44 @@ def _added_markers(root: Path, base: str | None, staged: bool) -> list[str]:
     return found
 
 
+def step_label(argv: list[str]) -> str:
+    """The command as a reader would type it: `python -m pytest -q`, not the
+    interpreter's absolute path (and never without the interpreter)."""
+    if not argv:
+        return ""
+    head = Path(argv[0]).name.lower()
+    if head.startswith("python"):
+        return " ".join(["python", *argv[1:4]])
+    return " ".join([Path(argv[0]).name, *argv[1:3]])
+
+
 def verify(config: LordConfig, index: Index, scope: tuple[str, ...] = (), run: bool = False, base: str | None = None, staged: bool = False, timeout: int = STEP_TIMEOUT) -> Report:
     root = config.root.resolve()
     report = Report(title="verification", meta={"root": str(root), "ran": run})
+    # `outstanding` holds facts that make the change NOT VERIFIED (a failing or
+    # unrun step, no detected step, an added TODO marker); `advisories` holds
+    # heuristics (bloat signal, import-based coverage) that must be justified in
+    # the report but do not decide the verdict. Mixing them labelled correct,
+    # fully tested changes NOT VERIFIED in five of eight live runs.
     outstanding: list[str] = []
+    advisories: list[str] = []
 
-    surface = measure(config, index, base=base, staged=staged, scope=scope)
+    changes = git_changes(root, base, staged)
+    only = project_scope(index, changes)
+    report.meta["measured_only"] = list(only)
+    surface = measure(config, index, base=base, staged=staged, scope=scope, only=only)
     summary = surface.findings[0]
     report.add(Finding(kind="change-surface", summary=summary.summary, severity=OK, confidence=CONFIRMED, evidence=summary.evidence[:15]))
     level = surface.meta.get("bloat_level", "low")
     if level != "low":
         report.add(Finding(kind="bloat-signal", summary=f"bloat signal {level.upper()}", severity=WARN, confidence=INFERRED, evidence=surface.meta.get("bloat_reasons", []),
                            recommendation="resolve or explicitly justify each reason in the final report"))
-        outstanding.append(f"bloat signal {level}")
+        advisories.append(f"bloat signal {level}")
     for f in surface.findings:
         if f.kind in ("resembles-existing", "name-collision", "potentially-unrelated"):
             report.add(f)
 
     # tests covering the changed code files
-    changes = git_changes(root, base, staged)
     changed_code = [c.path for c in changes if c.kind in ("source", "script") and c.status != "D"]
     covered: dict[str, list[str]] = {}
     test_kind = {f.path for f in index.inventory.files if f.kind == "test"}
@@ -183,7 +202,7 @@ def verify(config: LordConfig, index: Index, scope: tuple[str, ...] = (), run: b
     if uncovered:
         report.add(Finding(kind="untested-change", summary=f"{len(uncovered)} changed code file(s) are imported by no test file", severity=WARN, confidence=INFERRED, evidence=uncovered[:15],
                            consequence="a regression there would pass the suite", recommendation="add or extend a test, or state why none is needed"))
-        outstanding.append(f"{len(uncovered)} changed file(s) without tests")
+        advisories.append(f"{len(uncovered)} changed file(s) without an importing test")
 
     markers = _added_markers(root, base, staged)
     if markers:
@@ -222,7 +241,7 @@ def verify(config: LordConfig, index: Index, scope: tuple[str, ...] = (), run: b
     verdict = "verified" if not outstanding else "not verified"
     task = session.load_task(root)
     assumptions = session.unconfirmed_material(task)
-    report.meta.update({"verdict": verdict, "outstanding": outstanding, "steps": [s.name for s in steps],
+    report.meta.update({"verdict": verdict, "outstanding": outstanding, "advisories": advisories, "steps": [s.name for s in steps],
                         "step_results": {s.name: s.status for s in steps if s.status}, "bloat_level": level, "tests_to_run": tests_to_run, "uncovered": uncovered,
                         "unconfirmed_material": assumptions, "open_questions": session.open_questions(task)})
     report.add(Finding(kind="verdict", summary=f"{verdict.upper()}" + (": " + "; ".join(outstanding) if outstanding else ": all detected steps passed, nothing outstanding"),
@@ -233,10 +252,12 @@ def verify(config: LordConfig, index: Index, scope: tuple[str, ...] = (), run: b
     block = ["Verification:"]
     for step in steps:
         status = step.status.upper() if step.status else "NOT RUN"
-        block.append(f"  {' '.join(step.argv[1:4]) if step.argv[0].endswith(('python', 'python.exe')) else step.argv[0]}" + (f" ({step.cwd})" if step.cwd else "") + f" - {status}")
+        block.append(f"  {step_label(step.argv)}" + (f" ({step.cwd})" if step.cwd else "") + f" - {status}")
     if not steps:
         block.append("  no automated verification detected - state how the change was verified")
     block.append(f"  LORD verify - {verdict.upper()}" + (" (" + "; ".join(outstanding) + ")" if outstanding else ""))
+    if advisories:
+        block.append("Advisories (heuristic, not part of the verdict; justify under Diff): " + "; ".join(advisories))
     if assumptions:
         block.append("Assumptions (unconfirmed, material): " + "; ".join(assumptions))
     report.meta["report_block"] = "\n".join(block)

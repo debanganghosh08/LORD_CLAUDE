@@ -1,28 +1,28 @@
 {
-  "doing": "Phase 8A.1 remediation implemented and committed; next is the live Baseline B re-evaluation (Gemini 3.1 Pro High, IDE, fresh conversations, record --series B) for T01, T03, T04, T05, T07, T08 (+T02, T06), then sections 14-15 of the remediation report",
+  "doing": "Phase 8A.1 complete: remediation (1bbd2c3), live Baseline B with Gemini 3.1 Pro High (8 scenarios), and the fixes Baseline B exposed; next is the review of the A-vs-B comparison, then Phase 8B",
   "done": [
-    "context counts as evidence; surfaced files are evidence; task frame with open-question gate and assumption advisory; PreInvocation reminder; containment copy detection; AST bypass signals; measure(only=); verify report block; T04 check; series label; single launcher; docs/skills/contract updated; 199 tests"
+    "Baseline B recorded for T01-T08 (docs/acceptance/evidence/*-b.json): 4 PASS / 4 PARTIAL / 0 FAIL vs A 1/6/1",
+    "Fixed after the series: step label, facts-vs-advisories verdict, per-project measurement in verify and PostInvocation, investigation-only evidence, root discovery never climbs to home, guide reset/debrief"
   ],
   "remaining": [
-    "Run Baseline B live and record with --series B",
-    "Fill report sections 14 and 15 (Baseline B results, before/after matrix) and score with the unchanged scorecard",
-    "Decide whether the Verification block becomes a scorecard requirement"
+    "Decide a clarification lever: Level 1 advisory when a material assumption exists and no question was asked (no question in 16 live runs)",
+    "Decide whether scorecard verification PASS requires the LORD Verification block",
+    "Phase 8B: ship the demo as a separate evaluation workspace (it shares LORD's memory store today)",
+    "Symbol-level context does not surface callee files (documented, not fixed)"
   ],
   "discovered": [
-    "The brief on a file dropped dependent findings, so a file-level context could not surface its callers; kept now (keep['dependent']=8)",
-    "Containment at 0.60 flags nested functions (containment 1.0 by construction) and many small-method pairs; 0.75 plus the enclosing-symbol exclusion leaves only plausible copies",
-    "The old baseline contained self-referential text matches (84 in refs-format_amount.json); baseline artefacts are now scoped to demo/"
+    "A global ~/.agents/skills folder (another tool) made LORD treat the home directory as a workspace; fixed in lord/paths.py; the user's folder was not touched",
+    "With the verification block required, Gemini pasted it in 8 of 8 runs including NOT VERIFIED; its prose can still overclaim next to it (T04 'fully tested')"
   ],
   "decided": [
-    "Bypass and copy signals are advisories (Level 1), never blocks; the open-question gate is a block because the question is the model's own recorded fact",
-    "load_task/load_handoff similarity (0.81) left as is: a shared loader would couple the session store to the versioned memory store"
+    "Heuristics never decide the verify verdict; they are advisories to justify",
+    "Evaluation debrief is sent after the scenario in the same conversation; scenario prompts stay unchanged"
   ],
   "next": [
-    "Reset demo, index and .lord/session before each Baseline B scenario (manual guide section 4)",
-    "After Baseline B: compare A vs B per dimension, update the report, commit, push"
+    "Review docs/reports/phase-8a1-remediation.md sections 14-19, then plan Phase 8B"
   ],
-  "verification": "python -m pytest: 199 passed; demo: 37 passed; oracle on unfixed demo: 3 fail (expected)",
-  "updated": "2026-09-20",
+  "verification": "python -m pytest: 205 passed; demo: 37 passed; oracle on unfixed demo: 3 fail (expected)",
+  "updated": "2026-09-30",
   "branch": "main",
-  "commit": "4cb5eaa"
+  "commit": "1bbd2c3"
 }

@@ -40,14 +40,30 @@ class BoundaryError(RuntimeError):
     """Raised when an operation would leave the workspace boundary."""
 
 
+def _home() -> Path | None:
+    try:
+        return Path.home().resolve()
+    except (OSError, RuntimeError):
+        return None
+
+
 def find_workspace_root(start: Path | None = None) -> Path:
     """Return the nearest ancestor (or `start` itself) containing a root marker.
 
     Falls back to `start` when no marker is found so LORD still works in a
     plain directory; callers that need Git should use `git_toplevel`.
+
+    The walk never climbs to the user's home directory or above it: a
+    home-level `.agents` or `.git` is global tool configuration, not a
+    workspace. (Observed 2026-09-30: a global `~/.agents/skills` folder made
+    every marker-less directory under home resolve to home, and `inventory`
+    walked the whole home directory.) Starting *at* home is still allowed.
     """
     origin = (start or Path.cwd()).resolve()
+    home = _home()
     for candidate in (origin, *origin.parents):
+        if home is not None and candidate != origin and (candidate == home or candidate in home.parents):
+            break
         if any((candidate / marker).exists() for marker in ROOT_MARKERS):
             return candidate
     return origin

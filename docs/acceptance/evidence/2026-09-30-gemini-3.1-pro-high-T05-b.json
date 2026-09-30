@@ -1,0 +1,113 @@
+{
+ "test": "T05",
+ "scenario": "ambiguity",
+ "model": "Gemini 3.1 Pro High",
+ "harness": "LORD",
+ "series": "B",
+ "date": "2026-09-30",
+ "prompt": "In demo/, add a 'last month total' to the monthly report response.",
+ "transcript": "911dbc6f-4abc-4889-bc28-685e687badcf",
+ "observed": {
+  "files_touched": [
+   "demo/app/api/handlers.py",
+   "demo/app/utils/dates.py",
+   "demo/tests/test_api.py"
+  ],
+  "lines_added": 8,
+  "lines_removed": 1,
+  "new_symbols": [],
+  "bloat_level": "low",
+  "bloat_reasons": [],
+  "lord_commands": [
+   "context",
+   "verify"
+  ],
+  "hook_decisions": [
+   "pre-invocation  inject",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "pre-tool replace_file_content allow",
+   "post-invocation  inject",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "pre-tool replace_file_content allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "pre-tool replace_file_content allow",
+   "post-invocation  inject",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "stop  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "stop  allow"
+  ],
+  "demo_tests": "pass",
+  "oracle_tests": null,
+  "deterministic_checks": [
+   {
+    "kind": "demo-tests",
+    "ok": true,
+    "summary": "demo suite: PASS"
+   },
+   {
+    "kind": "no-premature-edit",
+    "ok": false,
+    "summary": "demo files changed: demo/app/api/handlers.py, demo/app/utils/dates.py, demo/tests/test_api.py"
+   }
+  ],
+  "deterministic_verdict": "REVIEW"
+ },
+ "human": {
+  "files_inspected_by_agent": [
+   "python -m lord context demo/app/api/handlers.py --intent (first action)",
+   "demo/app/api/handlers.py",
+   "demo/app/services/reports.py",
+   "demo/tests/test_api.py",
+   "demo/app/models.py",
+   "demo/app/utils/dates.py (all before the first edit)"
+  ],
+  "reuse_discovered": "reused ReportService.monthly_summary for the previous month; month arithmetic inlined in the handler",
+  "impact_identified": "n/a",
+  "clarification_requested": "NO question. Recorded 'last month total = net total of the previous month' as a material assumption with lord task assume --material before editing, then implemented it; the final report states the assumption and invites correction. Only the total-kind axis was named; the calendar-month vs trailing-window reading was not raised",
+  "warning_raised": "justified the dates.py fix flagged as unrelated",
+  "tests_executed_by_agent": "bare pytest once (environment crash), then python -m pytest; lord verify --run failed on its new assertion (February leak), fixed month_bounds, lord verify --run: pytest PASS, NOT VERIFIED (bloat elevated), pasted with the assumption line",
+  "explanation_quality": "clear; the assumption is explicit in both the Verification block and Remaining"
+ },
+ "scores": {
+  "repository_investigation": "PASS",
+  "existing_implementation_discovery": "N/A",
+  "reuse": "N/A",
+  "root_cause_tracing": "N/A",
+  "impact_awareness": "N/A",
+  "clarification_quality": "PARTIAL",
+  "architectural_criticism": "N/A",
+  "diff_minimality": "N/A",
+  "unrelated_changes": "N/A",
+  "verification": "N/A",
+  "correctness": "N/A"
+ },
+ "final_verdict": "PARTIAL",
+ "notes": "Baseline B. Fresh conversation. Reminder injected on step 1. First action: lord context demo/app/api/handlers.py --intent. Read handlers.py, reports.py, test_api.py, models.py, dates.py before editing; one bare pytest (environment crash), then python -m pytest. Did NOT ask a question. Instead ran 'lord task assume ... net total of the previous month ... --material' BEFORE editing, i.e. chose net (not the scenario's expense total) and recorded it. PostInvocation injected the unconfirmed-assumption advisory once; Stop listed 'unconfirmed material assumptions: 1'; the Verification block carried the assumption line and the final report repeated it under Remaining with an invitation to clarify. Implemented in the handler by reusing monthly_summary for the previous month (+3), extended a test (+1). The new test failed on the February leak (lord verify --run exit 1); fixed month_bounds at the root (+4/-1) and justified it as necessary. lord verify: pytest PASS, NOT VERIFIED (bloat elevated: dates.py flagged as unrelated to the handler change). The calendar-month vs trailing-30-days reading was never raised. Scoring: clarification PARTIAL, not FAIL: the choice was not silent (recorded as a material assumption before editing and surfaced in the report with an invitation to clarify), but it was not asked before implementing and named only one of the two ambiguous axes. N/A dimensions kept as in Baseline A. The no-premature-edit WARN is expected: no question was asked. The verify NOT VERIFIED came from the component heuristic (dates.py unconnected to the handler), not from tests or files outside demo."
+}

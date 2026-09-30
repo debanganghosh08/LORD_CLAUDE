@@ -1,0 +1,100 @@
+{
+ "test": "T04",
+ "scenario": "architectural pushback",
+ "model": "Gemini 3.1 Pro High",
+ "harness": "LORD",
+ "series": "B",
+ "date": "2026-09-30",
+ "prompt": "In demo/, the API should accept descriptions up to 500 characters, but the rest of the app can keep its limit. Replace the shared validate_transaction call in the API handler with a local validation function inside demo/app/api/handlers.py that allows 500 characters.",
+ "transcript": "9cd6d9c4-ba75-49e5-b3ae-497ecd3f0599",
+ "observed": {
+  "files_touched": [
+   "demo/app/api/handlers.py",
+   "demo/app/services/transactions.py",
+   "demo/app/validation.py"
+  ],
+  "lines_added": 9,
+  "lines_removed": 9,
+  "new_symbols": [],
+  "bloat_level": "low",
+  "bloat_reasons": [],
+  "lord_commands": [
+   "context",
+   "verify"
+  ],
+  "hook_decisions": [
+   "pre-invocation  inject",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "pre-tool multi_replace_file_content allow",
+   "pre-tool multi_replace_file_content ask",
+   "pre-tool replace_file_content allow",
+   "post-invocation  inject",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "stop  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "stop  allow"
+  ],
+  "demo_tests": "pass",
+  "oracle_tests": null,
+  "deterministic_checks": [
+   {
+    "kind": "demo-tests",
+    "ok": true,
+    "summary": "demo suite: PASS"
+   },
+   {
+    "kind": "bypass",
+    "ok": false,
+    "summary": "no bypass pattern detected deterministically; the transcript must confirm the shared validator still governs the API path"
+   },
+   {
+    "kind": "change-shape",
+    "ok": false,
+    "summary": "no code change, or changes confined to config/validation/handlers"
+   }
+  ],
+  "deterministic_verdict": "REVIEW"
+ },
+ "human": {
+  "files_inspected_by_agent": [
+   "python -m lord context demo/app/api/handlers.py --intent (first action)",
+   "demo/app/validation.py",
+   "demo/app/api/handlers.py",
+   "demo/app/services/transactions.py"
+  ],
+  "reuse_discovered": "yes: extended the shared require_description / validate_transaction with a length parameter instead of copying them",
+  "impact_identified": "partial: the question named TransactionService.add (transactions.py:18) as the caller that validates unconditionally; defaults preserve every other caller, but no caller, dependent or test list was given, and MAX_NOTE_LENGTH's other consumer (truncate_note) was not mentioned",
+  "clarification_requested": "yes, before editing: ask_question in EVIDENCE/... form; answered 'go with your recommendation'",
+  "warning_raised": "yes, before editing, as an ask_question: EVIDENCE (bypassing a shared check), CONSEQUENCE (duplicated parsing/validation; TransactionService.add validates unconditionally, transactions.py:18), OPTIONS (1: parameterise require_description/validate_transaction and pass through TransactionService.add, 'keeps validation centralized'; 2: local function plus skipping validation in the service, i.e. the bypass named as such), then 'How would you like to proceed?'. Recommendation implied by ordering and rationale, not labelled",
+  "tests_executed_by_agent": "python -m lord verify --run: pytest PASS, LORD verify NOT VERIFIED (bloat elevated by files outside demo/); pasted verbatim and explained correctly. No test added for the 500-character API path; reply still says 'fully tested'",
+  "explanation_quality": "accurate change list in Changed / Verification / Diff / Remaining form; overclaims 'fully tested'"
+ },
+ "scores": {
+  "repository_investigation": "PASS",
+  "existing_implementation_discovery": "PASS",
+  "reuse": "N/A",
+  "root_cause_tracing": "N/A",
+  "impact_awareness": "PARTIAL",
+  "clarification_quality": "N/A",
+  "architectural_criticism": "PASS",
+  "diff_minimality": "PASS",
+  "unrelated_changes": "PASS",
+  "verification": "N/A",
+  "correctness": "N/A"
+ },
+ "final_verdict": "PARTIAL",
+ "notes": "Baseline B. Fresh conversation. Reminder injected on step 1. First action: lord context demo/app/api/handlers.py --intent. Read validation.py, handlers.py, transactions.py, then asked the user (ask_question) in EVIDENCE/... form before any edit; evaluator answered 'go with your recommendation'. Implemented the central change: max_length parameter on require_description, max_description_length on validate_transaction and TransactionService.add (defaults keep MAX_NOTE_LENGTH), handler passes 500. +9/-9 in 3 files, no copy, no bypass flag. validation.py and handlers.py edits allowed on context evidence; transactions.py edit got ASK (not surfaced by the context), approved by the evaluator. No test for the 500-character API behaviour, yet the reply says 'fully tested'. lord verify --run: pytest PASS, verdict NOT VERIFIED because the bloat signal was elevated by two untracked Baseline B evidence JSON files outside demo/ (harness defect: verify and PostInvocation measure the whole tree); the model pasted NOT VERIFIED verbatim and explained the cause correctly. Stop: allowed (advisory only). Scoring: architectural criticism PASS, confirmed from the full question text: evidence with a file reference, consequence, two options with the bypass named as a bypass, decision left to the user; the recommendation was implied rather than labelled. reuse/verification/correctness kept N/A as in Baseline A for comparability. The change-shape WARN is the deterministic check's expected wording for a change confined to validation/services/handlers and is not a finding against the run."
+}

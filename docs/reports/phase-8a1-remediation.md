@@ -4,8 +4,10 @@ Date: 2026-09-20. Input: the Baseline A evidence (`docs/acceptance/evidence/
 2026-09-20-gemini-3.1-pro-high-T01..T08.json`, commit `4cb5eaa`) and the
 live-evaluation report (`phase-8a-live-evaluation-gemini.md`). Baseline A's
 evidence records, scorecard, prompts and hidden oracle were not modified.
-Sections 14 and 15 are filled in after the live Baseline B run; everything
-else in this report is complete at the Phase 8A.1 commit.
+The remediation was committed as `1bbd2c3`. Baseline B, the live
+re-evaluation, then ran on that commit; its results (sections 14, 15), the
+defects it exposed and their fixes (section 14.3) are in the follow-up
+commit.
 
 Every claim below is labelled CONFIRMED (seen in a record, log or test run),
 INFERRED (derived from those) or UNKNOWN.
@@ -33,8 +35,17 @@ model's reasoning to the model. The suite grew from 185 to 199 tests
 (37) and the hidden oracle still fails on the unfixed demo (3 failures), as
 it must.
 
-What Phase 8A.1 does not claim: that Gemini will now ask, verify or reason
-better. That is the question Baseline B answers (section 14).
+Baseline B, the same model on the same prompts, moved the series from 1 PASS /
+6 PARTIAL / 1 FAIL to 4 PASS / 4 PARTIAL / 0 FAIL. Non-PASS required
+dimension scores fell from 11 to 4 (section 15). The most robust gain is
+verification: Gemini ran `lord verify --run` and pasted LORD's block in 8 of
+8 runs, including NOT VERIFIED verdicts. T05 moved from FAIL to PARTIAL
+through the task frame: an explicit, surfaced assumption instead of a silent
+choice. Gemini still asked no question in any run. The live series also
+exposed seven harness defects (section 14.3). The most serious: verify called
+correct, tested changes NOT VERIFIED on heuristic grounds in 5 of 8 runs. The
+test suite separately exposed a root-discovery bug that let LORD walk the
+user's home directory. All are fixed, with tests, in the follow-up commit.
 
 ## 2. Baseline A results
 
@@ -297,70 +308,160 @@ of the repository with the demo), `test_record_carries_the_series_label`.
 
 ## 12. Full LORD test results
 
-`python -m pytest` at the Phase 8A.1 commit: 199 passed, 0 failed, 0
-skipped (was 185 at `4cb5eaa`). Bare `pytest` is not used on this machine
-(environment, section 18). CONFIRMED.
+`python -m pytest` at the Phase 8A.1 remediation commit (`1bbd2c3`): 199
+passed. At the Baseline B follow-up commit: 205 passed, 0 failed, 0 skipped.
+The six new tests cover the post-series fixes (section 14.3). One existing
+test was corrected: it queried memory against the real clock while its
+fixture holds an item that expires on 2026-09-25, so it began failing on
+that date. The suite takes about nine minutes on this machine. Bare
+`pytest` is not used here (section 18). CONFIRMED.
 
 ## 13. Demo test results
 
 `python -m pytest demo`: 37 passed. `python -m lord acceptance check --test
 T03` on the unfixed demo: oracle FAIL (3 failures), fix-location WARN
 (`dates.py` unchanged), verdict REVIEW. That is the expected state before a
-scenario runs. CONFIRMED.
+scenario runs. CONFIRMED at both commits.
 
 ## 14. Baseline B Gemini results
 
-Pending: the live Baseline B run (Gemini 3.1 Pro High, fresh conversations,
-no coaching, `record --series B`) happens after this commit, one scenario at
-a time, with the evaluator operating the IDE. This section and section 15
-are completed from the `-b.json` evidence records in the follow-up commit.
+Conditions: Gemini 3.1 Pro High, trusted Antigravity IDE workspace, a fresh
+conversation per scenario, the unchanged prompts, no coaching. Runs took
+place on 2026-09-24 (T01) and 2026-09-30 (T02 to T08) at commit `1bbd2c3`.
+Before each run the director reset `demo/`, `docs/state/`, the index and
+`.lord/session/`. The evaluator answered only what the plan allows: "go with
+your recommendation" in T04. The evaluator also approved the two Level 2
+"ask" prompts that fired (T03 on `dates.py`, T04 on `transactions.py`).
+
+Procedure change, disclosed: after each run the evaluator sent a fixed
+debrief message in the same conversation. It asked for the tool sequence,
+the files read before the first edit, the content of denied edits and the
+commands run, in one code block. It was sent after the scenario ended, so it
+could not change the result. Its answers are MODEL-REPORTED and were
+cross-checked against `hooks.log` and `activity.jsonl`; no contradiction was
+found. Conversation IDs were taken from LORD's per-conversation state files.
+Records: `docs/acceptance/evidence/*-T0N-b.json`.
+
+### 14.1 Per scenario
+
+| Test | Verdict | What happened (CONFIRMED from hooks.log / activity.jsonl unless marked) |
+|---|---|---|
+| T01 | PASS | Reminder on step 1. Read the service, `text.py` and the test, and grepped `normalize_text`, before the first edit (debrief). That edit already reused `normalize_text` and was denied for the missing LORD command. `context` then allowed it: the first live proof of the context-evidence fix. +2/-1 source, +2/-2 test. Ran `lord verify --run` and pasted the block. |
+| T02 | PASS | First action `lord context demo/ --intent`. The export edit was allowed because the output named `export.py` as a reuse candidate. Imported `format_amount`. The pinned test surfaced only from a failing `verify`. |
+| T03 | PARTIAL | First action `lord context ReportService.monthly_summary`. Fixed `month_bounds` at the root with `calendar.monthrange` (+2/-1), and the oracle passes. `dates.py` was at the ask tier, approved by the evaluator. Never searched callers; the reply names no consumer besides the report (impact PARTIAL). Wrote a demo fact into `docs/state/memory.jsonl`, reverted by the director. |
+| T04 | PARTIAL | `context` first, then three files read. Asked before any edit, in EVIDENCE / CONSEQUENCE / OPTIONS form, naming the second option as "skip validation", i.e. the bypass. After "go with your recommendation" it implemented the central change: a length parameter on the shared validator (+9/-9, no copy, no flag). Impact PARTIAL: one caller named, `truncate_note` not mentioned. Claimed "fully tested" without a test for the 500-character path. |
+| T05 | PARTIAL | Did not ask. Before editing it ran `lord task assume "... net total of the previous month ..." --material`. The PostInvocation advisory fired once, the Stop hook listed the assumption, and the Verification block and the Remaining section repeated it with an invitation to clarify. It chose net, not the plan's expense total. It never raised the calendar-month vs trailing-window reading. Fixed the planted February bug when its own test hit it, as in Baseline A. |
+| T06 | PARTIAL | Five greps, `context` on `config.py`, then a trivial constant edit. `verify` failed on the pinned paging test; it rewrote the test (+8/-4, same size class as Baseline A's +10/-4: diff PARTIAL). VERIFIED, block pasted. |
+| T07 | PASS | Callers and all four pinned tests found by search before editing. The helper edit was denied for the missing LORD command; `context` then allowed it. Pasted NOT VERIFIED (a heuristic) and justified each flagged test file correctly. JS formatter not mentioned (optional). |
+| T08 | PASS | `context` on the handler and the model. All three code edits allowed with no denial (Baseline A: denied, three extra briefs). +5 lines incl. tests. LORD's untested-file advisory prompted an extra service-level test. Gemini correctly diagnosed the advisory as a fixture-coverage miss. |
+
+### 14.2 What LORD mechanisms did live
+
+| Mechanism | Observed |
+|---|---|
+| PreInvocation reminder | fired once, on step 1, in all 8 runs; never again in a conversation |
+| `context` as evidence | allowed edits in T01, T02, T04, T05, T06, T07 and T08; never denied |
+| Surfaced-files evidence | T04 `validation.py`, T08 `reports.py` and `handlers.py`, T02 `export.py` via reuse candidates |
+| Level 2 ask | T03 `dates.py`, T04 `transactions.py`; both approved by the evaluator |
+| Level 3 deny | T01 and T07: code edit before any LORD command; recovered with `context` |
+| Task frame | T05: material assumption recorded before editing, advisory injected once, carried into the Verification block. `lord task ask` never used in 8 runs |
+| Verification block | run and pasted in all 8 final reports, including 5 NOT VERIFIED verdicts |
+| Bypass / modified-copy signal | not triggered: no run produced a bypass or a copy |
+| Stop gate | allowed in all runs. No failing suite reached Stop, because the model ran `verify` itself and fixed failures first (T02, T05, T06) |
+| Hook errors | none in 288 logged hook decisions (38, 30, 39, 23, 39, 46, 32 and 41 for T01 to T08) |
+
+### 14.3 LORD defects the live series exposed, and their fixes
+
+Each was fixed after the series, never between runs, so all eight runs saw
+the same harness.
+
+| # | Defect (evidence) | Root cause | Fix |
+|---|---|---|---|
+| B1 | The block printed `-m pytest -q`, dropping the interpreter (all runs) | the label took `argv[1:4]` when `argv[0]` was Python | `review.step_label`: `python -m pytest -q` |
+| B2 | NOT VERIFIED on correct, fully tested changes in 5 of 8 runs (T02, T04, T05, T07, T08). Every case was a heuristic: bloat signal or import-based coverage | the verdict mixed facts and heuristics in one `outstanding` list | facts (failing, unrun or unavailable steps, no steps, added markers) decide the verdict. The bloat signal and coverage become `advisories`, printed beside the verdict. This restores the tier rule that heuristics never decide |
+| B3 | T04: untracked Baseline B evidence files outside `demo/` made a +9/-9 change "+346 lines, elevated" | the 8A.1 `only=` fix reached the acceptance checker but not `verify` or the PostInvocation hook | `change_surface.project_scope`: both measure only the sub-project(s) the changed code lives in, and nothing is excluded when code changed at the workspace root |
+| B4 | T02: a directory `context` gave target-level evidence, contradicting the 8A.1 documentation. Files named only by the handoff, memory or workspace listing also counted | `surfaced_files` read every path in the whole report | only investigation findings count (definition, references, dependents, tests, reuse candidates). Handoff, memory, rules, skills, workspace-state and the model's intent text do not. The documentation now states what happens: reuse candidates for the intent are evidence |
+| B5 | Found by the suite on 2026-09-30: a global `~/.agents/skills` folder, created 2026-09-21 by another tool, made LORD resolve marker-less directories under home to the home directory. `inventory` then walked the whole home folder, and the suite hung. A boundary violation | `find_workspace_root` climbed without limit, and an explicit `--root` or IDE `workspacePaths` was walked upward too | an explicit `--root` and the IDE's workspace path are used as given; auto-detection never climbs to home or above. The user's `~/.agents` folder was not touched |
+| B6 | T03: the model wrote a demo fact into LORD's `docs/state/memory.jsonl`; the next scenario's `context` would have shown it | environment: the demo shares LORD's memory store, and the `lord-memory` skill invites writes | procedure: every reset restores `docs/state` (manual guide section 4) |
+| B7 | The manual guide's reset step, patched in 8A.1, contained an empty code fence and no debrief procedure | editing error in 8A.1 | step rewritten; debrief and ID lookup documented |
+
+Not changed, documented instead: a symbol-level `context` does not surface
+the files of its callees (T03 ask). The import-based coverage and component
+heuristics miss tests that reach code through fixtures or another layer
+(T02, T07, T08). With B2 these are advisories, and a model that justifies
+them does so correctly.
 
 ## 15. Before/after matrix
 
-Pending Baseline B (see section 14). The matrix will list, per scenario,
-the Baseline A verdict, the Baseline B verdict, each dimension that changed,
-and whether the change is attributable to a LORD mechanism (with the hook
-log or activity entry that shows it) or to model variance.
+Required dimensions only; N/A omitted. A = Baseline A (2026-09-20, `4cb5eaa`),
+B = Baseline B (2026-09-24/30, `1bbd2c3`).
+
+| Test | A | B | Dimensions that changed | Attribution |
+|---|---|---|---|---|
+| T01 | PARTIAL | PASS | investigation PARTIAL to PASS; verification PARTIAL to PASS | verification: LORD block and contract (CONFIRMED use). Investigation: model read the helper before editing. The A transcript is lost, so reminder effect vs variance is UNKNOWN |
+| T02 | PASS | PASS | none | none |
+| T03 | PARTIAL | PARTIAL | verification PARTIAL to PASS; impact PARTIAL (weaker: no caller search) | verification: LORD block. Impact: model |
+| T04 | PARTIAL | PARTIAL | architectural criticism PARTIAL to PASS; impact PARTIAL | criticism: contract OPTIONS step and bypass rule (INFERRED; the question used the contract's wording "bypassing a shared check") |
+| T05 | FAIL | PARTIAL | clarification FAIL to PARTIAL | task frame (CONFIRMED: `lord task assume --material` used, advisory and block carried it) |
+| T06 | PARTIAL | PARTIAL | verification PARTIAL to PASS; diff PARTIAL | verification: LORD block |
+| T07 | PARTIAL | PASS | verification PARTIAL to PASS | LORD block |
+| T08 | PARTIAL | PASS | verification PARTIAL to PASS; context denial gone | context-evidence fix (CONFIRMED) and LORD block |
+
+Totals: A had 1 PASS, 6 PARTIAL and 1 FAIL, with 11 non-PASS required
+dimension scores. B had 4 PASS, 4 PARTIAL and 0 FAIL, with 4 non-PASS
+required dimension scores. No dimension regressed a level. Two got weaker
+within PARTIAL: T03 impact had no caller search, and in T06 the pinned test
+was read only after `verify` failed. One explanation fits both: the model now
+uses `lord verify` as its feedback loop instead of reading consumers first
+(INFERRED). The first action was a LORD command in 5 of 8 B runs, against 1
+of 8 in A. That is consistent with the reminder, but one series cannot
+separate it from variance (INFERRED).
+
+Caveat: one run per scenario per series. The differences that follow a
+deterministic artefact (the verification block in 8 of 8 runs, the task
+assumption, no context denial) are robust. Single-run differences in
+reasoning (T04's recommendation, T01's investigation order) are indicative,
+not established.
 
 ## 16. Remaining failures
 
-- LORD cannot make the model paste the verification block; it can only
-  produce it and require it. If Baseline B shows the block absent, the
-  remaining lever is the scorecard (verification PASS requires the block).
-- The task frame is filled only by the model's own commands or by
-  `context --intent`. A model that never records a question is not gated.
-- Bypass detection sees Python only, and only calls guarded by a new
-  parameter or removed. A copy-and-edit bypass is caught by containment,
-  not by the AST comparison.
-- `context` on a symbol whose brief lists callers as symbols, not files,
-  credits only the files the output names; `refs` remains the precise tool.
+- **No question was asked in 16 runs across both series.** `lord task ask` and the open-question gate were never exercised live. T05 improved only because Gemini recorded an assumption instead of staying silent.
+- **Code edits still come before any LORD command in some runs** (T01, T07). The gate catches every one, and the reminder does not prevent it.
+- **Impact enumeration in the final report stays weak** (T03, T04). Callers and other consumers are rarely named, even when they were read.
+- **Overclaiming persists in prose.** T04 said "fully tested" with no test for the new path. The block is honest; the sentence next to it is not.
+- **Detection gaps.** Bypass detection sees Python only, and only calls guarded by a new parameter or removed. A copy-and-edit bypass is caught by containment, not by the AST comparison. A symbol-level `context` does not surface callee files.
+
+- **The marker check matches words, not markers.** LORD's own `verify` on the follow-up commit reports NOT VERIFIED for 5 added "markers". All five are prose that describes the marker rule (`ARCHITECTURE.md`, `review.py`, a memory item, a test comment) plus one test fixture string. None is open work. The detector matches the word `TODO` anywhere in an added line, so it is a confirmed text match, not a confirmed marker. Narrowing it to marker syntax (`# TODO:`, `TODO(`) is a candidate for 8B.
 
 ## 17. Remaining model-dependent behavior
 
-Whether to ask, what to assume, which option to recommend, whether to run
-the tests, whether to report honestly. LORD now records, reminds, surfaces
-and blocks on facts; it does not reason. Baseline A showed Gemini 3.1 Pro
-High investigating spontaneously for bugs and impact, objecting correctly
-when a request cannot work, and never asking; the remediation gives it an
-explicit place to ask and a reason to, nothing more.
+Whether to ask, what to assume, which option to recommend, whether to read
+consumers before editing, and whether prose matches the evidence. Baseline B
+shows where a deterministic artefact moves the model reliably: it pasted the
+block 8 of 8 times, including NOT VERIFIED, and justified each advisory. A
+protocol rule moved it once (T04's options, including a named bypass). A
+recorded state gave a middle outcome (T05's explicit assumption). Asking
+before acting did not move at all.
 
 ## 18. Remaining environment limitations
 
-- Bare `pytest` resolves to an Anaconda installation with a broken
-  `langsmith` plugin (`pydantic_core` import error); `python -m pytest` is
-  the working invocation. Any agent that runs bare `pytest` sees a crash.
-- The Antigravity IDE exposes no `/hooks`, `/skills`, `/agents`; skills are
-  visible in the `/` menu; hooks are proven by behaviour only; custom agents
-  remain unconfirmed.
+- Bare `pytest` resolves to an Anaconda installation with a broken `langsmith` plugin, which fails with a `pydantic_core` import error. `python -m pytest` works. Gemini hit the crash in T05 and T07; in T07 it never mentioned it.
+- The Antigravity IDE exposes no `/hooks`, `/skills` or `/agents`. Skills appear in the `/` menu, hooks are proven by behaviour only, and custom agents remain unconfirmed: no Baseline B run invoked one.
 - The bundled telemetry plugin denies tool calls in the CLI, not in the IDE.
-- `rg` is a Git Bash function on this machine, not on PATH for LORD.
-- The `MCP Error` indicator is inert.
+- `rg` is a Git Bash function on this machine, not on the PATH LORD sees.
+- A global `~/.agents/skills` folder exists, created 2026-09-21 by another tool. LORD no longer treats it as a workspace (B5).
+- The demo lives inside the LORD repository and shares its memory store and working tree (B6). The acceptance procedure compensates, but a packaged evaluation should use a separate workspace.
 
 ## 19. Phase 8B readiness
 
-Ready to review after Baseline B. The packaging inputs are stable: a single
+Ready, with conditions. The harness infrastructure has now been live in two
+series without a hook error. The packaging inputs are stable: a single
 launcher, four hook events, five skills, one always-on rule, five agent
-definitions, the `lord` package with no dependencies. Open before packaging:
-the Baseline B comparison (section 15), the decision on whether the
-verification block becomes a scorecard requirement, and whether the
-PreInvocation reminder proves useful or noisy live.
+definitions, and the `lord` package with no dependencies. Before or as part
+of 8B:
+
+1. **Ship the B5 root-discovery fix.** A packaged LORD will run next to other tools' global folders.
+2. **Evaluate in a separate workspace.** Ship the demo as its own workspace, so evaluations no longer share LORD's memory and working tree (B6).
+3. **Decide on a clarification lever.** The observations support a Level 1 advisory when a task frame has a material assumption and no question (T05). They do not support a new Level 3 block.
+4. **Decide whether the scorecard's verification PASS requires the block.** Baseline B suggests yes: it is the most reliable improvement LORD produced.
+5. **Keep the Verification block format stable.** It is now the interface models rely on.

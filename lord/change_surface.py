@@ -265,6 +265,17 @@ def _components(paths: list[str], index: Index) -> list[set[str]]:
     return sorted(groups.values(), key=len, reverse=True)
 
 
+def project_scope(index: Index, changes: list[FileChange]) -> tuple[str, ...]:
+    """The sub-project(s) the changed code lives in, as `measure(only=...)`
+    prefixes. Empty when no code changed or any changed code file belongs to the
+    workspace-root project: then the whole tree is the project and nothing is
+    excluded. Untracked records, reports or another project's files then do not
+    count against a sub-project's change (observed live: evidence JSON files
+    turned a +9/-9 validator change into an 'elevated' +346 line diff)."""
+    roots = {index.inventory.project_root_of(c.path) for c in changes if c.kind in ("source", "script") and c.status != "D"}
+    return () if not roots or "." in roots else tuple(sorted(roots))
+
+
 def measure(config: LordConfig, index: Index, base: str | None = None, staged: bool = False, scope: tuple[str, ...] = (), only: tuple[str, ...] = ()) -> Report:
     """Measure the change surface.
 

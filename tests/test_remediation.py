@@ -304,3 +304,96 @@ def test_record_carries_the_series_label(lord_clone: Path, monkeypatch):
     path = Path(report.meta["path"])
     data = json.loads(path.read_text(encoding="utf-8"))
     assert data["series"] == "B" and path.name.endswith("-T06-b.json") and acceptance.validate_evidence(data) == []
+
+
+# --- Baseline B findings (live re-evaluation) ------------------------------------------------
+
+@pytest.fixture
+def mono(tmp_path: Path) -> Path:
+    """A workspace whose code lives in a sub-project (`app/`), like the demo inside LORD."""
+    repo = tmp_path / "mono"
+    _write(repo / "README.md", "workspace\n")
+    _write(repo / "app" / "pyproject.toml", "[project]\nname='app'\nversion='0'\n[tool.pytest.ini_options]\ntestpaths=['tests']\npythonpath=['.']\n")
+    _write(repo / "app" / "pkg" / "__init__.py", "")
+    _write(repo / "app" / "pkg" / "mod.py", "def double(x):\n    return x * 2\n")
+    _write(repo / "app" / "pkg" / "other.py", "def triple(x):\n    return x * 3\n")
+    _write(repo / "app" / "tests" / "test_mod.py", "from pkg.mod import double\n\n\ndef test_double():\n    assert double(2) == 4\n")
+    _write(repo / ".gitignore", ".lord/\n__pycache__/\n.pytest_cache/\n")
+    _init(repo)
+    return repo
+
+
+def test_step_label_names_the_interpreter():
+    from lord.review import step_label
+    assert step_label([sys.executable, "-m", "pytest", "-q"]) == "python -m pytest -q"
+    assert step_label(["C:/tools/npm.cmd", "test"]) == "npm.cmd test"
+
+
+def test_verify_verdict_is_decided_by_facts_and_measured_per_sub_project(mono: Path):
+    # unrelated records outside the sub-project (the live T04 situation)
+    for i in range(3):
+        _write(mono / "docs" / "evidence" / f"run-{i}.json", json.dumps({"n": i, "lines": ["x"] * 60}, indent=1))
+    _write(mono / "app" / "pkg" / "mod.py", "def double(x):\n    return 2 * x\n")
+    config = load_config(mono)
+    report = verify(config, ensure_index(config), run=True, timeout=120)
+    assert report.meta["measured_only"] == ["app"] and report.meta["bloat_level"] == "low", report.meta
+    assert report.meta["verdict"] == "verified" and report.meta["advisories"] == []
+    assert "  python -m pytest -q (app) - PASS" in report.meta["report_block"]
+    # a heuristic (no importing test) is an advisory beside the verdict, never the verdict
+    _write(mono / "app" / "pkg" / "other.py", "def triple(x):\n    return 3 * x\n")
+    report = verify(config, ensure_index(config), run=True, timeout=120)
+    assert report.meta["verdict"] == "verified", report.meta["outstanding"]
+    assert any("without an importing test" in a for a in report.meta["advisories"])
+    assert "LORD verify - VERIFIED" in report.meta["report_block"] and "Advisories (heuristic" in report.meta["report_block"]
+    # a fact (an added TODO marker) still decides it
+    _write(mono / "app" / "pkg" / "other.py", "def triple(x):\n    return 3 * x  # TODO: overflow\n")
+    report = verify(config, ensure_index(config), run=True, timeout=120)
+    assert report.meta["verdict"] == "not verified" and any("marker" in o for o in report.meta["outstanding"])
+
+
+def test_project_scope_is_empty_for_root_level_code(svc: Path, mono: Path):
+    from lord.change_surface import git_changes, project_scope
+    _write(svc / "svc" / "store.py", "def store(path):\n    return path\n")
+    config = load_config(svc)
+    assert project_scope(ensure_index(config), git_changes(svc)) == ()
+    _write(mono / "app" / "pkg" / "mod.py", "def double(x):\n    return x + x\n")
+    config = load_config(mono)
+    assert project_scope(ensure_index(config), git_changes(mono)) == ("app",)
+
+
+def test_only_investigation_findings_count_as_surfaced_evidence(sample: Path):
+    from lord.cli import surfaced_files
+    from lord.report import INFO, OK, Finding, Report
+    report = Report(title="context", meta={"root": str(sample), "intent": "touch pkg/runner.py", "dependents": ["pkg/users.py"]})
+    report.add(Finding(kind="handoff", summary="unfinished work", severity=INFO, confidence=CONFIRMED, evidence=["remaining: fix pkg/jobs.py"]))
+    report.add(Finding(kind="workspace-state", summary="dirty", severity=INFO, confidence=CONFIRMED, evidence=["M pkg/broken.py"]))
+    report.add(Finding(kind="decision", summary="memory item about pkg/utils/strings.py", severity=OK, confidence=CONFIRMED))
+    report.add(Finding(kind="definition", summary="pkg/validators.py:8 function validate_email", severity=OK, confidence=CONFIRMED))
+    report.add(Finding(kind="candidate-reuse-or-extend", summary="tests/test_validators.py:1 function test_ok", severity=OK, confidence=INFERRED))
+    assert surfaced_files(report, sample) == ["pkg/users.py", "pkg/validators.py", "tests/test_validators.py"]
+
+
+def test_root_discovery_never_climbs_to_home(tmp_path: Path, monkeypatch):
+    from lord import paths
+    home = tmp_path / "home"
+    (home / ".agents" / "skills").mkdir(parents=True)          # global tool config, not a workspace
+    plain = home / "work" / "plain"
+    plain.mkdir(parents=True)
+    monkeypatch.setattr(paths, "_home", lambda: home.resolve())
+    assert paths.find_workspace_root(plain) == plain.resolve()
+    project = home / "work" / "proj"
+    (project / ".git").mkdir(parents=True)
+    (project / "src").mkdir()
+    assert paths.find_workspace_root(project / "src") == project.resolve()   # a real workspace below home is still found
+
+
+def test_explicit_root_is_used_as_given(tmp_path: Path):
+    outer = tmp_path / "outer"
+    (outer / ".agents").mkdir(parents=True)
+    inner = outer / "inner"
+    _write(inner / "a.py", "X = 1\n")
+    completed = subprocess.run([sys.executable, "-m", "lord", "--root", str(inner), "inventory", "--json"], cwd=ROOT, capture_output=True, text=True, timeout=120)
+    assert completed.returncode == 0, completed.stderr
+    data = json.loads(completed.stdout)
+    assert Path(data["meta"]["root"]).resolve() == inner.resolve()
+    assert hooks._root_from({"workspacePaths": [str(inner)]}, None) == inner.resolve()

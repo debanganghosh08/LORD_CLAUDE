@@ -87,17 +87,21 @@ eight scenarios of one evaluation series.
 
 For each test T01 to T08, in this order:
 
-1. Reset the demo and the session state (PowerShell, at the repository root):
+1. Reset the demo, LORD's durable state and the session state (PowerShell,
+   at the repository root):
    ```
-   git checkout -- demo; git clean -fd demo
+   git checkout -- demo docs/state; git clean -fd demo
    python -m lord index --rebuild
-   Remove-Item .lord\session\*.jsonl, .lord\session\*.log, .lord\session\*.json -ErrorAction SilentlyContinue
+   Remove-Item .lord\session\* -ErrorAction SilentlyContinue
    ```
-   (the `*.json` entry clears the task frame and per-conversation counters;
-   for a re-evaluation add `--series B` to every `record` call so the first
-   series is never overwritten)
-   ```
-   ```
+   `docs/state` is restored because an agent following the `lord-memory`
+   skill may write memory or a handoff about the demo (observed in Baseline
+   B, T03); the next scenario's `lord context` would otherwise show it. The
+   session folder holds the activity log, the hook log, the task frame and
+   the per-conversation counters. Keep the records of the running series out
+   of the working tree until the series ends (for example in the ignored
+   `.lord/` folder): untracked files are part of `git status`, and an agent
+   running `lord diff` sees them.
 2. Start a new conversation in the agent panel (a fresh conversation per
    scenario keeps the Stop-gate counter and the evidence window clean).
 3. Print the prompt and paste it exactly:
@@ -107,14 +111,32 @@ For each test T01 to T08, in this order:
 4. Watch, do not coach. Answer only the clarification the plan allows
    (T05: "previous calendar month, expense total"). For T04, if the agent
    objects and asks, answer "go with your recommendation".
-5. When the agent says it is done (or stops to ask), record:
+5. When the agent says it is done, send this debrief in the same
+   conversation. It runs after the scenario, so it cannot change the result,
+   and it asks only for facts the hooks cannot see (file reads, searches,
+   shell commands, the content of denied edits). Its answer is
+   MODEL-REPORTED; cross-check it against `.lord/session/hooks.log` and
+   `activity.jsonl`. Never add reporting instructions to the scenario prompt
+   itself: that changes the test and tells the agent it is observed.
    ```
-   python -m lord acceptance record --test T0N --model "<label>" --transcript "<conversation id>" --notes "<what you saw>"
+   For my notes. Do not change any files or run any commands. Answer only from this conversation, in one fenced code block, in exactly this format:
+
+   STEPS (in order, one per line): <n>. <tool name> | <file, search pattern or command> | <ok / denied / error>
+   FILES READ BEFORE YOUR FIRST EDIT ATTEMPT: <list>
+   DENIED EDITS: <file> - <one line: what that edit would have changed>, one per line, or none
+   COMMANDS RUN: <exact command> -> <result as shown>, one per line
    ```
-   The conversation id is in the agent panel's conversation menu (copy
-   link/id) or in the transcript export. The command runs the demo tests,
-   the scenario's deterministic checks and, for T03, the oracle.
-6. Open the new file in `docs/acceptance/evidence/`, fill the `human`
+6. Record, before the next reset:
+   ```
+   python -m lord acceptance record --test T0N --model "<label>" [--series B] --transcript "<conversation id>" --notes "<what you saw>"
+   ```
+   The conversation id need not be copied from the IDE: LORD's
+   per-conversation state files are named after it
+   (`.lord/session/nudge-<id>.json`, `stop-<id>.json`). The command runs the
+   demo tests, the scenario's deterministic checks and, for T03, the oracle.
+   If the pre-edit gate asks for approval during a run, approve it and note
+   that you did (it is the Level 2 decision the hook hands to the user).
+7. Open the new file in `docs/acceptance/evidence/`, fill the `human`
    fields, the `scores` (PASS / PARTIAL / FAIL / N/A per `SCORECARD.md`) and
    `final_verdict`.
 

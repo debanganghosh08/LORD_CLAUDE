@@ -102,7 +102,9 @@ existing architecture -> CREATE new.
 - Distinguish MODEL-REPORTED from LORD-DETERMINED. `python -m lord verify
   --run` executes the detected steps and prints a `Verification:` block with
   one line per step (PASS / FAIL / NOT RUN) and the LORD verdict (VERIFIED /
-  NOT VERIFIED). Paste that block into the final report verbatim. A test run
+  NOT VERIFIED), followed by any heuristic advisories (bloat signal, files
+  without an importing test) that you must justify under Diff but that do
+  not change the verdict. Paste that block into the final report verbatim. A test run
   you describe in prose is a claim; the block is the evidence. If a runner is
   broken in the environment, the block says NOT RUN or FAIL and so must you.
 - Review the diff against the stated scope: files, lines added and removed,

@@ -193,7 +193,7 @@ Intervention tiers (Phase 8A.1 made them explicit):
 | PreToolUse on `write_to_file`, `replace_file_content`, `multi_replace_file_content` | non-code file (docs, config, tests); edit of at most 3 lines; path outside the workspace | file kind and edit size from the tool arguments | audit | `allow` |
 | | consequential code edit while the task frame has an open question | `.lord/session/task.json` | 3 | `deny` naming the question and `lord task resolve` |
 | | code file whose path or symbols were named by a LORD investigation command in the last 45 minutes, or surfaced by its output (callers, dependents, tests of a `context`/`brief` target) | `.lord/session/activity.jsonl` (`files`) | audit | `allow` |
-| | code file, only task-level investigation (`reuse`, `brief`, `context` on something else, `context` on a directory) | activity log | 2 | `ask` (user decides; the reason names the file) |
+| | code file, only task-level investigation (`reuse`, `brief`, `context` on something that did not surface this file) | activity log | 2 | `ask` (user decides; the reason names the file) |
 | | code file, no LORD investigation at all in the window | activity log | 3 | `deny` with the exact command to run |
 | | new code file without a `context`, `reuse` or `brief` in the window | activity log | 3 | `deny` (reuse -> extend -> refactor -> create) |
 | Stop (fully idle, code files changed) | a detected verification step FAILED, for example pytest exit 1 | `verify --run` with real exit codes, cached per working-tree signature | 3, bounded | `continue` with the failing output, at most 2 consecutive times per conversation |
@@ -210,12 +210,30 @@ surfaced, never enforced, because hard gates that fire on heuristics train
 agents to ignore them.
 
 Evidence semantics: a command's evidence is its target plus the workspace
-files its output named. `context pkg/validators.py` therefore makes the
-validator, its dependents and its tests editable; `context pkg` (a
-directory) is task-level only, because a directory brief names nothing
-specific. `context` is an investigation command (it contains the brief);
-before Phase 8A.1 it was not counted, which denied a correctly investigated
-edit in the live evaluation.
+files named by the investigation part of its output: definition,
+references, callers, dependents, tests and reuse candidates for the stated
+intent. `context pkg/validators.py` therefore makes the validator, its
+dependents and its tests editable, and `context demo/ --intent "..."` makes
+the files its reuse candidates named editable (observed live in Baseline B,
+T02: the export module was a candidate for the intent and its edit was
+allowed). Files that appear only in the handoff, memory items, the rules or
+skills listing, the workspace-state listing or the model's own intent text
+are not evidence. `context` is an investigation command (it contains the
+brief); before Phase 8A.1 it was not counted, which denied a correctly
+investigated edit in the live evaluation. A symbol-level `context` does not
+surface the files its callees live in (Baseline B, T03: `context
+ReportService.monthly_summary` left `dates.py` at the ask tier).
+
+Verification semantics: `verify` separates facts from heuristics. The
+verdict is NOT VERIFIED only for facts: a failing, timed-out or unavailable
+step, no detected step, steps not executed, or an added TODO/FIXME marker.
+The bloat signal and import-based test coverage are advisories printed
+beside the verdict ("Advisories (heuristic, ...)") and must be justified in
+the report. Before this split, correct and fully tested changes were
+labelled NOT VERIFIED in five of eight Baseline B runs. The change surface
+behind the advisory, in `verify` and in the PostInvocation hook, is measured
+over the sub-project(s) the changed code lives in (`project_scope`), so
+untracked records elsewhere in the workspace are not counted.
 
 Failure handling: every code path ends in valid JSON and exit code 0. An
 internal error returns the event's permissive default (`allow` or `{}`) and
@@ -338,7 +356,11 @@ LORD's own symbols.
   records. The open-question gate enforces the model's own question, not
   the existence of one.
 - Import-based test coverage cannot credit tests that drive code through
-  subprocesses.
+  subprocesses or reach it through shared fixtures (`conftest.py`); such
+  files are reported as "without an importing test" (an advisory).
+- The component heuristic behind "unrelated file" follows imports, so a test
+  that exercises a change through another layer is reported as unrelated
+  (Baseline B, T07 and T08). It is an advisory, never a verdict.
 - Nothing writes memory automatically; the write policy is a judgement
   guided by the `lord-memory` skill, and the schema enforces only structure
   and evidence.

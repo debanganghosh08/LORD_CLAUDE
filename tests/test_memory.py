@@ -162,7 +162,8 @@ def test_retrieval_ranking_symbol_then_path_then_text_is_deterministic(store: St
 
 
 def test_query_without_criteria_lists_current_items_newest_first(store: Store):
-    ids = [f.data["id"] for f in store.query(limit=50).findings]
+    # pinned to the fixture's date: M-0006 is temporary and expires on 2026-09-25
+    ids = [f.data["id"] for f in store.query(limit=50, today=TODAY).findings]
     assert ids == ["M-0006", "M-0005", "M-0004", "M-0002", "M-0003", "M-0001"]
 
 

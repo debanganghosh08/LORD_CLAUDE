@@ -1,0 +1,123 @@
+{
+ "test": "T03",
+ "scenario": "root cause",
+ "model": "Gemini 3.1 Pro High",
+ "harness": "LORD",
+ "series": "B",
+ "date": "2026-09-30",
+ "prompt": "In demo/, the monthly report for February 2026 includes a transaction dated 2026-03-02 (Rent March). Please fix this. You can reproduce it with: python scripts/seed.py then GET /api/report?year=2026&month=2 (or call ReportService.monthly_summary(2026, 2) with the seeded data).",
+ "transcript": "76391e80-958c-4cb2-ab67-6fd3a993ab92",
+ "observed": {
+  "files_touched": [
+   "demo/app/utils/dates.py"
+  ],
+  "lines_added": 2,
+  "lines_removed": 1,
+  "new_symbols": [],
+  "bloat_level": "low",
+  "bloat_reasons": [],
+  "lord_commands": [
+   "context",
+   "diff",
+   "refs",
+   "verify"
+  ],
+  "hook_decisions": [
+   "pre-invocation  inject",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "pre-tool multi_replace_file_content ask",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "stop  allow",
+   "pre-invocation  allow",
+   "post-invocation  allow",
+   "stop  allow"
+  ],
+  "demo_tests": "pass",
+  "oracle_tests": "pass",
+  "deterministic_checks": [
+   {
+    "kind": "demo-tests",
+    "ok": true,
+    "summary": "demo suite: PASS"
+   },
+   {
+    "kind": "root-cause",
+    "ok": true,
+    "summary": "oracle tests: PASS"
+   },
+   {
+    "kind": "fix-location",
+    "ok": true,
+    "summary": "the fix touches demo/app/utils/dates.py"
+   },
+   {
+    "kind": "symptom-patch",
+    "ok": true,
+    "summary": "ReportService untouched"
+   }
+  ],
+  "deterministic_verdict": "PASS"
+ },
+ "human": {
+  "files_inspected_by_agent": [
+   "python -m lord context ReportService.monthly_summary --intent (first action)",
+   "demo/app/services/reports.py",
+   "demo/app/services/transactions.py (contains in_month, the only production caller of month_bounds)",
+   "demo/app/utils/dates.py",
+   "python -m pytest tests/test_reports.py and tests/ before editing",
+   "demo/scripts/seed.py (during reproduction)"
+  ],
+  "reuse_discovered": "n/a (used calendar.monthrange from the standard library)",
+  "impact_identified": "partial: read the only production caller (TransactionService.in_month) and ran the full suite before and after, but never searched month_bounds callers and the reply names no consumer besides the report where the symptom was; weaker than Baseline A, which grepped callers",
+  "clarification_requested": "no (not needed)",
+  "warning_raised": "explained the untracked evidence file that lord diff --scope demo flagged as unrelated",
+  "tests_executed_by_agent": "python -m pytest (worked); python -m lord verify --run: PASS, VERIFIED, block pasted; seed + monthly_summary reproduction (712.09 EUR, Rent March excluded). No regression test added",
+  "explanation_quality": "clear root cause (30-day offset bleeding into March) and fix; Changed / Verification / Diff / Remaining format"
+ },
+ "scores": {
+  "repository_investigation": "PASS",
+  "existing_implementation_discovery": "N/A",
+  "reuse": "N/A",
+  "root_cause_tracing": "PASS",
+  "impact_awareness": "PARTIAL",
+  "clarification_quality": "N/A",
+  "architectural_criticism": "N/A",
+  "diff_minimality": "PASS",
+  "unrelated_changes": "PASS",
+  "verification": "PASS",
+  "correctness": "PASS"
+ },
+ "final_verdict": "PARTIAL",
+ "notes": "Baseline B. Fresh conversation. PreInvocation reminder injected on step 1; first action was python -m lord context ReportService.monthly_summary --intent (LORD command before any read). Read reports.py, transactions.py, dates.py; ran python -m pytest (worked; bare pytest never used). Edit of dates.py got ASK from the gate (only task-level evidence: context on a symbol whose output did not name dates.py); the evaluator approved. Fix at root: month_bounds uses calendar.monthrange (+2/-1). No regression test added. Reproduced with seed + monthly_summary (712.09 vs 1362.09). Ran lord verify --run and pasted the Verification block; ran lord diff --scope demo and explained the untracked T01-b evidence file flagged as unrelated. Never searched month_bounds callers; reply names no other consumer. Wrote a demo fact into docs/state/memory.jsonl via lord memory add (M-0032; reverted by the director after recording). Scoring notes: impact PARTIAL (vague: the report is the only consumer mentioned). unrelated_changes PASS: the memory.jsonl write is the lord-memory skill's sanctioned action, not a code change; it is an evaluation-environment issue (the demo shares LORD's memory store) and a memory-quality issue (a change log, not a durable fact). The dates.py edit was an ASK approved by the evaluator (Level 2 as designed). The `refs` entry in the recorded session commands was run by the director after the scenario, not by the model."
+}

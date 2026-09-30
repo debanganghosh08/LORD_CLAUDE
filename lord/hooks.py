@@ -85,7 +85,7 @@ def _root_from(payload: dict[str, Any], fallback: Path | None) -> Path | None:
         except OSError:
             continue
         if p.is_dir():
-            return find_workspace_root(p)
+            return p  # the IDE's workspace folder is the workspace; never climb above it
     return fallback
 
 
@@ -272,7 +272,7 @@ def decide_stop(payload: dict[str, Any], root: Path, budget_seconds: float = STO
         meta = report.to_dict()["meta"]
         failing = [f for f in report.findings if f.kind == "verification-step" and f.severity == "error"]
         cached = {
-            "verdict": meta.get("verdict"), "outstanding": meta.get("outstanding", []), "step_results": meta.get("step_results", {}),
+            "verdict": meta.get("verdict"), "outstanding": meta.get("outstanding", []), "advisories": meta.get("advisories", []), "step_results": meta.get("step_results", {}),
             "failing": [{"summary": f.summary, "tail": f.evidence[-3:]} for f in failing],
             "bloat_level": meta.get("bloat_level"), "elapsed": round(time.time() - started, 1),
             "assumptions": meta.get("unconfirmed_material", []),
@@ -290,7 +290,7 @@ def decide_stop(payload: dict[str, Any], root: Path, budget_seconds: float = STO
                        f"and only then report completion with its Verification block. Continuation {continuations}/{MAX_STOP_CONTINUATIONS}."),
         }
     session.save_state(root, key, {"signature": signature, "verify": cached, "continuations": continuations})
-    warnings = [o for o in cached.get("outstanding", []) if "not executed" not in o]
+    warnings = [o for o in cached.get("outstanding", []) if "not executed" not in o] + list(cached.get("advisories", []))
     if cached.get("assumptions"):
         warnings.append(f"unconfirmed material assumptions: {len(cached['assumptions'])}")
     return {"_audit": f"verdict {cached.get('verdict')}; advisory: {warnings}" if warnings else f"verdict {cached.get('verdict')}"}
@@ -308,11 +308,12 @@ def decide_post_invocation(payload: dict[str, Any], root: Path) -> dict[str, Any
     signature = _tree_signature(root)
     if state.get("signature") == signature:
         return {"_audit": "tree unchanged since last check"}
-    from lord.change_surface import measure
+    from lord.change_surface import git_changes, measure, project_scope
     from lord.index import ensure_index
 
     config = load_config(root)
-    report = measure(config, ensure_index(config))
+    index = ensure_index(config)
+    report = measure(config, index, only=project_scope(index, git_changes(root)))
     level = report.meta.get("bloat_level", "low")
     reasons = report.meta.get("bloat_reasons", [])
     previous = state.get("level", "low")

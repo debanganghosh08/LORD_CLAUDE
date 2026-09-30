@@ -94,7 +94,8 @@ UNKNOWN.
 ```
 Changed:       file by file; what was reused, what was new and why
 Verification:  the `python -m lord verify --run` block, verbatim
-               (<step> (<cwd>) - PASS | FAIL | NOT RUN; LORD verify - VERIFIED | NOT VERIFIED)
+               (<step> (<cwd>) - PASS | FAIL | NOT RUN; LORD verify - VERIFIED | NOT VERIFIED;
+                Advisories: heuristic signals to justify under Diff, not part of the verdict)
 Diff:          `lord diff --scope`: files, +added/-removed, new files, bloat level; each reason resolved or justified
 Remaining:     unconfirmed assumptions, open questions, what the user should double-check
 ```
