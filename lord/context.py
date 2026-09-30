@@ -16,19 +16,25 @@ from pathlib import Path
 from lord.config import LordConfig
 from lord.index import Index
 from lord.memory import Store, load_handoff
+from lord.paths import product_dirs
 from lord.query import tokenize
 from lord.report import CONFIRMED, INFERRED, INFO, OK, WARN, Finding, Report
 from lord.review import brief
 
 SECTION_LIMITS = {"handoff": 1, "memory": 6, "brief": 18, "skills": 3, "rules": 3}
-FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---\n", re.S)
+FRONTMATTER_RE = re.compile(r"^---\r?\n(.*?)\r?\n---\r?\n", re.S)
 
 
 def _frontmatter(path: Path) -> dict[str, str]:
     try:
-        match = FRONTMATTER_RE.match(path.read_text(encoding="utf-8"))
+        return frontmatter(path.read_text(encoding="utf-8"))
     except OSError:
         return {}
+
+
+def frontmatter(text: str) -> dict[str, str]:
+    """Top-level `key: value` fields of a Markdown file's YAML frontmatter."""
+    match = FRONTMATTER_RE.match(text)
     fields: dict[str, str] = {}
     for line in (match.group(1).splitlines() if match else []):
         if ":" in line and not line.startswith((" ", "-")):
@@ -40,22 +46,28 @@ def _frontmatter(path: Path) -> dict[str, str]:
 def matching_skills(root: Path, intent: str, limit: int) -> list[tuple[str, str, int]]:
     """(name, description, overlap) for skills whose description shares terms with the intent."""
     terms = tokenize(intent) if intent else set()
-    found = []
-    for skill_md in sorted((root / ".agents" / "skills").glob("*/SKILL.md")):
-        fm = _frontmatter(skill_md)
-        name = fm.get("name") or skill_md.parent.name
-        description = fm.get("description", "")
-        overlap = len(terms & tokenize(description)) if terms else 0
-        found.append((name, description, overlap))
+    found, names = [], set()
+    # the workspace adapter and the installed plugin both provide skills
+    for base in product_dirs(root):
+        for skill_md in sorted((base / "skills").glob("*/SKILL.md")):
+            fm = _frontmatter(skill_md)
+            name = fm.get("name") or skill_md.parent.name
+            if name in names:
+                continue
+            names.add(name)
+            description = fm.get("description", "")
+            overlap = len(terms & tokenize(description)) if terms else 0
+            found.append((name, description, overlap))
     found.sort(key=lambda t: (-t[2], t[0]))
     return [f for f in found[:limit] if f[2] > 0 or not intent]
 
 
 def always_on_rules(root: Path) -> list[str]:
-    names = []
-    for rule in sorted((root / ".agents" / "rules").glob("*.md")):
-        if _frontmatter(rule).get("trigger") == "always_on":
-            names.append(rule.stem)
+    names: list[str] = []
+    for base in product_dirs(root):
+        for rule in sorted((base / "rules").glob("*.md")):
+            if _frontmatter(rule).get("trigger") == "always_on" and rule.stem not in names:
+                names.append(rule.stem)
     return names
 
 

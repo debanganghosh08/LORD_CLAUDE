@@ -22,7 +22,8 @@ kept separate from that adapter so other environments can be supported later.
 - an impact and root-cause analysis layer (Phase 4);
 - narrowly scoped specialist agents that return structured evidence (Phase 5);
 - durable engineering state kept apart from transient runtime state;
-- a distributable adapter for Antigravity.
+- one Antigravity plugin (rules, skills, agents, hooks, launcher and the
+  runtime), installed once and used by any repository.
 
 ## What LORD is not
 
@@ -46,6 +47,16 @@ kept separate from that adapter so other environments can be supported later.
 | | structured findings with explicit confidence |
 | | verification steps and durable state |
 
+## Install (Antigravity)
+
+```
+python -m lord plugin install --global --dry-run   # what would change
+python -m lord plugin install --global             # the plugin + `python -m lord` everywhere
+python -m lord plugin status --global
+```
+Reversible (`plugin rollback`, `plugin uninstall`), user-level, no API key.
+See [docs/INSTALL.md](docs/INSTALL.md).
+
 ## Quick start
 
 Requirements: Python 3.11+ and Git. ripgrep is recommended but optional.
@@ -68,11 +79,13 @@ python -m lord graph pkg/users.py        # inspect one node's edges
 python -m lord brief validate_email --intent "..."   # one-call pre-edit synthesis
 python -m lord verify --run --scope <path>            # completion check with real test results
 python -m lord context validate_email --intent "..."  # handoff + memory + brief + skills + rules, capped
-python -m lord task ask "..." | assume "..." --material | resolve "..." --answer "..." | confirm "..." | show   # task frame: questions block edits, assumptions are surfaced
+python -m lord task ask "..." | assume "..." --material | resolve "..." --answer "..." | confirm "..." | show   # task frame: a question blocks code edits; a material assumption makes the next edit a user decision
 python -m lord memory query --path src/users.py       # durable decisions, traps, conventions for an area
 python -m lord memory add --category trap --statement "..." --evidence "file:line"   # record what must outlive the session
 python -m lord handoff write --doing "..." --remaining "..." --from-verify           # resume point for unfinished work
-python -m lord acceptance prompts                     # demo evaluation scenarios; also baseline | check --test T03 | record --test T03 --model <label>
+python -m lord verify --reconcile reply.md           # a reply's verification claims vs LORD's executed record
+python -m lord acceptance workspace --out <dir>       # the demo as a separate repository; then check|record --workspace <dir> --test T03
+python -m lord plugin validate|install|status|rollback|uninstall   # package and install the Antigravity plugin
 python -m lord --help                    # all commands; add --json for machine output
 python -m pytest                         # run the LORD test suite (needs pytest)
 ```
@@ -81,39 +94,39 @@ Every result carries a confidence: `confirmed` (parsed source), `inferred`
 (heuristic or text match) or `unknown` (analysis unavailable for that
 language). LORD never turns "could not analyse" into "nothing found".
 
-Inside Antigravity, opening this workspace activates
-`.agents/rules/lord-operating-contract.md` (always on), the skills
-`lord-critical-review`, `lord-pre-edit-audit`, `lord-reuse-audit` and
-`lord-impact-analysis`, and five read-only specialist subagents:
-`lord-investigator`, `lord-reuse-auditor`, `lord-impact-analyst`,
-`lord-skeptical-reviewer`, `lord-verification-reviewer`. In a trusted
-workspace `.agents/hooks.json` also installs four hooks: a once-per-conversation
-reminder, a pre-edit gate on code-file writes (denies when no LORD
-investigation ran or a recorded question is open, asks when only a
-task-level investigation ran), a completion gate that blocks "done" while a
-detected test step fails, and post-step advisories (change surface, bypass
-signals, unconfirmed assumptions). Interventions are tiered: information,
-advisory, ask, block (docs/ARCHITECTURE.md section 7).
+With the plugin installed, every Antigravity workspace gets the operating
+contract (always on), the skills `lord-critical-review`,
+`lord-pre-edit-audit`, `lord-reuse-audit`, `lord-impact-analysis` and
+`lord-memory`, five read-only specialist subagents (packaged; not verified
+live in the IDE) and four hooks: a once-per-conversation reminder, a
+pre-edit gate on code-file writes (denies when no LORD investigation ran or
+a recorded question is open, asks when only a task-level investigation ran
+or when a material assumption is unconfirmed), a completion gate that blocks
+"done" while a detected test step fails, and post-step advisories (change
+surface, bypass signals, unconfirmed assumptions). Interventions are tiered:
+information, advisory, ask, block (docs/ARCHITECTURE.md section 7). The
+workspace keeps only its own state (`.lord/`, which ignores itself, and
+`docs/state/` if memory is written).
 
 ## Repository layout
 
 ```
-.agents/            Antigravity adapter: rules/, skills/, agents/ (tracked product source)
-lord/               LORD core, Python standard library only
-tests/              pytest suite and fixtures
-docs/               architecture, roadmap, security, decisions, phase reports
-docs/state/         durable engineering memory (memory.jsonl) and handoff (handoff.json), versioned
-docs/acceptance/    evaluation: test plan, scorecard, manual Antigravity/Gemini guide, baseline ground truth, evidence records
-demo/               small ledger application used as the evaluation environment (reuse traps, a planted root-cause bug)
+plugin/             the Antigravity plugin source: plugin.json, hooks.json, lord_hook.py (the one launcher),
+                    lord_cli.py, rules/, skills/, agents/
+lord/               the runtime (LORD core), Python standard library only
+tests/              pytest suite and fixtures (tests/fixtures/demo_workspace/: the evaluation demo template)
+docs/               architecture, install, roadmap, security, decisions, phase reports
+docs/state/         LORD's own durable memory (memory.jsonl) and handoff (handoff.json), versioned
+docs/acceptance/    evaluation: test plan, scorecard, manual Antigravity/Gemini guide, baseline ground truth, oracles, evidence records
 AGENTS.md           cross-tool pointer to the contract; CLAUDE.md imports it
 lord.toml           optional per-project configuration (exclusions)
-                    (.agents/lord_hook.py is the hook launcher; docs/ARCHITECTURE.md section 7)
-.lord/              generated machine-local state (index, caches); ignored by Git
+.lord/              generated machine-local state (index, session); ignores itself
 ```
 
 ## Documentation
 
 - [Architecture](docs/ARCHITECTURE.md): layers, boundaries, interfaces, state model, limitations
+- [Install](docs/INSTALL.md): plugin install, update, rollback, uninstall; global vs workspace state
 - [Roadmap](docs/ROADMAP.md): phases 1-9
 - [Security policy](docs/SECURITY.md)
 - [Contributing and Git policy](CONTRIBUTING.md)

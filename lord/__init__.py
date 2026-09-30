@@ -6,4 +6,4 @@ change-surface analysis, impact analysis, and structured reports that any
 IDE-hosted model can consume. It never calls a model API.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0rc1"

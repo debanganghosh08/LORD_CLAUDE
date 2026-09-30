@@ -116,7 +116,7 @@ def test_verify_without_run_lists_steps_and_is_not_verified(dup_git: Path):
     assert any("not executed" in o for o in report.meta["outstanding"]) and any("marker" in o for o in report.meta["outstanding"])
     assert report.meta["steps"] == ["pytest"]
     markers = next(f for f in report.findings if f.kind == "unresolved-markers")
-    assert markers.confidence == CONFIRMED and markers.evidence[0].startswith("app/api.py: return 'pong'")
+    assert markers.confidence == CONFIRMED and markers.evidence[0].startswith("app/api.py:17: return 'pong'")
 
 
 def test_verify_run_reports_real_results_and_coverage(dup_git: Path):
@@ -163,7 +163,7 @@ def _frontmatter(path: Path) -> str:
 
 @pytest.mark.parametrize("name", SPECIALISTS)
 def test_specialists_are_read_only_and_structured(name: str):
-    path = ROOT / ".agents" / "agents" / f"{name}.md"
+    path = ROOT / "plugin" / "agents" / f"{name}.md"
     assert path.is_file()
     fm = _frontmatter(path)
     assert f"name: {name}" in fm and "subagent: true" in fm and "mainAgent: false" in fm
@@ -174,12 +174,12 @@ def test_specialists_are_read_only_and_structured(name: str):
 
 
 def test_exactly_the_planned_specialists_exist():
-    agents = sorted(p.stem for p in (ROOT / ".agents" / "agents").glob("*.md"))
+    agents = sorted(p.stem for p in (ROOT / "plugin" / "agents").glob("*.md"))
     assert agents == sorted(SPECIALISTS), "every agent must have a genuine responsibility; no decorative agents"
 
 
 def test_critical_review_skill_binds_protocol_to_specialists_and_tools():
-    body = (ROOT / ".agents" / "skills" / "lord-critical-review" / "SKILL.md").read_text(encoding="utf-8")
+    body = (ROOT / "plugin" / "skills" / "lord-critical-review" / "SKILL.md").read_text(encoding="utf-8")
     for step in ("Understand intent", "Validate user assumptions", "Search existing solutions", "Trace root cause", "Smallest valid change", "Verify", "Report"):
         assert step in body, step
     for specialist in SPECIALISTS:

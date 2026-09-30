@@ -10,7 +10,7 @@ depending on any one model or provider.
 ```
 USER INTENT
    |
-LORD OPERATING CONTRACT        .agents/rules  (always-on behaviour contract)
+LORD OPERATING CONTRACT        plugin/rules  (always-on behaviour contract)
    |
 REPOSITORY FORENSICS           lord.inventory, lord.symbols, lord.index   (Phase 2)
    |
@@ -72,31 +72,42 @@ no model API. Exposed through one stable boundary: `python -m lord <command>`
 | `change_surface.py` | Git-based diff measurement, new symbols, name collisions, resemblance, churn, unrelated files, bloat signal | 3 |
 | `graph.py` | relationship graph over the index: defines, imports, calls, references, extends, implements, tests, configures; per-edge confidence | 4 |
 | `impact.py` | impact report (callers, indirect chains, callees, dependents, types, tests, config, boundary, consequences) and root-cause trace worksheet | 4 |
-| `review.py` | `brief` (one-call pre-edit synthesis) and `verify` (change surface, test coverage of the change, unresolved markers, detected test/lint/build steps with real results, verdict) | 5 |
-| `session.py` | transient session state in `.lord/session/`: investigation activity log (with the files each command surfaced), the task frame (`task.json`: request, intent, target, assumptions, questions), per-conversation counters and caches, hook diagnostics | 6, 8A.1 |
+| `review.py` | `brief` (one-call pre-edit synthesis); `verify` (change surface, test coverage of the change, unresolved markers, detected test/lint/build steps with real results, verdict, recorded for reuse); `reconcile` (a reply's verification claims against LORD's executed record) | 5, 8B |
+| `markers.py` | unfinished-work markers added by a change, in marker syntax only (code comments via `tokenize` for Python, comment syntax elsewhere; line-leading `TODO:` in prose outside code fences); new untracked files scanned in full | 8B |
+| `session.py` | transient session state in `.lord/session/`: investigation activity log (with the files each command surfaced), the task frame (`task.json`: request, intent, target, assumptions with confirmation source, questions, decision state, confirmation gate), the last executed verification with its tree signature, per-conversation counters and caches, hook diagnostics | 6, 8A.1, 8B |
 | `hooks.py` | Antigravity hook decisions (pre-edit gate, task gate, completion gate, once-per-conversation reminder, change-surface / bypass / assumption advisories) with fail-safe dispatch | 6, 8A.1 |
-| `.agents/lord_hook.py` | the single launcher: `python -m lord_hook <event>`; Antigravity runs workspace hooks from `.agents/` (confirmed live); locates the `lord` package from its own file; never exits non-zero | 6, 8A.1 |
+| `plugin/lord_hook.py` | the single launcher: `python -m lord_hook <event>`, run by Antigravity from the plugin folder; finds the runtime from its own file (`<plugin>/runtime` installed, `<repo>` in a checkout); never exits non-zero; imports on any Python 3 | 6, 8A.1, 8B |
+| `plugin.py` | packaging: validate the plugin source (documented manifest fields, hooks, rules, skills, agents, no machine paths, no secrets, stdlib-only runtime); install / update / roll back / uninstall a self-contained bundle; optional `python -m lord` registration | 8B |
 | `memory.py` | durable memory store (`docs/state/memory.jsonl`): schema and trust validation, supersession, key conflicts, deterministic retrieval; handoff (`docs/state/handoff.json`) | 7 |
 | `context.py` | capped context assembly: handoff, relevant memory, brief, matching skills, always-on rules | 7 |
-| `acceptance.py` | demo evaluation: baseline ground truth, per-scenario deterministic checks, evidence records with validation | 8A |
+| `acceptance.py` | demo evaluation in a separate workspace: export, baseline ground truth, per-scenario checks each labelled confirmed fact / heuristic signal / human review required, evidence records with the task decisions and the verification reconciliation | 8A, 8B |
 
 Design rules for the core: prefer the standard library; deterministic and
 reproducible; Windows-first via `pathlib`; every analysis distinguishes
 CONFIRMED / INFERRED / UNKNOWN; unsupported input is reported as UNKNOWN, never
 as an empty result.
 
-### 3.2 Antigravity adapter (`.agents/`)
+### 3.2 Antigravity plugin (`plugin/`)
 
-Tracked product source that binds LORD to Antigravity's current customisation
-mechanisms (documented at antigravity.google/docs):
+Tracked product source that binds LORD to Antigravity as one plugin
+(antigravity.google/docs/plugins; decision record 0003). `lord plugin
+install` builds a self-contained bundle from it plus the runtime:
 
-| Mechanism | Location | LORD use |
-|---|---|---|
-| Rules | `.agents/rules/*.md` (frontmatter `trigger`, `description`; 12k chars max) | the always-on operating contract |
-| Skills | `.agents/skills/<name>/SKILL.md` (+ `scripts/`, `resources/`) | executable procedures: pre-edit audit, later reuse audit, impact, verification |
-| Custom subagents | `.agents/agents/<name>.md` (frontmatter `name`, `description`, `tools`, `model`, `subagent`) | narrowly scoped specialists returning structured findings |
-| Hooks | `.agents/hooks.json` (`PreToolUse`, `PostToolUse`, `PreInvocation`, `PostInvocation`, `Stop`; command handlers with JSON on stdin/stdout) | pre-edit gate, completion gate, change-surface advisory (section 7) |
-| Plugins | `.agents/plugins/<name>/plugin.json` or `~/.gemini/config/plugins/` | Phase 8 portable distribution |
+| Mechanism | Source | Installed (`~/.gemini/config/plugins/lord/` or `<ws>/.agents/plugins/lord/`) | LORD use |
+|---|---|---|---|
+| Manifest | `plugin/plugin.json` (`name`, `description` only: the documented schema) | `plugin.json` | identity; version lives in `lord.__version__` and `install.json` |
+| Rules | `plugin/rules/*.md` (frontmatter `trigger`, `description`; 12k chars max) | `rules/` (loaded when the plugin is enabled) | the always-on operating contract |
+| Skills | `plugin/skills/<name>/SKILL.md` | `skills/` | executable procedures: pre-edit audit, reuse audit, impact, critical review, memory |
+| Custom subagents | `plugin/agents/<name>.md` | `agents/` | specialists; documented for Antigravity 2.0 and the CLI, not verified in the IDE |
+| Hooks | `plugin/hooks.json` + `plugin/lord_hook.py` | same files, unchanged | pre-edit gate, confirmation boundary, completion gate, advisories (section 7) |
+| Runtime | `lord/` | `runtime/lord/` | the deterministic core; `lord-harness.pth` in the Python user site makes `python -m lord` import it; `lord_cli.py` is the fallback |
+| MCP | none | none | LORD needs no MCP server |
+
+Global vs workspace: the plugin (rules, skills, agents, hooks, launcher,
+runtime) is the product and is installed once; everything project-specific
+lives in the workspace the hook payload names: `.lord/` (index, session,
+task frame, hook log; ignores itself) and `docs/state/` (durable memory,
+only when written). The bundle carries no memory, evidence, demo or tests.
 
 Rules hold principles and stay short. Skills hold procedures. Agents hold
 roles. The contract is written once and referenced, never duplicated.
@@ -104,7 +115,7 @@ roles. The contract is written once and referenced, never duplicated.
 Cross-tool pointers: `AGENTS.md` (read by several agent tools) summarises the
 contract in seven lines and points at the canonical rule; `CLAUDE.md` imports
 `AGENTS.md`. No `GEMINI.md` copy is kept at the workspace root because the
-`.agents/rules` always-on rule already covers Antigravity.
+plugin's always-on rule already covers Antigravity.
 
 ### 3.3 Specialist agent architecture
 
@@ -115,7 +126,7 @@ happens in a subagent, and only structured findings return.
 SPECIALIST DEEP INVESTIGATION -> STRUCTURED FINDINGS -> PRIMARY AGENT SYNTHESIS
 ```
 
-Roles (all shipped, `.agents/agents/`):
+Roles (all shipped, `plugin/agents/`):
 
 | Agent | Question it answers | Backing commands | Writes code? |
 |---|---|---|---|
@@ -141,7 +152,7 @@ claim, evidence, confidence, consequence, recommendation.
   reads or writes outside it. `safe_join` refuses escaping paths.
 - **Git boundary**: the Git root must equal the workspace root; `doctor`
   reports an error otherwise.
-- **Source vs generated state**: `.agents/`, `lord/`, `tests/`, `docs/` are
+- **Source vs generated state**: `plugin/`, `lord/`, `tests/`, `docs/` are
   source. `.lord/` is machine-local derived state (index, caches) and is
   ignored; it is rebuilt, never authored.
 - **Durable vs transient state**: durable engineering knowledge lives in
@@ -183,20 +194,21 @@ Intervention tiers (Phase 8A.1 made them explicit):
 | Level | Name | Mechanism | Used for |
 |---|---|---|---|
 | 0 | information | command output; the once-per-conversation PreInvocation reminder (silent when the conversation already investigated) | what LORD knows; how to start |
-| 1 | advisory | PostInvocation `injectSteps` ephemeral message, each once | unconfirmed material assumption; bypass signal; change larger than the task |
-| 2 | ask | PreToolUse `ask` | task-level evidence only: the user decides at the edit |
+| 1 | advisory | PostInvocation `injectSteps` ephemeral message, each once | unconfirmed material assumption (after an edit); bypass signal; change larger than the task |
+| 2 | ask | PreToolUse `ask` | task-level evidence only; a code edit under an unconfirmed material assumption (the confirmation boundary): the user decides at the edit |
 | 3 | block | PreToolUse `deny`; Stop `continue` (capped) | no investigation at all; an open question; a failing test |
 
 | Hook | Situation | Evidence | Level | Decision |
 |---|---|---|---|---|
 | PreInvocation | first step of a conversation with no LORD investigation in the window | activity log, per-conversation marker | 0 | one ephemeral reminder naming `context` and `task ask`; nothing afterwards |
 | PreToolUse on `write_to_file`, `replace_file_content`, `multi_replace_file_content` | non-code file (docs, config, tests); edit of at most 3 lines; path outside the workspace | file kind and edit size from the tool arguments | audit | `allow` |
-| | consequential code edit while the task frame has an open question | `.lord/session/task.json` | 3 | `deny` naming the question and `lord task resolve` |
+| | any code edit (trivial ones included) while the task frame has an open question | `.lord/session/task.json` | 3 | `deny` naming the question and `lord task resolve` |
+| | a code edit the evidence rules would allow or ask, while the task frame holds a material assumption nobody confirmed | `task.json` | 2 | `ask` naming the assumption; the gated file changing afterwards records the user's approval (`source: edit-gate approval`); an unchanged file means rejected, and the next edit asks again. Never applied to an edit the evidence rules deny |
 | | code file whose path or symbols were named by a LORD investigation command in the last 45 minutes, or surfaced by its output (callers, dependents, tests of a `context`/`brief` target) | `.lord/session/activity.jsonl` (`files`) | audit | `allow` |
 | | code file, only task-level investigation (`reuse`, `brief`, `context` on something that did not surface this file) | activity log | 2 | `ask` (user decides; the reason names the file) |
 | | code file, no LORD investigation at all in the window | activity log | 3 | `deny` with the exact command to run |
 | | new code file without a `context`, `reuse` or `brief` in the window | activity log | 3 | `deny` (reuse -> extend -> refactor -> create) |
-| Stop (fully idle, code files changed) | a detected verification step FAILED, for example pytest exit 1 | `verify --run` with real exit codes, cached per working-tree signature | 3, bounded | `continue` with the failing output, at most 2 consecutive times per conversation |
+| Stop (fully idle, code files changed) | a detected verification step FAILED, for example pytest exit 1 | `verify --run` with real exit codes, cached per working-tree signature; a `verify --run` the agent already ran on the same tree is reused, not repeated | 3, bounded | `continue` with the failing output, at most 2 consecutive times per conversation |
 | | untested change, TODO markers, bloat signal, unavailable tools | heuristic or advisory | audit | allow, logged |
 | PostInvocation (code files changed, tree changed since last check) | bloat signal HIGH, or the first rise to ELEVATED | `diff` reasons | 1 | ephemeral message asking whether the change became larger than the task |
 | | a call that was unconditional at HEAD is now guarded by a new parameter, or a shared call was removed (`invariant-bypass`, `shared-call-removed`) | AST comparison of the modified Python file against HEAD | 1 | ephemeral message, once per finding |
@@ -224,9 +236,23 @@ investigated edit in the live evaluation. A symbol-level `context` does not
 surface the files its callees live in (Baseline B, T03: `context
 ReportService.monthly_summary` left `dates.py` at the ask tier).
 
+Clarification semantics (Phase 8B): LORD cannot tell whether a request is
+ambiguous; the model has to notice. LORD gives the model a place to record
+it (`task ask` for a question, `task assume --material` for a reading it
+proceeds on), turns that record into a user decision at the next code edit
+(deny while a question is open; ask while a material assumption is
+unconfirmed), and preserves who decided: `edit-gate approval` (observed) or
+`model-reported` (`task confirm`, the model's word). `lord task show` prints
+the decision state: `blocked`, `awaiting-confirmation` or `clear`. Cosmetic
+assumptions never gate. An ambiguity the model never records is invisible.
+
 Verification semantics: `verify` separates facts from heuristics. The
 verdict is NOT VERIFIED only for facts: a failing, timed-out or unavailable
-step, no detected step, steps not executed, or an added TODO/FIXME marker.
+step, no detected step, steps not executed, or an added unfinished-work
+marker in marker syntax (`lord/markers.py`: a comment that starts with the
+marker, or a line-leading `TODO:` in prose outside code fences; prose that
+discusses markers, string literals and fixture data are not markers; new
+untracked files are scanned in full).
 The bloat signal and import-based test coverage are advisories printed
 beside the verdict ("Advisories (heuristic, ...)") and must be justified in
 the report. Before this split, correct and fully tested changes were
@@ -234,6 +260,15 @@ labelled NOT VERIFIED in five of eight Baseline B runs. The change surface
 behind the advisory, in `verify` and in the PostInvocation hook, is measured
 over the sub-project(s) the changed code lives in (`project_scope`), so
 untracked records elsewhere in the workspace are not counted.
+
+Reporting contract (Phase 8B): `verify --run` records its executed result
+with the working-tree signature (`.lord/session/verification.json`). A
+model's reply is a claim; `lord verify --reconcile <reply>` and `acceptance
+record --reply` compare it with that record: VERIFIED / NOT VERIFIED come
+only from LORD's executed checks on the current tree; UNVERIFIED CLAIM when
+LORD has no fresh record but the reply claims success; NO VERIFICATION when
+neither exists. A claim never changes the status; a disagreement is listed
+as a contradiction.
 
 Failure handling: every code path ends in valid JSON and exit code 0. An
 internal error returns the event's permissive default (`allow` or `{}`) and
@@ -246,15 +281,19 @@ recursion, Stop has a time budget and a continuation cap, and Antigravity
 itself caps consecutive Stop continuations (CLI changelog).
 
 Windows execution: Antigravity tokenises the command string itself and keeps
-literal quotes (observed), so hook commands contain no quotes. Workspace
-hooks run from the hooks.json folder (`<workspace>\.agents`, confirmed
-live in the Phase 8A evaluation), so the single launcher lives at
-`.agents/lord_hook.py` and locates the `lord` package from its own file,
-never from the cwd. The launcher logs the cwd it was started from; `doctor`
-reports an error if the launcher is missing.
+literal quotes (observed), so hook commands contain no quotes and no
+absolute path. Hooks run from the folder holding hooks.json (shipped docs;
+workspace hooks confirmed live in Phase 8A, plugin hooks observed in the
+Phase 6 CLI run), so the single launcher lives next to the plugin's
+hooks.json (`plugin/lord_hook.py`) and locates the runtime from its own
+file, never from the cwd. The launcher logs the cwd it was started from;
+`doctor` checks every hooks.json that applies (workspace, workspace plugin,
+user, global plugin), reports a missing launcher as an error and LORD
+hooks configured twice as a warning.
 
-Trust: workspace `.agents/hooks.json` (and rules, skills, agents) load only in
-a trusted workspace. CLI print mode never trusts, so `agy -p` cannot exercise
+Trust: workspace customisations (`.agents/hooks.json`, rules, skills,
+agents) load only in a trusted workspace; whether a global plugin's hooks
+also require a trusted workspace is not documented. CLI print mode never trusts, so `agy -p` cannot exercise
 workspace hooks; the IDE prompts for trust when a folder is opened.
 
 ## 8. Durable memory and context (Phase 7)
@@ -302,9 +341,18 @@ brief (up to 18 findings), skills whose descriptions match the intent (3) and
 the always-on rules. Every section names the command that gives more. It
 composes existing pieces; it is not an autonomous context engine.
 
-## 9. Evaluation environment (Phase 8A)
+## 9. Evaluation environment (Phase 8A; separate workspace since 8B)
 
-`demo/` is a small standard-library ledger application (web page -> API
+The demo template (`tests/fixtures/demo_workspace/demo/`, excluded from
+LORD's own index) is evaluated only as a separate Git repository created by
+`lord acceptance workspace --out <dir>` outside the LORD repository: no LORD
+source, memory, session state, evidence or oracles in it, and the `demo/`
+folder name kept so the scenario prompts stay unchanged. `acceptance
+check/record --workspace <dir>` observe it; evidence and the oracle stay in
+the LORD repository (the oracle imports the demo named by
+`LORD_ACCEPTANCE_DEMO`).
+
+The demo is a small standard-library ledger application (web page -> API
 handlers -> services -> shared utilities and configuration -> repository,
 with tests) designed to expose shallow agents: a text helper that a service
 does not use yet, a money formatter the export does not import, shared
@@ -319,9 +367,10 @@ manual Antigravity/Gemini procedure, LORD's own analysis of the demo as
 ground truth (`baseline/`, generated by `lord acceptance baseline`), the
 private root-cause oracle tests (excluded from the index by `lord.toml`),
 and versioned evidence records (`evidence/`, created by `lord acceptance
-record` and validated by the test suite). `lord acceptance check <TEST>`
-runs the deterministic post-conditions of a scenario against the working
-tree.
+record` and validated by the test suite). `lord acceptance check --workspace
+<dir> --test <ID>` runs the deterministic post-conditions of a scenario
+against that workspace; each says whether it is a confirmed fact, a
+heuristic signal, or needs human review.
 
 Two capabilities were fixed while establishing the ground truth: `verify`
 now detects and runs verification steps per sub-project (a change under
@@ -330,7 +379,7 @@ behaviour search and duplicate detection stay inside one project root with
 rarity-weighted term matching, so the demo's analysis is not polluted by
 LORD's own symbols.
 
-## 10. Current limitations (after Phase 8A)
+## 10. Current limitations (after Phase 8B)
 
 - Call resolution is name-based across files (inferred); only import
   bindings and same-file definitions are confirmed. Dynamic dispatch,
@@ -350,11 +399,20 @@ LORD's own symbols.
   PreToolUse deny/allow, PostInvocation advisory, Stop continuation
   observed; cwd `.agents`). PreInvocation is validated against the
   documented payload shape and fires live only from Phase 8A.1's Baseline B
-  onwards. Whether the IDE loads `.agents/agents/` remains unconfirmed.
+  onwards. Plugin hooks, rules and skills in the IDE are validated by the
+  separate-workspace probe (docs/acceptance/MANUAL-ANTIGRAVITY-GEMINI.md
+  section 3); whether the IDE loads plugin `agents/` remains unconfirmed.
 - The task frame is filled by the model (`lord task ask/assume`) or by
   `context --intent`; LORD cannot detect an ambiguity the model never
-  records. The open-question gate enforces the model's own question, not
-  the existence of one.
+  records. The open-question gate and the confirmation boundary enforce the
+  model's own record, not the existence of one. Approval at the boundary is
+  inferred from the gated file changing (a shell command that rewrote it
+  would read as approval), and a model can `task confirm` without asking;
+  that confirmation is labelled model-reported.
+- The marker detector recognises marker syntax: a marker written mid-comment
+  (`# fix later, TODO`) or in a language whose comments are not `#`, `//`,
+  `/* */`, `--` or `;` is not seen. Files under a fixtures/testdata folder
+  are treated as test data.
 - Import-based test coverage cannot credit tests that drive code through
   subprocesses or reach it through shared fixtures (`conftest.py`); such
   files are reported as "without an importing test" (an advisory).

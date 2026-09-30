@@ -9,10 +9,12 @@ present. It reports facts, never secrets.
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import sys
 from pathlib import Path
 
+from lord import __version__
 from lord.config import load_config
 from lord.paths import git_toplevel, state_dir
 from lord.report import CONFIRMED, ERROR, INFO, OK, WARN, Finding, Report
@@ -85,17 +87,21 @@ def run_doctor(root: Path) -> Report:
         )
     )
 
-    agents_dir = root / ".agents"
-    present = [d for d in ADAPTER_DIRS if (agents_dir / d).is_dir()]
+    # where LORD's rules and skills come from, and which runtime is executing
+    from lord.paths import plugin_root, product_dirs, runtime_home
+
+    plugin = plugin_root()
+    origin = "installed plugin" if plugin is not None and plugin.parent != runtime_home() else "development checkout"
+    report.add(Finding(kind="runtime", summary=f"LORD {__version__} runtime from the {origin}", severity=OK, confidence=CONFIRMED,
+                       evidence=[str(runtime_home())] + ([f"plugin: {plugin}"] if plugin else [])))
+    sources = product_dirs(root)
     report.add(
         Finding(
-            kind="antigravity-adapter",
-            summary=(
-                f".agents/ present with {', '.join(present)}" if present else ".agents/ adapter not found"
-            ),
-            severity=OK if present else INFO,
-            evidence=[str(agents_dir)] if agents_dir.exists() else [],
-            recommendation="" if present else "install the LORD Antigravity adapter to activate rules, skills and agents",
+            kind="product",
+            summary=f"rules/skills provided by: {', '.join(str(d) for d in sources)}" if sources else "no LORD rules or skills found for this workspace",
+            severity=OK if sources else INFO,
+            evidence=[f"{d}: {', '.join(x for x in ADAPTER_DIRS if (d / x).is_dir())}" for d in sources],
+            recommendation="" if sources else "install the plugin: `python -m lord plugin install --global`",
         )
     )
 
@@ -113,13 +119,16 @@ def run_doctor(root: Path) -> Report:
         )
     )
 
+    from lord.plugin import _stdlib_violations
+
+    violations = _stdlib_violations(runtime_home() / "lord")
     report.add(
         Finding(
             kind="provider-independence",
-            summary="LORD core makes no model API calls and needs no API key",
-            severity=OK,
+            summary="LORD runtime imports only the Python standard library: no model API, no API key" if not violations else f"{len(violations)} non-stdlib import(s) in the runtime",
+            severity=OK if not violations else ERROR,
             confidence=CONFIRMED,
-            evidence=["pyproject.toml: dependencies = []"],
+            evidence=violations[:10] or [f"checked every module under {runtime_home() / 'lord'}"],
         )
     )
     return report
@@ -173,22 +182,21 @@ def validate_hooks_config(data: object) -> list[str]:
     return errors
 
 
-def check_hooks(root: Path) -> list[Finding]:
-    """Findings about `.agents/hooks.json`: schema, resolvable commands, launcher copies."""
-    import json
+def hook_configs(root: Path) -> list[tuple[str, Path]]:
+    """Every hooks.json that can apply to this workspace, as (label, path):
+    the workspace adapter, a workspace-installed plugin, the user-level hooks
+    and a globally installed plugin (read, never written)."""
+    from lord.paths import PLUGIN_NAME, global_plugins_dir
 
-    path = root / ".agents" / "hooks.json"
-    if not path.is_file():
-        return [Finding(kind="hooks", summary="no .agents/hooks.json (enforcement not installed)", severity=INFO)]
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except ValueError as exc:
-        return [Finding(kind="hooks", summary=f"hooks.json is not valid JSON: {exc}", severity=ERROR, evidence=[str(path)],
-                        consequence="Antigravity will ignore or reject the file", recommendation="fix the JSON")]
-    errors = validate_hooks_config(data)
-    findings = []
-    if errors:
-        findings.append(Finding(kind="hooks", summary=f"hooks.json has {len(errors)} schema problem(s)", severity=ERROR, evidence=errors[:10]))
+    candidates = [("workspace .agents", root / ".agents" / "hooks.json"),
+                  ("workspace plugin", root / ".agents" / "plugins" / PLUGIN_NAME / "hooks.json")]
+    plugins = global_plugins_dir()
+    if plugins is not None:
+        candidates += [("user hooks", plugins.parent / "hooks.json"), ("global plugin", plugins / PLUGIN_NAME / "hooks.json")]
+    return [(label, path) for label, path in candidates if path.is_file()]
+
+
+def _commands(data: object) -> list[str]:
     commands = []
     for hook in data.values() if isinstance(data, dict) else []:
         for event, value in (hook.items() if isinstance(hook, dict) else []):
@@ -197,14 +205,60 @@ def check_hooks(root: Path) -> list[Finding]:
             for item in value:
                 handlers = item.get("hooks", []) if event in TOOL_EVENTS and isinstance(item, dict) else [item]
                 commands.extend(h.get("command", "") for h in handlers if isinstance(h, dict))
-    missing = sorted({c.split()[0] for c in commands if c and shutil.which(c.split()[0]) is None})
-    if missing:
-        findings.append(Finding(kind="hooks", summary=f"hook command executable(s) not on PATH: {', '.join(missing)}", severity=ERROR,
-                                consequence="a PreToolUse hook that cannot start denies every matching tool call", recommendation="install it or disable the hook"))
-    launcher = root / ".agents" / "lord_hook.py"
-    if any("lord_hook" in c for c in commands) and not launcher.is_file():
-        findings.append(Finding(kind="hooks", summary=".agents/lord_hook.py launcher missing", severity=ERROR, evidence=[str(launcher)],
-                                consequence="Antigravity runs workspace hooks from .agents/; without the launcher every gated write is denied"))
-    if not findings:
-        findings.append(Finding(kind="hooks", summary=f"hooks.json valid: {', '.join(sorted({e for h in data.values() for e in h if e != 'enabled'}))}", severity=OK, evidence=[str(path)]))
+    return commands
+
+
+def _launcher_of(command: str, config_dir: Path) -> Path | None:
+    """The launcher a LORD hook command runs: `python -m lord_hook` resolves
+    in the hook's working directory (the directory holding hooks.json);
+    `python "<path>/lord_hook.py"` names it."""
+    if "lord_hook" not in command:
+        return None
+    match = re.search(r'"([^"]*lord_hook\.py)"|(\S*lord_hook\.py)', command)
+    if match:
+        return Path(match.group(1) or match.group(2))
+    return config_dir / "lord_hook.py"
+
+
+def check_hooks(root: Path) -> list[Finding]:
+    """Findings about every hooks.json that applies: schema, resolvable
+    commands, launcher presence, and LORD enforcement configured twice."""
+    import json
+
+    configs = hook_configs(root)
+    if not configs:
+        return [Finding(kind="hooks", summary="no hooks.json applies to this workspace (enforcement not installed)", severity=INFO,
+                        recommendation="install the plugin: `python -m lord plugin install --global` (see docs/INSTALL.md)")]
+    findings: list[Finding] = []
+    running_lord: list[str] = []
+    for label, path in configs:
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except ValueError as exc:
+            findings.append(Finding(kind="hooks", summary=f"{label}: hooks.json is not valid JSON: {exc}", severity=ERROR, evidence=[str(path)],
+                                    consequence="Antigravity will ignore or reject the file", recommendation="fix the JSON"))
+            continue
+        errors = validate_hooks_config(data)
+        before = len(findings)
+        if errors:
+            findings.append(Finding(kind="hooks", summary=f"{label}: hooks.json has {len(errors)} schema problem(s)", severity=ERROR, evidence=errors[:10]))
+        commands = _commands(data)
+        missing = sorted({c.split()[0] for c in commands if c and shutil.which(c.split()[0]) is None})
+        if missing:
+            findings.append(Finding(kind="hooks", summary=f"{label}: hook command executable(s) not on PATH: {', '.join(missing)}", severity=ERROR,
+                                    consequence="a PreToolUse hook that cannot start denies every matching tool call", recommendation="install it or disable the hook"))
+        launchers = {_launcher_of(c, path.parent) for c in commands} - {None}
+        if launchers:
+            running_lord.append(label)
+        for launcher in sorted(launchers, key=str):
+            if not launcher.is_file():  # type: ignore[union-attr]
+                findings.append(Finding(kind="hooks", summary=f"{label}: LORD launcher missing at {launcher}", severity=ERROR, evidence=[str(path)],
+                                        consequence="without the launcher every gated write is denied", recommendation="reinstall: `python -m lord plugin install ...`"))
+        if len(findings) == before and isinstance(data, dict):
+            events = sorted({e for h in data.values() if isinstance(h, dict) for e in h if e != "enabled"})
+            findings.append(Finding(kind="hooks", summary=f"{label}: hooks.json valid: {', '.join(events)}", severity=OK, evidence=[str(path)]))
+    if len(running_lord) > 1:
+        findings.append(Finding(kind="hooks", summary=f"LORD hooks are configured {len(running_lord)} times ({', '.join(running_lord)})", severity=WARN,
+                                consequence="Antigravity merges hook configurations and runs each one: every gate would fire twice",
+                                recommendation="keep one: the global plugin, or a workspace install, not both"))
     return findings

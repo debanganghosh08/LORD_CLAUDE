@@ -113,10 +113,11 @@ def test_report_json_and_markdown_carry_confidence():
 def test_doctor_reports_clean_environment_for_lord_itself():
     report = run_doctor(ROOT)
     kinds = {f.kind: f for f in report.findings}
-    assert {"python", "tool-git", "git-root", "config", "antigravity-adapter", "state-dir", "provider-independence"} <= kinds.keys()
+    assert {"python", "tool-git", "git-root", "config", "runtime", "product", "state-dir", "provider-independence"} <= kinds.keys()
     assert not report.has_errors, report.to_markdown()
-    assert kinds["antigravity-adapter"].severity == OK
-    assert kinds["provider-independence"].confidence == CONFIRMED
+    assert kinds["product"].severity == OK and "plugin" in kinds["product"].summary, "the plugin source provides rules and skills"
+    assert kinds["runtime"].summary.endswith("development checkout")
+    assert kinds["provider-independence"].confidence == CONFIRMED and kinds["provider-independence"].severity == OK
 
 
 def test_cli_doctor_json_is_machine_readable():
@@ -131,9 +132,12 @@ def test_cli_doctor_json_is_machine_readable():
 # --- adapter structure --------------------------------------------------------
 
 REQUIRED_PATHS = (
-    ".agents/rules/lord-operating-contract.md",
-    ".agents/skills/lord-pre-edit-audit/SKILL.md",
-    ".agents/agents/lord-investigator.md",
+    "plugin/rules/lord-operating-contract.md",
+    "plugin/skills/lord-pre-edit-audit/SKILL.md",
+    "plugin/plugin.json",
+    "plugin/hooks.json",
+    "plugin/lord_hook.py",
+    "plugin/agents/lord-investigator.md",
     "AGENTS.md",
     "CLAUDE.md",
     "README.md",
@@ -155,7 +159,7 @@ def test_required_structure_exists(relative: str):
 
 
 def test_rules_have_valid_frontmatter_and_size():
-    rules = list((ROOT / ".agents" / "rules").glob("*.md"))
+    rules = list((ROOT / "plugin" / "rules").glob("*.md"))
     assert rules
     for rule in rules:
         fm = _frontmatter(rule)
@@ -165,7 +169,7 @@ def test_rules_have_valid_frontmatter_and_size():
 
 
 def test_skills_have_skill_md_with_description():
-    skills = [p for p in (ROOT / ".agents" / "skills").iterdir() if p.is_dir()]
+    skills = [p for p in (ROOT / "plugin" / "skills").iterdir() if p.is_dir()]
     assert skills
     for skill in skills:
         fm = _frontmatter(skill / "SKILL.md")
@@ -174,7 +178,7 @@ def test_skills_have_skill_md_with_description():
 
 
 def test_agents_have_name_description_and_are_subagents():
-    agents = list((ROOT / ".agents" / "agents").glob("*.md"))
+    agents = list((ROOT / "plugin" / "agents").glob("*.md"))
     assert agents
     for agent in agents:
         fm = _frontmatter(agent)
@@ -184,7 +188,7 @@ def test_agents_have_name_description_and_are_subagents():
 
 
 def test_contract_is_referenced_not_duplicated():
-    contract = (ROOT / ".agents/rules/lord-operating-contract.md").read_text(encoding="utf-8")
+    contract = (ROOT / "plugin/rules/lord-operating-contract.md").read_text(encoding="utf-8")
     agents_md = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
     assert "lord-operating-contract.md" in agents_md
     assert len(agents_md) < len(contract) / 2, "AGENTS.md must be a pointer, not a copy"
@@ -195,7 +199,8 @@ def test_contract_is_referenced_not_duplicated():
 
 IGNORED = (".env", ".env.local", "secrets/token.txt", "server.pem", "id_rsa", ".lord/index.json",
            ".claude/settings.local.json", ".gemini/state.json", "lord/__pycache__/x.pyc", "node_modules/a/b.js", "debug.log")
-TRACKED = (".agents/rules/lord-operating-contract.md", ".agents/skills/x/SKILL.md", ".agents/agents/x.md",
+TRACKED = ("plugin/rules/lord-operating-contract.md", "plugin/plugin.json", "plugin/lord_hook.py", "tests/fixtures/demo_workspace/demo/app/config.py",
+           ".agents/rules/lord-operating-contract.md", ".agents/skills/x/SKILL.md", ".agents/agents/x.md",
            ".agents/hooks.json", ".agents/plugins/lord/plugin.json", "lord/cli.py", "tests/test_foundation.py",
            "docs/ARCHITECTURE.md", "lord.toml", ".env.example")
 

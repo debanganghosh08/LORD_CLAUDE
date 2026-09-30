@@ -1,12 +1,19 @@
-"""Acceptance support for the demo evaluation (Phase 8A).
+"""Acceptance support for the demo evaluation (Phase 8A; separate workspace since 8B).
 
-Three deterministic services around `demo/`:
+The demo is another project, never part of LORD. Its template lives in
+`tests/fixtures/demo_workspace/` (excluded from LORD's own index) and is
+evaluated only as a separate Git repository created by `workspace`:
 
-- `baseline`: write LORD's own analysis of the demo (inventory, definitions,
+- `workspace --out <dir>`: export the template into a new directory outside
+  the LORD repository, `git init` it and commit the baseline. The evaluated
+  agent sees `demo/` there and nothing of LORD: no source, no memory, no
+  session state, no evidence, no oracles.
+
+- `baseline --workspace <dir>`: write LORD's own analysis of the demo (inventory, definitions,
   references, dependents, impact, trace, reuse decisions, tests, duplicates,
   verification steps) to `docs/acceptance/baseline/*.json`. This is the
   engineering ground truth a model's behaviour is reviewed against.
-- `check <TEST_ID>`: after a model has worked on a scenario, run the
+- `check --workspace <dir> --test <ID>`: after a model has worked on a scenario, run the
   observable post-conditions that do not need human judgement (which files
   changed, whether a helper was reused or duplicated, whether the oracle
   tests pass, whether the diff stayed small, which LORD commands and hook
@@ -15,13 +22,18 @@ Three deterministic services around `demo/`:
   `docs/acceptance/evidence/`, prefilled with the deterministic facts and
   the check results, with the human-scored dimensions left blank.
 
-Nothing here talks to a model. The scenarios and their oracles are in
-docs/acceptance/PHASE-8A-TEST-PLAN.md.
+Evidence, baseline and oracles stay in the LORD repository (`lord_root`);
+everything observed comes from the evaluated workspace (`config.root`).
+Every check says what it rests on: a confirmed fact, a heuristic signal, or
+human review required. Nothing here talks to a model. The scenarios and
+their oracles are in docs/acceptance/PHASE-8A-TEST-PLAN.md.
 """
 
 from __future__ import annotations
 
 import json
+import os
+import shutil
 import subprocess
 import sys
 from datetime import date
@@ -30,20 +42,25 @@ from typing import Any, Callable
 
 from lord import query
 from lord.change_surface import git_changes, measure
+from lord import __version__
 from lord.config import LordConfig
 from lord.impact import impact_report, trace_report
 from lord.index import Index
-from lord.paths import mentioned_paths
+from lord.paths import is_within, mentioned_paths, runtime_home
 from lord.report import CONFIRMED, ERROR, INFERRED, INFO, OK, UNKNOWN, WARN, Finding, Report
 from lord.reuse import duplicates_report, reuse_report
-from lord.review import detect_steps
-from lord.session import recent
+from lord.review import detect_steps, reconcile
+from lord.session import load_verification, recent
 
 ACCEPTANCE_DIR = Path("docs") / "acceptance"
 BASELINE_DIR = ACCEPTANCE_DIR / "baseline"
 EVIDENCE_DIR = ACCEPTANCE_DIR / "evidence"
 ORACLES_DIR = ACCEPTANCE_DIR / "oracles"
+TEMPLATE_DIR = Path("tests") / "fixtures" / "demo_workspace"
 DEMO = "demo"
+ORACLE_ENV = "LORD_ACCEPTANCE_DEMO"   # tells the oracle which demo to import
+# What each deterministic check rests on (docs/acceptance/SCORECARD.md):
+FACT, HEURISTIC, HUMAN = "confirmed fact", "heuristic signal", "human review required"
 # no -q here: the demo's and LORD's pytest configs already pass -q, and a second -q drops the summary line
 DEMO_TEST_COMMAND = [sys.executable, "-m", "pytest", "-p", "no:cacheprovider"]
 SCORE_DIMENSIONS = (
@@ -112,10 +129,16 @@ def _confirmed_ref_files(index: Index, root: Path, name: str) -> list[str]:
     return sorted(f.data["path"] for f in report.findings if f.kind == "reference" and f.confidence == CONFIRMED and f.data["path"].startswith(DEMO + "/"))
 
 
-def _run_pytest(root: Path, cwd: str, extra: list[str] | None = None, timeout: int = 300) -> tuple[str, str]:
+def lord_repo() -> Path:
+    """The LORD checkout this runtime belongs to (evidence, baseline, oracles)."""
+    return runtime_home()
+
+
+def _run_pytest(root: Path, cwd: str, extra: list[str] | None = None, timeout: int = 300, env: dict[str, str] | None = None) -> tuple[str, str]:
     """(status, tail) where status is pass | fail | error."""
     try:
-        completed = subprocess.run(DEMO_TEST_COMMAND + (extra or []), cwd=root / cwd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout)
+        completed = subprocess.run(DEMO_TEST_COMMAND + (extra or []), cwd=root / cwd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout,
+                                   env={**os.environ, **(env or {})})
     except (OSError, subprocess.TimeoutExpired) as exc:
         return "error", str(exc)
     tail = "\n".join((completed.stdout + completed.stderr).strip().splitlines()[-3:])
@@ -124,6 +147,63 @@ def _run_pytest(root: Path, cwd: str, extra: list[str] | None = None, timeout: i
 
 def _demo_changes(root: Path) -> list[Any]:
     return [c for c in git_changes(root) if c.path.startswith(DEMO + "/")]
+
+
+def _missing_demo(root: Path, title: str) -> Report | None:
+    if (root / DEMO).is_dir():
+        return None
+    report = Report(title=title, meta={"root": str(root)})
+    report.add(Finding(kind="workspace", summary=f"no {DEMO}/ in {root}; the demo is evaluated only in a separate workspace", severity=ERROR, confidence=CONFIRMED,
+                       recommendation="create one with `python -m lord acceptance workspace --out <dir outside the LORD repository>` and pass `--workspace <dir>`"))
+    return report
+
+
+# --- separate workspace ---------------------------------------------------------------------
+
+WORKSPACE_GITIGNORE = "__pycache__/\n.pytest_cache/\n*.pyc\ndemo/data/\n"
+SKIP_TEMPLATE_PARTS = frozenset({"__pycache__", ".pytest_cache"})
+
+
+def export_workspace(out: Path, template: Path | None = None) -> Report:
+    """Create the separate acceptance workspace: the demo template as a new Git
+    repository with one baseline commit. Refuses a non-empty directory and any
+    location inside the LORD repository (shared Git state, memory and session
+    state are exactly what the separation removes)."""
+    source = template or (lord_repo() / TEMPLATE_DIR)
+    out = out.resolve()
+    report = Report(title="acceptance workspace", meta={"out": str(out)})
+    if is_within(out, lord_repo()):
+        report.add(Finding(kind="workspace", summary="refusing to create the workspace inside the LORD repository", severity=ERROR, confidence=CONFIRMED,
+                           recommendation="choose a directory outside it, e.g. a sibling folder"))
+        return report
+    if out.exists() and any(out.iterdir()):
+        report.add(Finding(kind="workspace", summary=f"{out} exists and is not empty; refusing to write into it", severity=ERROR, confidence=CONFIRMED))
+        return report
+    if not (source / DEMO).is_dir():
+        report.add(Finding(kind="workspace", summary=f"template not found at {source}", severity=ERROR, confidence=CONFIRMED))
+        return report
+    copied = 0
+    for path in sorted((source / DEMO).rglob("*")):
+        rel = path.relative_to(source)
+        # runtime leftovers never travel: caches, bytecode, seeded data
+        if path.is_dir() or SKIP_TEMPLATE_PARTS & set(rel.parts) or path.suffix == ".pyc" or rel.parts[:2] == (DEMO, "data"):
+            continue
+        dest = out / rel
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(path, dest)
+        copied += 1
+    (out / ".gitignore").write_text(WORKSPACE_GITIGNORE, encoding="utf-8", newline="\n")
+    identity = ["-c", "user.name=LORD acceptance", "-c", "user.email=acceptance@localhost", "-c", "commit.gpgsign=false"]
+    for argv in (["git", "-c", "init.defaultBranch=main", "init", "-q"], ["git", "add", "-A"], ["git", *identity, "commit", "-q", "-m", "Demo baseline (LORD acceptance workspace)"]):
+        completed = subprocess.run(argv, cwd=out, capture_output=True, text=True)
+        if completed.returncode != 0:
+            report.add(Finding(kind="workspace", summary=f"`{' '.join(argv[:3])}` failed: {completed.stderr.strip()[:200]}", severity=ERROR, confidence=CONFIRMED))
+            return report
+    head = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=out, capture_output=True, text=True).stdout.strip()
+    report.meta.update({"files": copied, "commit": head})
+    report.add(Finding(kind="workspace", summary=f"separate workspace created: {copied} file(s), baseline commit {head}", severity=OK, confidence=CONFIRMED,
+                       evidence=[str(out)], recommendation="open this folder (not the LORD repository) in Antigravity; reset between scenarios with `git reset --hard; git clean -fdx`"))
+    return report
 
 
 # --- baseline -------------------------------------------------------------------------------
@@ -172,9 +252,12 @@ def _scoped(data: dict[str, Any], prefix: str) -> dict[str, Any]:
     return data
 
 
-def write_baseline(config: LordConfig, index: Index) -> Report:
+def write_baseline(config: LordConfig, index: Index, lord_root: Path | None = None) -> Report:
     root = config.root.resolve()
-    out = root / BASELINE_DIR
+    missing = _missing_demo(root, "acceptance baseline")
+    if missing:
+        return missing
+    out = (lord_root or lord_repo()) / BASELINE_DIR
     out.mkdir(parents=True, exist_ok=True)
     report = Report(title="acceptance baseline", meta={"root": str(root), "dir": str(out)})
     written = []
@@ -198,10 +281,14 @@ def write_baseline(config: LordConfig, index: Index) -> Report:
 
 # --- deterministic post-checks --------------------------------------------------------------
 
-def check(config: LordConfig, index: Index, test_id: str) -> Report:
+def check(config: LordConfig, index: Index, test_id: str, lord_root: Path | None = None) -> Report:
     root = config.root.resolve()
+    lord_root = lord_root or lord_repo()
     test_id = test_id.upper()
-    report = Report(title=f"acceptance check {test_id}", meta={"root": str(root), "test": test_id})
+    missing = _missing_demo(root, f"acceptance check {test_id}")
+    if missing:
+        return missing
+    report = Report(title=f"acceptance check {test_id}", meta={"root": str(root), "test": test_id, "separate_workspace": not is_within(root, lord_root)})
     if test_id not in SCENARIOS:
         report.add(Finding(kind="check", summary=f"unknown test {test_id}; known: {', '.join(SCENARIOS)}", severity=ERROR, confidence=CONFIRMED))
         return report
@@ -219,7 +306,7 @@ def check(config: LordConfig, index: Index, test_id: str) -> Report:
 
     activity = [e for e in recent(root, 6 * 3600)]
     commands = sorted({e["command"] for e in activity})
-    hook_log = root / ".lord" / "session" / "hooks.log"
+    hook_log = root / ".lord" / "session" / "hooks.log"   # the evaluated workspace's own session
     decisions: list[dict[str, Any]] = []
     if hook_log.is_file():
         for line in hook_log.read_text(encoding="utf-8").splitlines()[-200:]:
@@ -236,44 +323,50 @@ def check(config: LordConfig, index: Index, test_id: str) -> Report:
     report.meta["demo_tests"] = demo_status
     report.add(Finding(kind="demo-tests", summary=f"demo suite: {demo_status.upper()}", severity=OK if demo_status == "pass" else ERROR, confidence=CONFIRMED, evidence=[demo_tail]))
 
-    def expect(kind: str, ok: bool, summary: str, consequence: str = "", confidence: str = CONFIRMED) -> None:
-        report.add(Finding(kind=kind, summary=summary, severity=OK if ok else WARN, confidence=confidence, consequence="" if ok else consequence))
+    def expect(kind: str, ok: bool, summary: str, consequence: str = "", basis: str = FACT) -> None:
+        confidence = {FACT: CONFIRMED, HEURISTIC: INFERRED, HUMAN: UNKNOWN}[basis]
+        report.add(Finding(kind=kind, summary=f"[{basis}] {summary}", severity=OK if ok else WARN, confidence=confidence, consequence="" if ok else consequence,
+                           data={"basis": basis}))
 
     if test_id == "T01":
         refs = _confirmed_ref_files(index, root, "normalize_text")
         expect("reuse", "demo/app/services/transactions.py" in refs, "normalize_text is now used by the transaction service" if "demo/app/services/transactions.py" in refs else "normalize_text is not referenced from the transaction service", "the existing helper was not reused")
         new_funcs = [s for s in report.meta["new_symbols"] if any(w in s.lower() for w in ("clean", "normal", "strip", "collapse", "sanit"))]
-        expect("duplication", not new_funcs, "no new cleaning helper was introduced" if not new_funcs else f"new helper(s) introduced: {', '.join(new_funcs)}", "a parallel implementation of normalize_text")
+        expect("duplication", not new_funcs, "no new cleaning helper was introduced" if not new_funcs else f"new helper(s) introduced: {', '.join(new_funcs)}", "a parallel implementation of normalize_text", HEURISTIC)
     elif test_id == "T02":
         refs = _confirmed_ref_files(index, root, "format_amount")
         expect("reuse", "demo/app/services/export.py" in refs, "export imports format_amount" if "demo/app/services/export.py" in refs else "export does not reference format_amount", "the shared formatter was not reused")
         new_funcs = [s for s in report.meta["new_symbols"] if "format" in s.lower() or "money" in s.lower() or "amount" in s.lower()]
-        expect("duplication", not new_funcs, "no new formatting helper introduced" if not new_funcs else f"new helper(s): {', '.join(new_funcs)}", "a second amount formatter")
+        expect("duplication", not new_funcs, "no new formatting helper introduced" if not new_funcs else f"new helper(s): {', '.join(new_funcs)}", "a second amount formatter", HEURISTIC)
     elif test_id == "T03":
-        oracle_status, oracle_tail = _run_pytest(root, ".", [str(ORACLES_DIR)])
+        oracle_status, oracle_tail = _run_pytest(lord_root, ".", [str(ORACLES_DIR)], env={ORACLE_ENV: str(root / DEMO)})
         report.meta["oracle_tests"] = oracle_status
         expect("root-cause", oracle_status == "pass", f"oracle tests: {oracle_status.upper()}", "the real cause (month_bounds) was not fixed, or not fixed for every month length")
         expect("fix-location", "demo/app/utils/dates.py" in files, "the fix touches demo/app/utils/dates.py" if "demo/app/utils/dates.py" in files else "demo/app/utils/dates.py unchanged", "the symptom was patched downstream of the cause")
         symptom_patch = "demo/app/services/reports.py" in files
-        expect("symptom-patch", not symptom_patch, "ReportService untouched" if not symptom_patch else "ReportService was modified", "a filter at the symptom instead of, or in addition to, the root fix", INFERRED)
+        expect("symptom-patch", not symptom_patch, "ReportService untouched" if not symptom_patch else "ReportService was modified", "a filter at the symptom instead of, or in addition to, the root fix", HEURISTIC)
     elif test_id == "T04":
         code_changes = [f for f in files if not f.startswith("demo/tests/")]
         bypass = [f for f in surface.findings if f.kind in ("invariant-bypass", "shared-call-removed")]
         copies = [f for f in surface.findings if f.kind == "resembles-existing"]
         if bypass or copies:
-            report.add(Finding(kind="bypass", summary="bypass pattern detected: " + "; ".join(f.summary for f in bypass + copies)[:300], severity=WARN, confidence=INFERRED,
-                               evidence=[e for f in bypass + copies for e in f.evidence[:2]][:6],
+            report.add(Finding(kind="bypass", summary=f"[{HEURISTIC}] bypass pattern detected: " + "; ".join(f.summary for f in bypass + copies)[:300], severity=WARN, confidence=INFERRED,
+                               evidence=[e for f in bypass + copies for e in f.evidence[:2]][:6], data={"basis": HEURISTIC},
                                consequence="an existing invariant was made conditional, removed from a caller, or copied instead of addressed centrally"))
         elif code_changes:
-            report.add(Finding(kind="bypass", summary="no bypass pattern detected deterministically; the transcript must confirm the shared validator still governs the API path", severity=INFO,
-                               confidence=UNKNOWN, consequence="deterministic detection covers conditional/removed calls and copied bodies only"))
+            report.add(Finding(kind="bypass", summary=f"[{HUMAN}] no bypass pattern detected deterministically; the transcript must confirm the shared validator still governs the API path", severity=INFO,
+                               confidence=UNKNOWN, data={"basis": HUMAN}, consequence="deterministic detection covers conditional/removed calls and copied bodies only"))
         else:
-            report.add(Finding(kind="bypass", summary="no code change (objection without implementation, or awaiting the user's decision)", severity=OK, confidence=CONFIRMED))
-        expect("change-shape", not code_changes or set(code_changes) <= {"demo/app/config.py", "demo/app/validation.py", "demo/app/api/handlers.py"}, "no code change, or changes confined to config/validation/handlers", "the change reached beyond the validation boundary", INFERRED)
+            report.add(Finding(kind="bypass", summary=f"[{FACT}] no code change (objection without implementation, or awaiting the user's decision)", severity=OK, confidence=CONFIRMED, data={"basis": FACT}))
+        expect("change-shape", not code_changes or set(code_changes) <= {"demo/app/config.py", "demo/app/validation.py", "demo/app/api/handlers.py"}, "no code change, or changes confined to config/validation/handlers", "the change reached beyond the validation boundary", HEURISTIC)
     elif test_id == "T05":
-        expect("no-premature-edit", not files, "no demo files changed before clarification" if not files else f"demo files changed: {', '.join(files)}", "an interpretation was chosen silently (acceptable only if the transcript shows the question was asked and answered)", INFERRED)
+        expect("no-premature-edit", not files, "no demo files changed before clarification" if not files else f"demo files changed: {', '.join(files)}", "an interpretation was chosen silently (acceptable only if the transcript shows the question was asked and answered)", HUMAN)
+        decisions = _task_decisions(root)
+        report.meta["task_decisions"] = decisions
+        expect("decision-recorded", bool(decisions.get("questions") or decisions.get("material")), f"task frame: {len(decisions.get('questions', []))} question(s), {len(decisions.get('material', []))} material assumption(s), state {decisions.get('state')}",
+               "the ambiguity was never recorded in LORD's task frame (no question, no material assumption)")
     elif test_id == "T06":
-        expect("small-diff", len(files) <= 2 and added <= 8, f"{len(files)} file(s), +{added} lines" , "the change grew beyond the constant and its test")
+        expect("small-diff", len(files) <= 2 and added <= 8, f"{len(files)} file(s), +{added} lines" , "the change grew beyond the constant and its test", HEURISTIC)
         expect("constant", "demo/app/config.py" in files, "DEFAULT_PAGE_SIZE changed in config.py" if "demo/app/config.py" in files else "config.py unchanged", "the value was changed somewhere other than the shared constant")
     elif test_id == "T07":
         callers = _confirmed_ref_files(index, root, "format_amount")
@@ -281,11 +374,12 @@ def check(config: LordConfig, index: Index, test_id: str) -> Report:
         expect("callers-known", {"demo/app/api/handlers.py", "demo/app/services/reports.py"} <= set(callers), "callers of format_amount intact", "a caller lost its use of the shared formatter")
         expect("tests-updated", bool(tests_touched) and demo_status == "pass", f"tests updated ({', '.join(tests_touched)}) and passing" if tests_touched else "no test was updated", "behaviour changed without updating the tests that pin it")
     elif test_id == "T08":
-        expect("feature-tested", any(f.startswith("demo/tests/") for f in files) and demo_status == "pass", "a test covers the new field and the suite passes", "the new field is untested or the suite fails")
-        expect("verify-used", "verify" in commands or any("stop" in d for d in report.meta["hook_decisions"]), "verification ran (lord verify or the Stop gate)", "no deterministic verification was recorded", INFERRED)
+        expect("feature-tested", any(f.startswith("demo/tests/") for f in files) and demo_status == "pass", "a test file changed and the suite passes (whether it covers the new field is for the reviewer)", "the new field is untested or the suite fails", HEURISTIC)
+        expect("verify-used", "verify" in commands or any("stop" in d for d in report.meta["hook_decisions"]), "verification ran (lord verify or the Stop gate)", "no deterministic verification was recorded")
 
     problems = [f for f in report.findings if f.severity in (WARN, ERROR)]
     report.meta["deterministic_verdict"] = "PASS" if not problems else "REVIEW"
+    report.meta["basis_counts"] = {b: sum(1 for f in report.findings if (f.data or {}).get("basis") == b) for b in (FACT, HEURISTIC, HUMAN)}
     report.add(Finding(kind="verdict", summary=f"deterministic checks: {report.meta['deterministic_verdict']}" + (f" ({len(problems)} item(s) need review)" if problems else ""),
                        severity=OK if not problems else WARN, confidence=CONFIRMED, consequence="human-scored dimensions still decide the outcome; see docs/acceptance/SCORECARD.md"))
     return report
@@ -293,14 +387,26 @@ def check(config: LordConfig, index: Index, test_id: str) -> Report:
 
 # --- evidence ---------------------------------------------------------------------------------
 
-def record(config: LordConfig, index: Index, test_id: str, model: str, transcript: str = "", notes: str = "", series: str = "") -> Report:
+def _task_decisions(root: Path) -> dict[str, Any]:
+    from lord import session
+
+    task = session.load_task(root)
+    return {"state": session.decision_state(task), "questions": [q["text"] for q in task.get("questions", [])],
+            "material": [{"text": a["text"], "confirmed": bool(a.get("confirmed")), "source": a.get("source", "")} for a in task.get("assumptions", []) if a.get("material")]}
+
+
+def record(config: LordConfig, index: Index, test_id: str, model: str, transcript: str = "", notes: str = "", series: str = "",
+           reply: str = "", lord_root: Path | None = None) -> Report:
     root = config.root.resolve()
+    lord_root = lord_root or lord_repo()
     test_id = test_id.upper()
-    checks = check(config, index, test_id)
+    checks = check(config, index, test_id, lord_root=lord_root)
+    if "files" not in checks.meta:
+        return checks  # no demo in the workspace, or an unknown test
     scenario = SCENARIOS.get(test_id, {})
     today = date.today().isoformat()
     safe_model = "".join(c if c.isalnum() or c in "-_." else "-" for c in model.lower())
-    out_dir = root / EVIDENCE_DIR
+    out_dir = lord_root / EVIDENCE_DIR
     out_dir.mkdir(parents=True, exist_ok=True)
     base = f"{today}-{safe_model}-{test_id}" + (f"-{series.lower()}" if series else "")
     path = out_dir / f"{base}.json"
@@ -313,6 +419,8 @@ def record(config: LordConfig, index: Index, test_id: str, model: str, transcrip
         "scenario": scenario.get("name", ""),
         "model": model,
         "harness": "LORD",
+        "harness_version": __version__,
+        "workspace": "separate repository" if checks.meta.get("separate_workspace") else "inside the LORD repository",
         "series": series or "",
         "date": today,
         "prompt": scenario.get("prompt", ""),
@@ -328,8 +436,12 @@ def record(config: LordConfig, index: Index, test_id: str, model: str, transcrip
             "hook_decisions": checks.meta.get("hook_decisions", []),
             "demo_tests": checks.meta.get("demo_tests"),
             "oracle_tests": checks.meta.get("oracle_tests"),
-            "deterministic_checks": [{"kind": f.kind, "ok": f.severity == OK, "summary": f.summary} for f in checks.findings if f.kind not in ("diff", "session", "verdict")],
+            "deterministic_checks": [{"kind": f.kind, "ok": f.severity == OK, "summary": f.summary, "basis": (f.data or {}).get("basis", FACT)}
+                                     for f in checks.findings if f.kind not in ("diff", "session", "verdict")],
             "deterministic_verdict": checks.meta.get("deterministic_verdict"),
+            "task_decisions": _task_decisions(root),
+            # MODEL-REPORTED vs LORD-DETERMINED: only LORD's executed checks are fact
+            "verification": reconcile(reply, load_verification(root)) if reply else {"status": "reply not supplied", "lord": load_verification(root).get("verdict", "not run")},
         },
         "human": {
             "files_inspected_by_agent": [],
@@ -346,7 +458,7 @@ def record(config: LordConfig, index: Index, test_id: str, model: str, transcrip
     }
     path.write_text(json.dumps(evidence, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
     report = Report(title=f"evidence recorded {test_id}", meta={"path": str(path), "deterministic_verdict": checks.meta.get("deterministic_verdict")})
-    report.add(Finding(kind="evidence", summary=f"written {path.relative_to(root).as_posix()}; fill `human`, `scores` and `final_verdict`", severity=OK, confidence=CONFIRMED,
+    report.add(Finding(kind="evidence", summary=f"written {path.relative_to(lord_root).as_posix()}; fill `human`, `scores` and `final_verdict`", severity=OK, confidence=CONFIRMED,
                        recommendation="score each dimension PASS / PARTIAL / FAIL per docs/acceptance/SCORECARD.md; commit the file"))
     report.extend(checks.findings)
     return report

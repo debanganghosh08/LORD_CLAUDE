@@ -13,7 +13,8 @@ and a push. A phase is never marked complete if it is not.
 | 6 | Enforcement | `.agents/hooks.json`: pre-edit gate (deny/ask/allow from session evidence), completion gate on failed verification (bounded), change-surface advisory; fail-safe launcher; hook test suite; live Antigravity findings |
 | 7 | Durable memory | `docs/state/memory.jsonl` (7 categories, trust statuses, evidence, supersession, key conflicts, deterministic retrieval), `docs/state/handoff.json`, `lord context` assembly interface, `lord-memory` skill |
 | 8A | Acceptance / dogfooding | `demo/` evaluation codebase with reuse traps and a planted root-cause bug; eight-scenario test plan with oracles; scorecard; manual Antigravity/Gemini procedure; LORD baseline ground truth; evidence records; `lord acceptance` tooling |
-| 8B | Distribution | Antigravity plugin (`plugin.json`), global installation/synchronisation, versioning, per-project bootstrap; packaged only after the 8A evidence is reviewed |
+| 8A.1 | Remediation | evidence-driven fixes after the first live Gemini series; Baseline B (4 PASS / 4 PARTIAL / 0 FAIL, from 1 / 6 / 1) |
+| 8B | Release candidate | marker detector by syntax; clarification boundary (material assumption -> user decision at the edit); MODEL-REPORTED vs LORD-DETERMINED reconciliation; `plugin/` + runtime as one installable Antigravity plugin (validate, install, update, rollback, uninstall); demo as a separate workspace; separate-workspace acceptance |
 | 9 | Benchmarking | repeatable task suite comparing models with and without LORD on bloat, reuse, root-cause accuracy and pushback quality |
 
 Later direction (conceptual, not committed): forensics, context and critic

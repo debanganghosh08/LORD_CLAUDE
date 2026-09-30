@@ -28,7 +28,7 @@ from lord.index import ensure_index
 
 ROOT = Path(__file__).resolve().parents[1]
 DUP = ROOT / "tests" / "fixtures" / "dup_repo"
-HOOKS_JSON = ROOT / ".agents" / "hooks.json"
+HOOKS_JSON = ROOT / "plugin" / "hooks.json"
 CONVERSATION = "11111111-2222-3333-4444-555555555555"
 
 
@@ -122,10 +122,21 @@ def test_invalid_hooks_configs_are_rejected():
     assert any("non-empty command" in e for e in validate_hooks_config(bad))
 
 
-def test_single_launcher_in_agents_and_doctor_sees_it():
-    assert (ROOT / ".agents" / "lord_hook.py").is_file() and not (ROOT / "lord_hook.py").exists(), "Antigravity runs hooks from .agents/; one launcher only"
-    findings = check_hooks(ROOT)
-    assert [f.severity for f in findings] == ["ok"], [f.summary for f in findings]
+def test_single_launcher_and_doctor_sees_an_installed_plugin(tmp_path: Path, monkeypatch):
+    tracked = subprocess.run(["git", "ls-files", "*lord_hook.py"], cwd=ROOT, capture_output=True, text=True).stdout.split()
+    assert tracked == ["plugin/lord_hook.py"], "one authoritative launcher, next to the plugin's hooks.json"
+    assert not (ROOT / ".agents").exists() and not (ROOT / "lord_hook.py").exists()
+    from lord import paths, plugin
+
+    monkeypatch.setattr(paths, "_home", lambda: tmp_path / "home")    # never read the real user's plugins
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    assert not plugin.install(plugin.resolve_plugins_dir(workspace=workspace), cli=False).has_errors
+    findings = check_hooks(workspace)
+    assert [f.severity for f in findings] == ["ok"] and "workspace plugin" in findings[0].summary, [f.summary for f in findings]
+    # the same enforcement configured twice is flagged
+    _write(workspace / ".agents" / "hooks.json", _read(HOOKS_JSON))
+    assert any(f.severity == "warn" and "configured 2 times" in f.summary for f in check_hooks(workspace))
 
 
 def test_doctor_flags_broken_hooks_json(tmp_path: Path):
@@ -348,24 +359,32 @@ def test_hooks_never_modify_the_workspace(repo: Path):
     assert (repo / ".lord" / "session" / "hooks.log").is_file()
 
 
-@pytest.mark.parametrize("cwd_rel", [".agents"])
-def test_launcher_contract_from_the_agents_directory(repo: Path, cwd_rel: str):
-    """Exactly what Antigravity does (confirmed live): run the command string
-    with the payload on stdin, from the workspace's .agents folder."""
-    shutil.copytree(ROOT / ".agents", repo / ".agents", dirs_exist_ok=True)
-    shutil.copytree(ROOT / "lord", repo / "lord", ignore=shutil.ignore_patterns("__pycache__"))
+def test_launcher_contract_from_an_installed_plugin(repo: Path, tmp_path: Path):
+    """Exactly what Antigravity does: run the hooks.json command string with the
+    payload on stdin, from the folder holding hooks.json (here an installed
+    plugin bundle). The workspace contains no LORD code at all."""
+    from lord import plugin
+
+    assert not (repo / "lord").exists()
+    plugins = tmp_path / "plugins"
+    plugins.mkdir()
+    assert not plugin.install(plugins, cli=False).has_errors
+    installed = plugins / "lord"
+    command = json.loads(_read(installed / "hooks.json"))["lord"]["PreToolUse"][0]["hooks"][0]["command"]
+    assert command == "python -m lord_hook pre-tool"
+    cwd_dir = installed
     payload = _payload("write_to_file", {"TargetFile": "app\\brand_new.py", "CodeContent": "x = 1\n" * 9, "Overwrite": "True"}, repo)
     env = {k: v for k, v in os.environ.items() if k not in ("LORD_HOOK_ACTIVE", "LORD_HOOKS_DISABLED")}
-    completed = subprocess.run(["python", "-m", "lord_hook", "pre-tool"], cwd=repo / cwd_rel, input=json.dumps(payload), capture_output=True, text=True, env=env, timeout=60)
+    completed = subprocess.run(["python", "-m", "lord_hook", "pre-tool"], cwd=cwd_dir, input=json.dumps(payload), capture_output=True, text=True, env=env, timeout=60)
     assert completed.returncode == 0, completed.stderr
     out = json.loads(completed.stdout)
     assert out["decision"] == "deny" and "brand_new.py" in out["reason"]
-    completed = subprocess.run(["python", "-m", "lord_hook", "stop", "--timeout", "120"], cwd=repo / cwd_rel, input=json.dumps(_payload("", {}, repo, fullyIdle=True)), capture_output=True, text=True, env=env, timeout=120)
+    completed = subprocess.run(["python", "-m", "lord_hook", "stop", "--timeout", "120"], cwd=cwd_dir, input=json.dumps(_payload("", {}, repo, fullyIdle=True)), capture_output=True, text=True, env=env, timeout=120)
     assert completed.returncode == 0 and json.loads(completed.stdout) == {}
-    completed = subprocess.run(["python", "-m", "lord_hook", "post-invocation"], cwd=repo / cwd_rel, input="garbage", capture_output=True, text=True, env=env, timeout=60)
+    completed = subprocess.run(["python", "-m", "lord_hook", "post-invocation"], cwd=cwd_dir, input="garbage", capture_output=True, text=True, env=env, timeout=60)
     assert completed.returncode == 0 and json.loads(completed.stdout) == {}
     log = [json.loads(l) for l in _read(repo / ".lord" / "session" / "hooks.log").splitlines()]
-    assert Path(log[0]["cwd"]).resolve() == (repo / cwd_rel).resolve()
+    assert Path(log[0]["cwd"]).resolve() == cwd_dir.resolve()
 
 
 def test_cli_investigation_commands_record_evidence(repo: Path):

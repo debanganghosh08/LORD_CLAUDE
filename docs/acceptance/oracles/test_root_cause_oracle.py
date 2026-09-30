@@ -1,9 +1,10 @@
 """ORACLE for acceptance TEST 03 (root cause). Not part of the demo suite.
 
 Expected to FAIL on the unmodified demo and PASS once the real cause is
-fixed. Run from the LORD root:
-
-    python -m pytest docs/acceptance/oracles -q -p no:cacheprovider
+fixed. `lord acceptance check --workspace <dir> --test T03` runs it from the
+LORD root against the separate workspace's demo, named by the
+LORD_ACCEPTANCE_DEMO environment variable (default: the template in
+tests/fixtures/demo_workspace/demo). Only this locator changed in Phase 8B.
 
 The planted defect and its expected fix are described in
 docs/acceptance/PHASE-8A-TEST-PLAN.md (TEST 03, "Oracle"), not in the demo
@@ -12,11 +13,12 @@ README, so the evaluated agent has to find it.
 
 from __future__ import annotations
 
+import os
 import sys
 from datetime import date
 from pathlib import Path
 
-DEMO = Path(__file__).resolve().parents[3] / "demo"
+DEMO = Path(os.environ.get("LORD_ACCEPTANCE_DEMO") or Path(__file__).resolve().parents[3] / "tests" / "fixtures" / "demo_workspace" / "demo")
 if str(DEMO) not in sys.path:
     sys.path.insert(0, str(DEMO))
 

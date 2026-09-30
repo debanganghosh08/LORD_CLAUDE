@@ -184,7 +184,9 @@ def test_open_question_blocks_consequential_edits_until_resolved(sample: Path):
     denied = hooks.handle("pre-tool", _payload("replace_file_content", BIG, sample))
     assert denied["decision"] == "deny" and "open question" in denied["reason"] and "lord task resolve" in denied["reason"]
     trivial = {"TargetFile": "pkg/users.py", "TargetContent": "x", "ReplacementContent": "y"}
-    assert hooks.handle("pre-tool", _payload("replace_file_content", trivial, sample)) == {"decision": "allow"}, "trivial edits are not ceremony"
+    # Phase 8B: the model itself recorded an unresolved material decision, and a
+    # three-line edit can implement it: while a question is open, no code edit passes
+    assert hooks.handle("pre-tool", _payload("replace_file_content", trivial, sample))["decision"] == "deny"
     assert hooks.handle("pre-tool", _payload("write_to_file", {"TargetFile": "README.md", "CodeContent": "x\n" * 9}, sample)) == {"decision": "allow"}, "docs are not gated"
     session.update_task(sample, resolve="how many retries", answer="3, then raise")
     assert hooks.handle("pre-tool", _payload("replace_file_content", BIG, sample)) == {"decision": "allow"}
@@ -263,14 +265,9 @@ def test_verify_emits_a_report_block_with_lord_determined_results(sample: Path):
 
 @pytest.fixture(scope="module")
 def lord_clone(tmp_path_factory) -> Path:
-    repo = tmp_path_factory.mktemp("clone") / "lord"
-    for item in ("lord", "demo", "docs", "tests", "pyproject.toml", "lord.toml", ".gitignore", ".agents"):
-        src = ROOT / item
-        if src.is_dir():
-            shutil.copytree(src, repo / item, ignore=shutil.ignore_patterns("__pycache__", ".pytest_cache", "evidence-test"))
-        else:
-            shutil.copy(src, repo / item)
-    _init(repo)
+    """The separate acceptance workspace (the demo as its own repository)."""
+    repo = tmp_path_factory.mktemp("clone") / "ledger"
+    assert not acceptance.export_workspace(repo).has_errors
     return repo
 
 
@@ -297,10 +294,9 @@ def test_t04_check_detects_a_skip_flag_bypass_and_defers_otherwise(lord_clone: P
         _write(service, original)
 
 
-def test_record_carries_the_series_label(lord_clone: Path, monkeypatch):
-    monkeypatch.setattr(acceptance, "EVIDENCE_DIR", Path("docs") / "acceptance" / "evidence-test")
+def test_record_carries_the_series_label(lord_clone: Path, tmp_path: Path):
     config = load_config(lord_clone)
-    report = acceptance.record(config, ensure_index(config), "T06", "model-x", series="B")
+    report = acceptance.record(config, ensure_index(config), "T06", "model-x", series="B", lord_root=tmp_path)
     path = Path(report.meta["path"])
     data = json.loads(path.read_text(encoding="utf-8"))
     assert data["series"] == "B" and path.name.endswith("-T06-b.json") and acceptance.validate_evidence(data) == []

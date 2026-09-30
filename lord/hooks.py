@@ -19,18 +19,17 @@ malformed JSON DENIES the tool call):
 Intervention levels (docs/ARCHITECTURE.md section 7):
   LEVEL 0 information   hook log, verify report block
   LEVEL 1 advisory      PreInvocation nudge (once), change-surface and assumption messages
-  LEVEL 2 ask           code edit with only task-level evidence
+  LEVEL 2 ask           code edit with only task-level evidence; code edit under an
+                        unconfirmed material assumption (confirmation boundary)
   LEVEL 3 block         no investigation at all; new code file without reuse/brief;
                         self-declared open question; failing verification step (bounded)
 """
 
 from __future__ import annotations
 
-import hashlib
 import json
 import os
 import re
-import subprocess
 import sys
 import time
 from pathlib import Path
@@ -39,7 +38,7 @@ from typing import Any
 from lord import session
 from lord.config import load_config
 from lord.inventory import PROBE_BYTES, classify, language_of
-from lord.paths import find_workspace_root, is_within
+from lord.paths import is_within
 
 EVENTS = ("pre-tool", "post-tool", "pre-invocation", "post-invocation", "stop")
 WRITE_TOOLS = ("write_to_file", "replace_file_content", "multi_replace_file_content")
@@ -59,8 +58,10 @@ STOP_VERIFY_BUDGET_SECONDS = 540
 NUDGE = (
     "LORD: this workspace gates code edits. Before the first edit of a code file run "
     "`python -m lord context <file-or-symbol> --intent \"<goal>\"` (or `lord brief`); a new code file needs `lord reuse` or `brief` first. "
-    "If the request has more than one reading that changes behaviour, data or API, record it with `python -m lord task ask \"<question>\"` and ask the user "
-    "before editing; state cosmetic assumptions with `lord task assume`. Finish with the Verification block that `lord verify --run` prints."
+    "If the request has more than one reading that changes behaviour, data or API, ask the user (record it with `python -m lord task ask \"<question>\"`: "
+    "code edits wait for `lord task resolve`), or, if you proceed on one reading, record it with `lord task assume \"<reading>\" --material`: your next "
+    "code edit then asks the user to confirm it. Cosmetic choices need no question (`lord task assume` without --material). "
+    "Finish with the Verification block that `lord verify --run` prints."
 )
 
 
@@ -154,19 +155,43 @@ def decide_pre_tool(payload: dict[str, Any], root: Path, now: float | None = Non
     if not _is_code(full, rel):
         return {"decision": "allow", "_audit": f"{tool} {rel}: not a code file"}
     shape, lines = _edit_shape(tool, args, exists)
-    if shape == "edit" and 0 < lines <= TRIVIAL_EDIT_LINES:
-        return {"decision": "allow", "_audit": f"{tool} {rel}: trivial edit ({lines} line(s))"}
 
-    # LEVEL 3: the model itself recorded open questions for this task and has not resolved them
+    # LEVEL 3: the model itself recorded open questions for this task and has not
+    # resolved them. Applies to every code edit, trivial ones included: a
+    # one-line change can implement an undecided interpretation.
     questions = session.open_questions(session.load_task(root))
     if questions:
         listed = "; ".join(q[:120] for q in questions[:3])
         return {
             "decision": "deny",
             "reason": (f"LORD task gate: the task frame has {len(questions)} open question(s) you recorded ({listed}). Ask the user, then "
-                       f"`python -m lord task resolve \"<question text>\" --answer \"<answer>\"` before a consequential edit of {rel}."),
+                       f"`python -m lord task resolve \"<question text>\" --answer \"<answer>\"` before editing {rel}."),
         }
 
+    result = _evidence_decision(root, rel, exists, shape, lines, now)
+    if result["decision"] == "deny":
+        return result
+    # LEVEL 2 confirmation boundary: an unconfirmed material assumption makes the
+    # next code edit a user decision (approval is observed when the file changes)
+    confirmed = session.settle_gate(root)
+    pending = session.unconfirmed_material(session.load_task(root))
+    if pending:
+        session.open_gate(root, rel, pending)
+        listed = "; ".join(a[:160] for a in pending[:3])
+        reason = (f"LORD confirmation boundary: this edit of {rel} implements unconfirmed material assumption(s): {listed}. "
+                  f"Approve only if that is what the user meant; otherwise reject and ask the user.")
+        if result.get("reason"):
+            reason += " " + result["reason"]
+        return {"decision": "ask", "reason": reason, "_audit": f"confirmation boundary for {len(pending)} assumption(s)"}
+    if confirmed:
+        result["_audit"] = f"{result.get('_audit', '')}; gated edit approved, confirmed: {'; '.join(c[:60] for c in confirmed)}".lstrip("; ")
+    return result
+
+
+def _evidence_decision(root: Path, rel: str, exists: bool, shape: str, lines: int, now: float | None) -> dict[str, Any]:
+    """The investigation-evidence decision for one code edit (allow / ask / deny)."""
+    if shape == "edit" and 0 < lines <= TRIVIAL_EDIT_LINES:
+        return {"decision": "allow", "_audit": f"{rel}: trivial edit ({lines} line(s))"}
     symbol_names: set[str] = set()
     if exists:
         try:
@@ -217,26 +242,28 @@ def decide_pre_invocation(payload: dict[str, Any], root: Path) -> dict[str, Any]
         session.save_state(root, key, {"nudged": True, "reason": "evidence present"})
         return {"_audit": "investigation evidence present; no nudge"}
     session.save_state(root, key, {"nudged": True})
-    return {"injectSteps": [{"ephemeralMessage": NUDGE}], "_audit": "nudged"}
+    return {"injectSteps": [{"ephemeralMessage": NUDGE + _cli_note()}], "_audit": "nudged"}
+
+
+def _cli_note() -> str:
+    """For an installed plugin whose CLI is not importable by the agent's
+    `python` (registration skipped, or a virtual environment): the fallback."""
+    from lord.paths import plugin_root, runtime_home
+
+    plugin = plugin_root()
+    if plugin is None or plugin.parent == runtime_home():   # development checkout
+        return ""
+    import tempfile
+
+    from lord.plugin import cli_resolution
+
+    with tempfile.TemporaryDirectory() as neutral:
+        if cli_resolution(Path(neutral)) != "not importable":
+            return ""
+    return f" In this environment `python -m lord` is not importable: run LORD as `python \"{(plugin / 'lord_cli.py').as_posix()}\" <command>`."
 
 
 # --- Stop ------------------------------------------------------------------------------
-
-def _tree_signature(root: Path) -> str:
-    try:
-        status = subprocess.run(["git", "status", "--porcelain", "--untracked-files=all"], cwd=root, capture_output=True, text=True, encoding="utf-8", errors="replace")
-        text = status.stdout if status.returncode == 0 else ""
-    except OSError:
-        text = ""
-    parts = [text]
-    for line in text.splitlines():
-        path = root / line[3:].strip().strip('"')
-        try:
-            parts.append(f"{line[3:]}:{path.stat().st_mtime_ns}")
-        except OSError:
-            continue
-    return hashlib.sha1("\n".join(parts).encode("utf-8")).hexdigest()
-
 
 def _changed_code_files(root: Path) -> list[str]:
     try:
@@ -260,8 +287,15 @@ def decide_stop(payload: dict[str, Any], root: Path, budget_seconds: float = STO
     if continuations >= MAX_STOP_CONTINUATIONS:
         return {"_audit": f"continuation cap reached ({continuations}); allowing"}
 
-    signature = _tree_signature(root)
+    signature = session.tree_signature(root)
     cached = state.get("verify") if state.get("signature") == signature else None
+    if cached is None:
+        # the agent already ran `lord verify --run` on exactly this tree: reuse
+        # that fact instead of running the suite a second time
+        recorded = session.load_verification(root)
+        if recorded.get("fresh") and recorded.get("ran"):
+            cached = {k: recorded.get(k) for k in ("verdict", "outstanding", "advisories", "step_results", "failing", "bloat_level", "assumptions")}
+            cached["reused"] = True
     if cached is None:
         from lord.index import ensure_index
         from lord.review import verify
@@ -305,7 +339,7 @@ def decide_post_invocation(payload: dict[str, Any], root: Path) -> dict[str, Any
     conversation = str(payload.get("conversationId") or "default")
     key = f"surface-{conversation}"
     state = session.load_state(root, key)
-    signature = _tree_signature(root)
+    signature = session.tree_signature(root)
     if state.get("signature") == signature:
         return {"_audit": "tree unchanged since last check"}
     from lord.change_surface import git_changes, measure, project_scope

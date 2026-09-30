@@ -218,7 +218,8 @@ def test_context_assembles_capped_sections(store: Store):
     assert "definition" in kinds and kinds[-1] == "next"
     sections = report.meta["sections"]
     assert sections["handoff"] == 1 and 1 <= sections["memory"] <= 6 and sections["brief"] <= 18
-    assert sections["rules"] == 0 and "rules" not in kinds, "the fixture workspace ships no rules; sections reflect the analysed workspace"
+    # since 8B the rules come from the plugin, so every workspace (this fixture ships none) gets the contract
+    assert sections["rules"] == 1 and "rules" in kinds and not (repo / ".agents").exists()
     from lord.context import always_on_rules
 
     assert always_on_rules(ROOT) == ["lord-operating-contract"]

@@ -81,17 +81,23 @@ existing architecture -> CREATE new.
   (not analysed). Never turn "could not analyse" into "nothing found".
 
 ## 6. Ambiguity and the task frame
-- If interpretations differ materially (files touched, signatures, data shapes,
-  scope, compatibility, architecture, a time window, a threshold, a policy the
-  request names but the code does not define), ask before editing. Record the
-  question: `python -m lord task ask "<question>"`. While a question is open,
-  consequential code edits are refused; `lord task resolve "<question>"
-  --answer "<user's answer>"` reopens them.
-- Otherwise choose the sensible default, state the assumption explicitly, and
-  proceed: `python -m lord task assume "<assumption>" [--material]`. A
-  material assumption (one that changes the result) is surfaced once after
-  the next step until the user confirms it. Do not manufacture confirmation
-  steps for trivial, low-risk work.
+- You identify ambiguity; LORD holds the decision boundary. If readings differ
+  materially (files touched, signatures, data shapes, scope, compatibility,
+  architecture, a time window, a threshold, a policy the request names but
+  the code does not define), the user decides, not you:
+  - ask, and record it: `python -m lord task ask "<question>"`. While a
+    question is open, every code edit is refused; `lord task resolve
+    "<question>" --answer "<user's answer>"` reopens them; or
+  - if you proceed on one reading, record it:
+    `python -m lord task assume "<reading>" --material`. Your next code edit
+    then becomes an approval prompt that names the assumption: the user's
+    approval confirms it, a rejection means ask. Do not run `lord task
+    confirm` unless the user actually confirmed it in the conversation (it is
+    recorded as your report, not as the user's decision).
+- Low-risk ambiguity (naming, formatting, an internal default nobody observes):
+  choose the sensible default and continue; `lord task assume "<choice>"`
+  without `--material` states it without any prompt. Do not manufacture
+  confirmation steps for trivial work.
 - The task frame (`lord task show`) holds the request, the intent, the target,
   the assumptions and the questions for the current task. `context --intent`
   and `brief --intent` fill the intent and target automatically.
@@ -99,14 +105,21 @@ existing architecture -> CREATE new.
 ## 7. Verify before completion
 - Run the relevant tests, type checks, lint and build. Report the real results,
   including failures. "Done" means verified, not written.
-- Distinguish MODEL-REPORTED from LORD-DETERMINED. `python -m lord verify
-  --run` executes the detected steps and prints a `Verification:` block with
-  one line per step (PASS / FAIL / NOT RUN) and the LORD verdict (VERIFIED /
-  NOT VERIFIED), followed by any heuristic advisories (bloat signal, files
-  without an importing test) that you must justify under Diff but that do
-  not change the verdict. Paste that block into the final report verbatim. A test run
-  you describe in prose is a claim; the block is the evidence. If a runner is
-  broken in the environment, the block says NOT RUN or FAIL and so must you.
+- Distinguish MODEL-REPORTED from LORD-DETERMINED. Only executed checks are
+  facts. `python -m lord verify --run` runs the detected steps, records the
+  result, and prints the block your report carries, verbatim:
+
+      Verification:
+        <command> - PASS | FAIL | NOT RUN
+        LORD verify - VERIFIED | NOT VERIFIED (<facts>)
+
+  followed by any heuristic advisories (bloat signal, files without an
+  importing test) that you justify under Diff but that do not change the
+  verdict. On FAIL add one line, `Reason: <the real output>`. If you could not
+  run verification, write `Verification: not run - <why>`. Never write PASS
+  for a command whose output you did not see; LORD reconciles your report
+  with its record, and a claim never overrides a failed check. Prose such as
+  "all tests pass" is a claim, not a result.
 - Review the diff against the stated scope: files, lines added and removed,
   new files, new symbols. Explain anything larger than the task warrants.
 

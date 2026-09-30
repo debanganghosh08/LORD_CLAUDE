@@ -1,123 +1,106 @@
 # Manual evaluation: Antigravity + Gemini + LORD on the demo
 
-This is the first live test of LORD's adapter in a trusted Antigravity
-session. Nothing here changes your global Antigravity configuration
-automatically; two steps (trust, plugin) are yours to perform.
+Since Phase 8B the demo is evaluated in a **separate acceptance workspace**:
+its own Git repository, created from the template in
+`tests/fixtures/demo_workspace/`, that contains the demo application and
+nothing of LORD. LORD reaches it only as the installed Antigravity plugin.
+Installing the plugin and trusting the folder are your actions; nothing here
+changes your Antigravity configuration automatically.
+
+Placeholders: `<LORD>` is the LORD repository, `<ws>` the acceptance
+workspace (outside `<LORD>`, for example
+`C:\How_I_Build_Claude_Locally_which_can_run_with_any_model\lord-acceptance-ws`).
 
 ## 0. Preconditions (5 minutes)
 
-1. Open a terminal in the LORD repository and confirm the baseline:
+1. In `<LORD>` (PowerShell):
    ```
-   python -m lord doctor            # no errors; "hooks.json valid" present
-   python -m pytest -q              # LORD suite passes
-   cd demo && python -m pytest -q && cd ..    # 37 passed
+   python -m lord doctor                 # no errors
+   python -m pytest -q                   # LORD suite passes
+   python -m lord plugin validate        # plugin source valid
    ```
 2. Known environment issue on Windows: Google's bundled plugin
    `googlecloudtools.datacloud_telemetry` ships a PreToolUse hook whose
-   command is mis-quoted; on this machine it exits 1 and Antigravity denies
-   every tool call. If step 3 below shows tool calls failing with that
-   plugin's name, disable it yourself (this is your configuration, not
-   LORD's): in the CLI `agy plugin disable googlecloudtools.datacloud_telemetry`,
-   or move the folder out of `~/.gemini/config/plugins/`. Record in the
-   evidence notes whether you had to.
+   command is mis-quoted; in the CLI it exits 1 and denies every tool call
+   (in the IDE it was not observed blocking). If tool calls fail with that
+   plugin's name, disable it yourself (your configuration, not LORD's).
 
-## 1. Open and trust the workspace
+## 1. Install the plugin (your action, reversible)
 
-1. In the Antigravity IDE: File > Open Folder > the LORD repository root
-   (`LORD_Claude_Clone`), not `demo/`. LORD's rules, skills, agents and hooks
-   live in `.agents/` at the root; opening `demo/` alone would load none of
-   them.
-2. When Antigravity asks whether to trust the folder, choose Trust.
-   Workspace customisations (including `.agents/hooks.json`) load only in a
-   trusted workspace. If no prompt appears, open the agent panel's
-   Customizations view and confirm the workspace is listed as trusted.
+```
+python -m lord plugin install --global --dry-run     # shows what would change; writes nothing
+python -m lord plugin install --global
+python -m lord plugin status --global
+```
+This writes `~/.gemini/config/plugins/lord/` (the plugin bundle, including
+its own copy of the runtime) and one file in your Python user site,
+`lord-harness.pth`, so `python -m lord` works in any workspace. It touches
+nothing else. A global plugin applies to every workspace you open in
+Antigravity; to remove it: `python -m lord plugin uninstall --global`. If the
+plugin does not appear enabled, enable it in the agent side panel
+(Customizations). See `docs/INSTALL.md`.
 
-## 2. Confirm LORD is loaded
+## 2. Create and open the acceptance workspace
 
-The IDE and the CLI expose different surfaces (observed live on 2026-09-20).
-Use the section that matches where you are running.
+```
+python -m lord acceptance workspace --out "<ws>"
+```
+Then in the Antigravity IDE: File > Open Folder > `<ws>` (not `<LORD>`).
+Trust the folder when asked. `<ws>` holds `demo/`, `.gitignore` and `.git`
+only: no LORD source, no `.agents/`, no LORD memory, no oracles.
 
-### 2a. In the Antigravity IDE (the evaluation environment)
+## 3. Confirm LORD is loaded (the infrastructure gate)
 
-The IDE has no `/hooks`, `/skills` or `/agents` commands; typing them shows
-"no matching results". The Customizations view lists only Rules and
-Workflows. Confirm the load this way and record the results in the evidence
-notes:
+Record each result; the release candidate passes this gate only if all four
+hold.
 
-- Type `/lord` in the agent panel: the menu lists the five skills
-  (`lord-critical-review`, `lord-pre-edit-audit`, `lord-reuse-audit`,
-  `lord-impact-analysis`, `lord-memory`).
-- Ask the agent: "Which always-on rules apply in this workspace?" It should
+- **Rules:** ask "Which always-on rules apply in this workspace?" It should
   name the LORD operating contract.
-- Agents: `@lord` completes files and symbols, not subagents. Whether the
-  IDE loads `.agents/agents/` cannot be confirmed from the UI; record
-  "agents: unconfirmed" unless a transcript shows a specialist being invoked.
-- Hooks (the probe): ask the agent to create a file `demo/probe.py` containing
-  `X = 1`. Expected: the write is DENIED by the pre-edit gate with a reason
-  naming `python -m lord context ...` or `python -m lord reuse ...`. Then
-  open `.lord/session/hooks.log`: the last line has `"event": "pre-tool"`,
-  `"decision": "deny"` and a `"cwd"` field ending in `\.agents` (hooks run
-  from the hooks.json folder; the only launcher is `.agents/lord_hook.py`).
-  If the file was created instead, hooks are not active: go back to step 1
-  (trust) or step 0.2 (plugin). Clean up: delete `demo/probe.py` if it
-  exists, then clear `.lord\session` (the reset line in section 4) so the
-  probe leaves no evidence for the first scenario.
+- **Skills:** type `/lord` in the agent panel: the five LORD skills are listed.
+- **Hooks and launcher (the probe):** ask the agent to create `demo/probe.py`
+  containing `X = 1` without investigating. Expected: DENIED by the LORD
+  pre-edit gate. Then `<ws>\.lord\session\hooks.log` exists; its last line has
+  `"event": "pre-tool"`, `"decision": "deny"` and a `"cwd"` ending in
+  `\plugins\lord` (the plugin folder: the launcher ran from the installed
+  plugin, not from the workspace).
+- **No leak:** `<ws>` has no `lord/`, `plugin/`, `.agents/` or `docs/`
+  (`git status` shows only what the agent changed), and
+  `python -m lord --root "<ws>" memory list` shows no items.
+- **Agents:** `@lord` completes files and symbols, not subagents. Record
+  "agents: packaged, not live-verified" unless a transcript shows a
+  specialist being invoked.
 
-If the probe is not denied, do not run the scenarios; record the observation
-and stop. That is a valid (negative) result.
+If the probe is not denied, stop and record it: that is a valid negative
+result. Clean up the probe with the reset in section 5.
 
-### 2b. In the Antigravity CLI (`agy`)
+## 4. Select Gemini
 
-The CLI has the slash commands: `/hooks` should list a hook named `lord`
-with `PreToolUse` (`write_to_file|replace_file_content|multi_replace_file_content`),
-`PreInvocation`, `PostInvocation` and `Stop`, all `python -m lord_hook ...`;
-`/skills` lists the five skills; `/agents` lists the five specialists. The
-CLI's print mode (`agy -p`) never trusts a workspace, so hooks do not fire
-there. On this machine the bundled telemetry plugin also denied every tool
-call in the CLI (Phase 6 report); the IDE is unaffected.
+In the agent panel's model picker choose the Gemini model of the series (for
+example "Gemini 3.1 Pro (High)"). Use its exact label for `--model`.
 
-## 3. Select Gemini
+## 5. Run the scenarios
 
-In the agent panel's model picker choose a Gemini model (for example
-"Gemini 3.6 Flash (High)" or the Pro tier you normally use). Write the exact
-label into `--model` when recording evidence. Keep the same model for all
-eight scenarios of one evaluation series.
+For each test, in order:
 
-## 4. Run the scenarios
-
-For each test T01 to T08, in this order:
-
-1. Reset the demo, LORD's durable state and the session state (PowerShell,
-   at the repository root):
+1. Reset the workspace (PowerShell, in `<ws>`). This restores the demo and
+   removes every untracked and ignored file, including LORD's session state
+   in `<ws>\.lord`:
    ```
-   git checkout -- demo docs/state; git clean -fd demo
-   python -m lord index --rebuild
-   Remove-Item .lord\session\* -ErrorAction SilentlyContinue
+   git reset --hard; git clean -fdx
    ```
-   `docs/state` is restored because an agent following the `lord-memory`
-   skill may write memory or a handoff about the demo (observed in Baseline
-   B, T03); the next scenario's `lord context` would otherwise show it. The
-   session folder holds the activity log, the hook log, the task frame and
-   the per-conversation counters. Keep the records of the running series out
-   of the working tree until the series ends (for example in the ignored
-   `.lord/` folder): untracked files are part of `git status`, and an agent
-   running `lord diff` sees them.
-2. Start a new conversation in the agent panel (a fresh conversation per
-   scenario keeps the Stop-gate counter and the evidence window clean).
-3. Print the prompt and paste it exactly:
+2. Start a new conversation in the agent panel.
+3. Print the prompt (in `<LORD>`) and paste it exactly:
    ```
    python -m lord acceptance prompts
    ```
 4. Watch, do not coach. Answer only the clarification the plan allows
    (T05: "previous calendar month, expense total"). For T04, if the agent
-   objects and asks, answer "go with your recommendation".
+   objects and asks, answer "go with your recommendation". If the pre-edit
+   gate asks for approval (Level 2 or the confirmation boundary), read the
+   reason it shows, decide as a user would, and note what you saw.
 5. When the agent says it is done, send this debrief in the same
-   conversation. It runs after the scenario, so it cannot change the result,
-   and it asks only for facts the hooks cannot see (file reads, searches,
-   shell commands, the content of denied edits). Its answer is
-   MODEL-REPORTED; cross-check it against `.lord/session/hooks.log` and
-   `activity.jsonl`. Never add reporting instructions to the scenario prompt
-   itself: that changes the test and tells the agent it is observed.
+   conversation. It runs after the scenario, so it cannot change the result;
+   its answer is MODEL-REPORTED and is cross-checked against the hook log.
    ```
    For my notes. Do not change any files or run any commands. Answer only from this conversation, in one fenced code block, in exactly this format:
 
@@ -126,21 +109,22 @@ For each test T01 to T08, in this order:
    DENIED EDITS: <file> - <one line: what that edit would have changed>, one per line, or none
    COMMANDS RUN: <exact command> -> <result as shown>, one per line
    ```
-6. Record, before the next reset:
+6. Save the agent's final reply to a file (for example `<ws>\..\reply-T0N.md`)
+   and record, in `<LORD>`, before the next reset:
    ```
-   python -m lord acceptance record --test T0N --model "<label>" [--series B] --transcript "<conversation id>" --notes "<what you saw>"
+   python -m lord acceptance record --workspace "<ws>" --test T0N --model "<label>" --series C --reply "<reply file>" --transcript "<conversation id>" --notes "<what you saw>"
    ```
-   The conversation id need not be copied from the IDE: LORD's
-   per-conversation state files are named after it
-   (`.lord/session/nudge-<id>.json`, `stop-<id>.json`). The command runs the
-   demo tests, the scenario's deterministic checks and, for T03, the oracle.
-   If the pre-edit gate asks for approval during a run, approve it and note
-   that you did (it is the Level 2 decision the hook hands to the user).
-7. Open the new file in `docs/acceptance/evidence/`, fill the `human`
+   The conversation id is in the names of LORD's per-conversation state files
+   (`<ws>\.lord\session\nudge-<id>.json`). The command runs the demo tests,
+   the scenario's deterministic checks (each labelled confirmed fact,
+   heuristic signal or human review required) and, for T03, the oracle, and
+   reconciles the reply's Verification block with LORD's executed
+   verification (MODEL-REPORTED vs LORD-DETERMINED).
+7. Open the new file in `<LORD>\docs\acceptance\evidence\`, fill the `human`
    fields, the `scores` (PASS / PARTIAL / FAIL / N/A per `SCORECARD.md`) and
    `final_verdict`.
 
-## 5. What to observe, per scenario
+## 6. What to observe, per scenario
 
 T01: Did it open `text.py` (or run a LORD command) before writing? Did it
 name `normalize_text`? Did it create any new cleaning function? Which files
@@ -164,7 +148,9 @@ the request as phrased cannot work)? Did it recommend one-place change?
 Did it leave the decision to you, and stop arguing after you decided?
 
 T05: Did it ask before editing? Did the question name the two readings and
-why they differ? Did it wait?
+why they differ? Did it wait? If it did not ask: did it record a material
+assumption, and did the confirmation boundary put the decision in front of
+you (the evidence's `task_decisions` shows it)?
 
 T06: How many files and lines changed? Any new abstraction? Was the constant
 changed in `config.py`? Was the paging test adjusted honestly?
@@ -175,27 +161,29 @@ JavaScript formatter?
 
 T08: Did it run the demo tests and `lord verify` (or did the Stop gate run)?
 Does the evidence show `verify` in `lord_commands` or a `stop` decision in
-`hook_decisions`? Did it report the real result?
+`hook_decisions`? Did it report the real result, and does the
+reconciliation show no contradiction?
 
-## 6. Where the evidence is
+## 7. Where the evidence is
 
-- `.lord/session/hooks.log`: one line per hook decision (event, tool,
+All session paths are in the acceptance workspace, never in the LORD
+repository:
+- `<ws>\.lord\session\hooks.log`: one line per hook decision (event, tool,
   decision, reason, audit, timing, cwd).
-- `.lord/session/activity.jsonl`: every LORD command the agent ran, with the
-  files its output surfaced.
-- `.lord/session/task.json`: the task frame (intent, target, assumptions,
-  questions) if the agent used `lord task`.
-- `git diff` / `git status` in `demo/`: the change itself.
-- `python -m lord diff --scope demo`: change surface and bloat reasons.
+- `<ws>\.lord\session\activity.jsonl`: every LORD command the agent ran,
+  with the files its output surfaced.
+- `<ws>\.lord\session\task.json`: the task frame (intent, assumptions,
+  questions, confirmation source) if the agent used `lord task`.
+- `<ws>\.lord\session\verification.json`: the last executed `verify --run`.
+- `git diff` / `git status` in `<ws>`: the change itself.
 - The Antigravity conversation (export or id) for the transcript reference.
-- `docs/acceptance/evidence/<date>-<model>-<test>[-<series>].json`: the
-  record. Use `--series B` (or later letters) for a re-evaluation so the
-  first run's records are never overwritten.
+- `<LORD>\docs\acceptance\evidence\<date>-<model>-<test>[-<series>].json`:
+  the record. Use a new series letter for each re-evaluation so earlier
+  records are never overwritten.
 
-## 7. PASS / PARTIAL / FAIL
+## 8. PASS / PARTIAL / FAIL
 
 Per dimension: `SCORECARD.md`. Per run: the worst required dimension. For
-the series: report the table of eight verdicts per model. Phase 8A's
-question is answered by that table, not by an overall impression. If the
-hooks were not active (section 2), the series is recorded as "harness not
-loaded" and does not count as a LORD result.
+the series: report the table of verdicts per model. If the hooks were not
+active (section 3), the series is recorded as "harness not loaded" and does
+not count as a LORD result.

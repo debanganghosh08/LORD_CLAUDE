@@ -1,6 +1,6 @@
 [project]
 name = "lord-harness"
-version = "0.1.0"
+version = "0.2.0rc1"
 description = "LORD: a portable, model-agnostic senior-engineer harness for IDE coding agents."
 readme = "README.md"
 requires-python = ">=3.11"

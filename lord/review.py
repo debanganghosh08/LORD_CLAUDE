@@ -22,17 +22,18 @@ import sys
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 from lord import session
 from lord.change_surface import git_changes, measure, project_scope
 from lord.config import LordConfig
 from lord.impact import impact_report, resolve_target
 from lord.index import Index
+from lord.markers import added_markers
 from lord.query import references
 from lord.report import CONFIRMED, ERROR, INFERRED, INFO, OK, UNKNOWN, WARN, Finding, Report
 from lord.reuse import reuse_report
 
-MARKER_RE = re.compile(r"\b(TODO|FIXME|XXX|HACK)\b")
 NPM_DEFAULT_TEST = "no test specified"
 STEP_TIMEOUT = 600
 
@@ -135,22 +136,6 @@ def run_steps(root: Path, steps: list[Step], timeout: int = STEP_TIMEOUT) -> Non
         step.tail = output[-30:]
 
 
-def _added_markers(root: Path, base: str | None, staged: bool) -> list[str]:
-    args = ["git", "diff", "-U0", "--no-color"]
-    args += [base] if base else (["--cached"] if staged else ["HEAD"])
-    try:
-        out = subprocess.run(args, cwd=root, capture_output=True, text=True, encoding="utf-8", errors="replace").stdout
-    except OSError:
-        return []
-    found, current = [], ""
-    for line in out.splitlines():
-        if line.startswith("+++ "):
-            current = line[4:].removeprefix("b/")
-        elif line.startswith("+") and not line.startswith("+++") and MARKER_RE.search(line):
-            found.append(f"{current}: {line[1:].strip()[:100]}")
-    return found
-
-
 def step_label(argv: list[str]) -> str:
     """The command as a reader would type it: `python -m pytest -q`, not the
     interpreter's absolute path (and never without the interpreter)."""
@@ -204,7 +189,10 @@ def verify(config: LordConfig, index: Index, scope: tuple[str, ...] = (), run: b
                            consequence="a regression there would pass the suite", recommendation="add or extend a test, or state why none is needed"))
         advisories.append(f"{len(uncovered)} changed file(s) without an importing test")
 
-    markers = _added_markers(root, base, staged)
+    # marker syntax, not the word (lord/markers.py): prose about markers and
+    # fixture strings are not unfinished work; a new untracked file is scanned
+    untracked = [c.path for c in changes if c.status == "A"] if not (base or staged) else []
+    markers = added_markers(root, base, staged, untracked=untracked)
     if markers:
         report.add(Finding(kind="unresolved-markers", summary=f"{len(markers)} TODO/FIXME/XXX/HACK marker(s) added by this change", severity=WARN, confidence=CONFIRMED, evidence=markers[:10],
                            recommendation="resolve them or list them as known follow-ups in the report"))
@@ -239,11 +227,12 @@ def verify(config: LordConfig, index: Index, scope: tuple[str, ...] = (), run: b
         outstanding.append("verification steps not executed (use --run)")
 
     verdict = "verified" if not outstanding else "not verified"
+    session.settle_gate(root)
     task = session.load_task(root)
     assumptions = session.unconfirmed_material(task)
     report.meta.update({"verdict": verdict, "outstanding": outstanding, "advisories": advisories, "steps": [s.name for s in steps],
                         "step_results": {s.name: s.status for s in steps if s.status}, "bloat_level": level, "tests_to_run": tests_to_run, "uncovered": uncovered,
-                        "unconfirmed_material": assumptions, "open_questions": session.open_questions(task)})
+                        "unconfirmed_material": assumptions, "open_questions": session.open_questions(task), "decision_state": session.decision_state(task)})
     report.add(Finding(kind="verdict", summary=f"{verdict.upper()}" + (": " + "; ".join(outstanding) if outstanding else ": all detected steps passed, nothing outstanding"),
                        severity=OK if verdict == "verified" else WARN, confidence=CONFIRMED if run else INFERRED,
                        consequence="" if verdict == "verified" else "do not report the task as done; report what remains"))
@@ -260,8 +249,112 @@ def verify(config: LordConfig, index: Index, scope: tuple[str, ...] = (), run: b
         block.append("Advisories (heuristic, not part of the verdict; justify under Diff): " + "; ".join(advisories))
     if assumptions:
         block.append("Assumptions (unconfirmed, material): " + "; ".join(assumptions))
+    confirmed = [f"{a['text']} ({a.get('source', 'confirmed')})" for a in task.get("assumptions", []) if a.get("material") and a.get("confirmed")]
+    if confirmed:
+        block.append("Assumptions (material, confirmed): " + "; ".join(confirmed))
+    if session.open_questions(task):
+        block.append("Open questions (unanswered): " + "; ".join(session.open_questions(task)))
     report.meta["report_block"] = "\n".join(block)
     report.add(Finding(kind="report-block", summary="paste this into the final report", severity=INFO, confidence=CONFIRMED if run else INFERRED, evidence=block))
+    if run:
+        failing = [{"summary": f.summary, "tail": f.evidence[-3:]} for f in report.findings if f.kind == "verification-step" and f.severity == ERROR]
+        session.save_verification(root, {"ran": True, "verdict": verdict, "outstanding": outstanding, "advisories": advisories, "failing": failing,
+                                          "step_results": report.meta["step_results"], "bloat_level": level, "assumptions": assumptions,
+                                          "report_block": report.meta["report_block"]})
+    return report
+
+
+# --- reporting contract: MODEL-REPORTED vs LORD-DETERMINED --------------------------------
+# The agent reports verification as LORD prints it:
+#
+#   Verification:
+#     <command> - PASS | FAIL | NOT RUN
+#     LORD verify - VERIFIED | NOT VERIFIED (<facts>)
+#
+# `reconcile` reads a model's reply against the last executed `verify --run`.
+# Only LORD's executed checks establish fact; the model's text is a claim.
+
+_BLOCK_LINE_RE = re.compile(r"^\s*[-*]?\s*(?P<cmd>.+?)\s+(?:-|—|–|:)\s+(?P<status>NOT VERIFIED|VERIFIED|NOT RUN|PASS(?:ED)?|FAIL(?:ED)?)\b", re.I)
+_PROSE_PASS_RE = re.compile(r"\b(all (?:the )?tests (?:now )?pass(?:ed)?|tests (?:all )?pass(?:ed)?|fully tested|everything passes)\b", re.I)
+
+
+def model_claims(text: str) -> dict[str, Any]:
+    """What a reply claims about verification. `present` is True only when it
+    carries a Verification block; prose like "all tests pass" is recorded as a
+    heuristic claim, never as a result."""
+    lines = text.splitlines()
+    start = next((i for i, line in enumerate(lines) if line.strip().lower().rstrip(":").strip("*# ") == "verification"), None)
+    steps: dict[str, str] = {}
+    verdict = ""
+    if start is not None:
+        for line in lines[start + 1:]:
+            if not line.strip():
+                if steps or verdict:
+                    break
+                continue
+            match = _BLOCK_LINE_RE.match(line)
+            if not match:
+                continue
+            cmd, status = match.group("cmd").strip().strip("`"), match.group("status").upper()
+            status = {"PASSED": "PASS", "FAILED": "FAIL"}.get(status, status)
+            if cmd.lower().startswith("lord verify"):
+                verdict = status
+            else:
+                steps[cmd] = status
+    return {"present": start is not None and bool(steps or verdict), "steps": steps, "verdict": verdict,
+            "prose_pass_claim": bool(_PROSE_PASS_RE.search(text))}
+
+
+def reconcile(text: str, recorded: dict[str, Any]) -> dict[str, Any]:
+    """Model-reported verification against LORD-determined verification.
+
+    `status` is decided by LORD's executed checks alone:
+      VERIFIED            LORD ran on this tree and nothing factual is outstanding
+      NOT VERIFIED        LORD ran on this tree and found failures or outstanding facts
+      UNVERIFIED CLAIM    LORD did not run on this tree; the model claims success
+      NO VERIFICATION     LORD did not run on this tree; the model claims nothing
+    A model claim is reported beside it (and as a contradiction when it
+    disagrees) but never changes it."""
+    claims = model_claims(text)
+    ran = bool(recorded.get("ran"))
+    fresh = bool(recorded.get("fresh"))
+    lord_state = "not run" if not ran else ("stale" if not fresh else str(recorded.get("verdict", "not verified")))
+    claims_success = claims["verdict"] == "VERIFIED" or (claims["steps"] and all(s == "PASS" for s in claims["steps"].values())) or (not claims["present"] and claims["prose_pass_claim"])
+    if lord_state == "verified":
+        status = "VERIFIED"
+    elif lord_state == "not verified":
+        status = "NOT VERIFIED"
+    else:
+        status = "UNVERIFIED CLAIM" if claims_success else "NO VERIFICATION"
+    contradictions: list[str] = []
+    lord_steps = {step_label_from_name(k): v.upper() for k, v in (recorded.get("step_results") or {}).items()} if ran and fresh else {}
+    if lord_state == "not verified" and claims_success:
+        contradictions.append("the reply claims success; LORD determined NOT VERIFIED (" + "; ".join(recorded.get("outstanding") or []) + ")")
+    for cmd, status_claimed in claims["steps"].items():
+        determined = next((v for k, v in lord_steps.items() if k and (k in cmd or cmd in k)), "")
+        if determined and determined != status_claimed:
+            contradictions.append(f"{cmd}: reply says {status_claimed}, LORD determined {determined}")
+    model_state = ("absent" if not claims["present"] and not claims["prose_pass_claim"] else
+                   "prose claim only (heuristic)" if not claims["present"] else
+                   "claims success" if claims_success else "reports failure or not run")
+    return {"status": status, "lord": lord_state, "model": model_state, "basis": "LORD-determined" if lord_state in ("verified", "not verified") else "model-reported",
+            "contradictions": contradictions, "model_steps": claims["steps"], "model_verdict": claims["verdict"], "lord_steps": recorded.get("step_results") or {}}
+
+
+def step_label_from_name(name: str) -> str:
+    """`demo: pytest` -> `pytest`: the tool part a model's line will contain."""
+    return name.split(":")[-1].strip()
+
+
+def reconcile_report(root: Path, text: str) -> Report:
+    result = reconcile(text, session.load_verification(root))
+    report = Report(title="verification reconciliation", meta=result)
+    report.add(Finding(kind="verification-status", summary=f"{result['status']} ({result['basis']})", severity=OK if result["status"] == "VERIFIED" else WARN,
+                       confidence=CONFIRMED if result["basis"] == "LORD-determined" else UNKNOWN,
+                       evidence=[f"LORD: {result['lord']}", f"reply: {result['model']}"],
+                       consequence="" if result["status"] == "VERIFIED" else "the task is not verified by an executed check"))
+    for c in result["contradictions"]:
+        report.add(Finding(kind="contradiction", summary=c, severity=WARN, confidence=CONFIRMED, consequence="the reply's claim is not a verification result"))
     return report
 
 

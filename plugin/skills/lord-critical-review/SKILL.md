@@ -19,7 +19,7 @@ different things. This protocol turns that posture into steps.
 | 5. Trace root cause / impact | For bugs: trace from the symptom. For shared code: blast radius. | `trace`, `impact`, or delegate to `lord-impact-analyst` |
 | 6. Identify risks | Consumers that break, tests that do not exist, config that names it, boundaries crossed. | from the impact report |
 | 7. Smallest valid change | The change that solves the goal durably with the least new surface. | |
-| 8. Decide on clarification | Ask only when interpretations differ materially (files, signatures, data shapes, scope, compatibility, architecture, a window or threshold the request names but the code does not define). Otherwise state the assumption and proceed. | `lord task ask "<question>"` (blocks consequential edits until `lord task resolve`), `lord task assume "<assumption>" --material` (surfaced until confirmed) |
+| 8. Decide on clarification | Ask only when interpretations differ materially (files, signatures, data shapes, scope, compatibility, architecture, a window or threshold the request names but the code does not define). Otherwise state the assumption and proceed. | `lord task ask "<question>"` (blocks code edits until `lord task resolve`), `lord task assume "<reading>" --material` (the next code edit asks the user to confirm it) |
 | 9. Plan | 3-6 lines: what you read, what changes file by file, what could break, what you flag. | |
 | 10. Implement | Keep to the plan; stop and say why if the diff must grow. | |
 | 11. Verify | Real results, not claims: the `Verification:` block is LORD-determined; anything you write in prose is model-reported. | `verify --run`, or delegate to `lord-verification-reviewer` |

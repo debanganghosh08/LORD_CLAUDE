@@ -21,16 +21,17 @@ material) are not part of LORD and must not be modified, imported or staged.
 - Never commit secrets, credentials, tokens, private keys or machine-local
   runtime state. The `.gitignore` enforces this; `tests/test_foundation.py`
   checks the policy.
-- `.agents/` is product source and is tracked. `.lord/` is generated state
-  and is ignored.
+- `plugin/` (the Antigravity plugin) and `lord/` (the runtime) are product
+  source and are tracked. `.lord/` is generated state and is ignored.
 
 ## Phase checkpoint (run at the end of every phase)
 
 1. Run `python -m pytest`.
 2. Inspect `git status` and `git diff --stat`.
 3. Verify the repository root and that nothing outside it is staged.
-4. Verify `.gitignore` still protects secrets and still tracks `.agents/`
-   (`git check-ignore -v <path>`).
+4. Verify `.gitignore` still protects secrets and still tracks `plugin/`
+   and `lord/` (`git check-ignore -v <path>`); `python -m lord plugin validate`
+   passes.
 5. Grep the staged diff for obvious secrets.
 6. Write or update `docs/reports/phase-N-*.md`.
 7. Commit with a descriptive message, then push.
@@ -49,10 +50,10 @@ material) are not part of LORD and must not be modified, imported or staged.
 
 ## Adding Antigravity customisations
 
-- Rules: `.agents/rules/<name>.md`, YAML frontmatter with `trigger`
+- Rules: `plugin/rules/<name>.md`, YAML frontmatter with `trigger`
   (`always_on`, `model_decision`, `glob`, `manual`) and `description`;
   12,000 characters maximum. Keep rules short; put procedures in skills.
-- Skills: `.agents/skills/<name>/SKILL.md` with `name` and `description`.
-- Agents: `.agents/agents/<name>.md` with `name`, `description`, `tools`,
+- Skills: `plugin/skills/<name>/SKILL.md` with `name` and `description`.
+- Agents: `plugin/agents/<name>.md` with `name`, `description`, `tools`,
   `model`, `subagent`. Specialists return structured findings, never dumps.
 - Do not duplicate the operating contract across files. Reference it.

@@ -2,4 +2,7 @@
 [lord]
 # Acceptance oracles reveal the answers to the demo's planted traps; keep them
 # out of the index so an evaluated agent cannot discover them through LORD.
-extra_exclude_globs = ["docs/acceptance/oracles/"]
+# The demo workspace template is another project: it is evaluated only as an
+# exported, separate repository (`lord acceptance workspace`), never as part
+# of LORD, so LORD's own analysis must not see it either.
+extra_exclude_globs = ["docs/acceptance/oracles/", "tests/fixtures/demo_workspace/"]

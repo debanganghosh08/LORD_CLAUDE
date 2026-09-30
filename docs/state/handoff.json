@@ -1,28 +1,26 @@
 {
-  "doing": "Phase 8A.1 complete: remediation (1bbd2c3), live Baseline B with Gemini 3.1 Pro High (8 scenarios), and the fixes Baseline B exposed; next is the review of the A-vs-B comparison, then Phase 8B",
+  "doing": "Phase 8B release candidate (0.2.0rc1): hardened, packaged as one Antigravity plugin, demo moved to a separate workspace; live separate-workspace test pending the user's global install",
   "done": [
-    "Baseline B recorded for T01-T08 (docs/acceptance/evidence/*-b.json): 4 PASS / 4 PARTIAL / 0 FAIL vs A 1/6/1",
-    "Fixed after the series: step label, facts-vs-advisories verdict, per-project measurement in verify and PostInvocation, investigation-only evidence, root discovery never climbs to home, guide reset/debrief"
+    "Marker detector by syntax (lord/markers.py); LORD verify on itself VERIFIED",
+    "Clarification boundary: open question denies every code edit; unconfirmed material assumption makes the next edit an ask; decision state and confirmation source",
+    "Verification record + reconcile (MODEL-REPORTED vs LORD-DETERMINED); Stop reuses a fresh record",
+    "plugin/ + lord plugin validate/install/rollback/uninstall/status; acceptance.py never ships",
+    "Demo template in tests/fixtures/demo_workspace; lord acceptance workspace --out; --workspace/--reply; basis labels",
+    "255 tests pass; separate-workspace rehearsal 15/15 outside the IDE"
   ],
   "remaining": [
-    "Decide a clarification lever: Level 1 advisory when a material assumption exists and no question was asked (no question in 16 live runs)",
-    "Decide whether scorecard verification PASS requires the LORD Verification block",
-    "Phase 8B: ship the demo as a separate evaluation workspace (it shares LORD's memory store today)",
-    "Symbol-level context does not surface callee files (documented, not fixed)"
-  ],
-  "discovered": [
-    "A global ~/.agents/skills folder (another tool) made LORD treat the home directory as a workspace; fixed in lord/paths.py; the user's folder was not touched",
-    "With the verification block required, Gemini pasted it in 8 of 8 runs including NOT VERIFIED; its prose can still overclaim next to it (T04 'fully tested')"
+    "User: python -m lord plugin install --global, then manual guide sections 1-3 (infrastructure gate) in the Antigravity IDE",
+    "If the gate passes: T01, T03, T04, T05, T08 as series C with Gemini, recorded with --workspace and --reply",
+    "Unverified: plugin hook cwd in the IDE, whether the IDE shows an ask reason, plugin agents in the IDE"
   ],
   "decided": [
-    "Heuristics never decide the verify verdict; they are advisories to justify",
-    "Evaluation debrief is sent after the scenario in the same conversation; scenario prompts stay unchanged"
+    "hooks.json stays python -m lord_hook <event> (no quotes, no absolute path); the LORD repo has no .agents adapter (ADR 0003)"
   ],
   "next": [
-    "Review docs/reports/phase-8a1-remediation.md sections 14-19, then plan Phase 8B"
+    "Run docs/acceptance/MANUAL-ANTIGRAVITY-GEMINI.md sections 1-3 and report the probe's hook-log line"
   ],
-  "verification": "python -m pytest: 205 passed; demo: 37 passed; oracle on unfixed demo: 3 fail (expected)",
+  "verification": "python -m pytest: 255 passed; lord verify --run: VERIFIED; demo 37 passed; oracle on unmodified demo FAIL (expected)",
   "updated": "2026-09-30",
   "branch": "main",
-  "commit": "1bbd2c3"
+  "commit": "065e257"
 }

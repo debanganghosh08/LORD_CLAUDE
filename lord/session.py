@@ -10,8 +10,9 @@ Three small records:
 - `task.json`: the current task frame: the request, the interpreted intent,
   the assumptions taken (cosmetic or material, confirmed or not) and the
   open questions. Written by `brief`/`context --intent` and by `lord task`.
-  The pre-edit hook refuses consequential edits while the frame lists open
-  questions; the advisory surfaces unconfirmed material assumptions.
+  The pre-edit hook denies code edits while the frame lists open questions
+  and asks the user (a confirmation boundary) before a code edit made under
+  an unconfirmed material assumption; see `decision_state`.
 - per-conversation counters and caches used by the hooks.
 
 This is transient state. Durable engineering knowledge lives in
@@ -20,8 +21,10 @@ This is transient state. Durable engineering knowledge lives in
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
+import subprocess
 import time
 from datetime import date
 from pathlib import Path
@@ -47,7 +50,7 @@ TASK_LEVEL_COMMANDS = frozenset({"context", "brief", "reuse", "impact", "trace",
 
 
 def session_dir(root: Path, create: bool = True) -> Path:
-    directory = state_dir(root) / SESSION_DIR_NAME
+    directory = state_dir(root, create=create) / SESSION_DIR_NAME
     if create:
         directory.mkdir(parents=True, exist_ok=True)
     return directory
@@ -183,6 +186,7 @@ def update_task(root: Path, request: str = "", intent: str = "", target: str = "
         for a in task["assumptions"]:
             if confirm.lower() in a["text"].lower():
                 a["confirmed"] = True
+                a["source"] = "model-reported"  # the model says the user confirmed it
     if question and not any(q["text"] == question for q in task["questions"]):
         task["questions"].append({"text": question, "resolved": False, "answer": ""})
     if resolve:
@@ -199,6 +203,57 @@ def open_questions(task: dict[str, Any]) -> list[str]:
 
 def unconfirmed_material(task: dict[str, Any]) -> list[str]:
     return [a["text"] for a in task.get("assumptions", []) if a.get("material") and not a.get("confirmed")]
+
+
+def decision_state(task: dict[str, Any]) -> str:
+    """Where the task stands on its material decisions:
+    `blocked` (an open question: code edits are denied), `awaiting-confirmation`
+    (a material assumption the user has not confirmed: the next code edit asks
+    the user), or `clear`. Cosmetic assumptions never gate anything."""
+    if open_questions(task):
+        return "blocked"
+    if unconfirmed_material(task):
+        return "awaiting-confirmation"
+    return "clear"
+
+
+# --- confirmation boundary --------------------------------------------------------------
+# An unconfirmed material assumption turns the next code edit into an `ask`: the
+# IDE's approval prompt is the user's decision. LORD cannot read that decision,
+# but it can observe its effect: when the gated file changes after the ask, the
+# edit was approved, and the assumptions it carried count as confirmed (source
+# "edit-gate approval", inferred). A rejected edit leaves the file unchanged and
+# the next edit asks again.
+
+def file_digest(path: Path) -> str:
+    try:
+        return hashlib.sha1(path.read_bytes()).hexdigest()
+    except OSError:
+        return "missing"
+
+
+def open_gate(root: Path, rel: str, assumptions: list[str]) -> None:
+    task = load_task(root)
+    if not task:
+        return
+    task["gate"] = {"file": rel, "digest": file_digest(root / rel), "assumptions": list(assumptions), "t": time.time()}
+    save_task(root, task)
+
+
+def settle_gate(root: Path) -> list[str]:
+    """Confirm the assumptions of an approved gated edit; return what it confirmed."""
+    task = load_task(root)
+    gate = task.get("gate") if task else None
+    if not gate or file_digest(root / gate.get("file", "")) == gate.get("digest"):
+        return []
+    confirmed = []
+    for a in task.get("assumptions", []):
+        if a["text"] in gate.get("assumptions", []) and not a.get("confirmed"):
+            a.update(confirmed=True, source="edit-gate approval")
+            confirmed.append(a["text"])
+    task.pop("gate", None)
+    save_task(root, task)
+    return confirmed
 
 
 # --- small per-key JSON state (counters, caches) ------------------------------------
@@ -221,6 +276,44 @@ def save_state(root: Path, key: str, data: dict[str, Any]) -> None:
         _state_path(root, key).write_text(json.dumps(data, default=str), encoding="utf-8")
     except OSError:
         pass
+
+
+def tree_signature(root: Path) -> str:
+    """Identity of the working tree's changes (paths, status and mtimes): two
+    equal signatures mean nothing changed in between."""
+    try:
+        status = subprocess.run(["git", "status", "--porcelain", "--untracked-files=all"], cwd=root, capture_output=True, text=True, encoding="utf-8", errors="replace")
+        text = status.stdout if status.returncode == 0 else ""
+    except OSError:
+        text = ""
+    parts = [text]
+    for line in text.splitlines():
+        path = root / line[3:].strip().strip('"')
+        try:
+            parts.append(f"{line[3:]}:{path.stat().st_mtime_ns}")
+        except OSError:
+            continue
+    return hashlib.sha1("\n".join(parts).encode("utf-8")).hexdigest()
+
+
+# --- LORD-determined verification --------------------------------------------------------
+# `verify --run` records what the executed checks established, keyed to the tree
+# signature. It is the only source of verification fact: a model's report is
+# reconciled against it (lord/review.py `reconcile`), never trusted instead of it.
+
+VERIFICATION_KEY = "verification"
+
+
+def save_verification(root: Path, record_: dict[str, Any]) -> None:
+    save_state(root, VERIFICATION_KEY, {**record_, "t": time.time(), "signature": tree_signature(root)})
+
+
+def load_verification(root: Path) -> dict[str, Any]:
+    """The last executed verification, with `fresh` = the tree is unchanged since."""
+    data = load_state(root, VERIFICATION_KEY)
+    if data:
+        data["fresh"] = data.get("signature") == tree_signature(root)
+    return data
 
 
 def hook_log(root: Path, entry: dict[str, Any]) -> None:

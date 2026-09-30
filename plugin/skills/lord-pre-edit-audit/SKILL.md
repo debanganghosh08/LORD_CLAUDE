@@ -29,8 +29,8 @@ One sentence: the outcome actually wanted, not the literal words. Then:
 
 ```
 python -m lord task start "<the request in one line>" --intent "<outcome wanted>"
-python -m lord task ask "<question>"                    # a material ambiguity; consequential edits wait for `task resolve`
-python -m lord task assume "<assumption>" --material     # a sensible default you are proceeding on; surfaced until `task confirm`
+python -m lord task ask "<question>"                    # a material ambiguity; code edits wait for `task resolve`
+python -m lord task assume "<reading>" --material        # proceeding on one reading: the next code edit asks the user to confirm it
 python -m lord task show
 ```
 

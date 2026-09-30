@@ -2,8 +2,8 @@
 # LORD .gitignore
 #
 # Policy: protect secrets and machine-local runtime state WITHOUT hiding LORD
-# product source. `.agents/` (rules, skills, agents, hooks.json, plugins) is
-# product source and is intentionally tracked.
+# product source. `plugin/` (manifest, hooks.json, launcher, rules, skills,
+# agents) and `lord/` (the runtime) are product source and are tracked.
 # ---------------------------------------------------------------------------
 
 # --- Secrets and credentials (never commit) --------------------------------
@@ -81,7 +81,7 @@ Thumbs.db
 desktop.ini
 
 # --- Demo runtime data (created by demo/scripts/seed.py) --------------------
-demo/data/
+tests/fixtures/demo_workspace/demo/data/
 
 # --- Test fixtures deliberately contain vendor/build dirs to test exclusions --
 !tests/fixtures/**/node_modules/

@@ -64,7 +64,8 @@ COMMANDS: tuple[tuple[str, str, str | None], ...] = (
 MEMORY_ACTIONS = ("query", "add", "supersede", "update", "check", "list")
 TASK_ACTIONS = ("show", "start", "assume", "ask", "resolve", "confirm", "clear")
 HANDOFF_ACTIONS = ("show", "write", "clear")
-ACCEPTANCE_ACTIONS = ("baseline", "check", "record", "prompts")
+ACCEPTANCE_ACTIONS = ("workspace", "baseline", "check", "record", "prompts")
+PLUGIN_ACTIONS = ("validate", "install", "uninstall", "rollback", "status")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -105,6 +106,8 @@ def build_parser() -> argparse.ArgumentParser:
             p.add_argument("--base", default=None, help="compare against this ref")
             p.add_argument("--staged", action="store_true", help="verify the staged set only")
             p.add_argument("--timeout", type=int, default=600, help="seconds per step")
+            p.add_argument("--reconcile", default="", metavar="FILE",
+                           help="do not run anything: compare the reply in FILE (- = stdin) with the last executed verification")
         if name == "context":
             p.add_argument("--intent", default="", help="what the task wants to achieve, in words")
             p.add_argument("--name", action="append", default=[], help="proposed new symbol name (repeatable)")
@@ -147,14 +150,27 @@ def build_parser() -> argparse.ArgumentParser:
     task.add_argument("--material", action="store_true", help="the assumption changes semantics, API, data or architecture (assume)")
     task.add_argument("--answer", default="", help="the user's answer (resolve)")
 
-    acceptance = sub.add_parser("acceptance", help="demo acceptance evaluation: baseline ground truth, deterministic checks, evidence records")
+    acceptance = sub.add_parser("acceptance", help="demo acceptance evaluation in a separate workspace: export, baseline, deterministic checks, evidence records")
     _add_common(acceptance)
     acceptance.add_argument("action", choices=ACCEPTANCE_ACTIONS)
+    acceptance.add_argument("--workspace", type=Path, default=None, help="the evaluated workspace (created by `acceptance workspace`)")
+    acceptance.add_argument("--out", type=Path, default=None, help="where `workspace` creates the separate acceptance workspace")
+    acceptance.add_argument("--reply", default="", help="file holding the agent's final reply; its verification claims are reconciled with LORD's")
     acceptance.add_argument("--test", default="", help="scenario id, e.g. T03")
     acceptance.add_argument("--model", default="", help="model label for the evidence record, e.g. gemini-3.6-flash")
     acceptance.add_argument("--transcript", default="", help="conversation id or exported transcript path")
     acceptance.add_argument("--notes", default="", help="free-text observations")
     acceptance.add_argument("--series", default="", help="evaluation series label, e.g. A or B")
+
+    plugin = sub.add_parser("plugin", help="package LORD as an Antigravity plugin: validate, install, uninstall, rollback, status")
+    _add_common(plugin)
+    plugin.add_argument("action", choices=PLUGIN_ACTIONS)
+    target = plugin.add_mutually_exclusive_group()
+    target.add_argument("--global", dest="use_global", action="store_true", help="the user-level plugins directory (~/.gemini/config/plugins)")
+    target.add_argument("--workspace", type=Path, default=None, help="a workspace's .agents/plugins directory")
+    target.add_argument("--dest", type=Path, default=None, help="any plugins directory")
+    plugin.add_argument("--dry-run", action="store_true", help="report what would change; write nothing")
+    plugin.add_argument("--no-cli", action="store_true", help="do not register `python -m lord` in the Python user site")
     return parser
 
 
@@ -163,6 +179,25 @@ def run(args: argparse.Namespace, root: Path) -> Report:
         from lord.doctor import run_doctor
 
         return run_doctor(root)
+    if args.command == "plugin":
+        return _plugin(args)
+    if args.command == "acceptance":
+        try:
+            import lord.acceptance  # noqa: F401 - development checkouts only
+        except ImportError:
+            from lord.report import CONFIRMED, ERROR, Finding
+
+            return Report(title="acceptance", findings=[Finding(kind="usage", summary="acceptance tooling ships only in a LORD development checkout, not in the installed plugin",
+                                                                severity=ERROR, confidence=CONFIRMED, recommendation="run it from the LORD repository")])
+    if args.command == "acceptance" and args.action == "workspace":
+        from lord.acceptance import export_workspace
+        from lord.report import CONFIRMED, ERROR, Finding
+
+        if args.out is None:
+            return Report(title="acceptance workspace", findings=[Finding(kind="usage", summary="--out <dir> is required", severity=ERROR, confidence=CONFIRMED)])
+        return export_workspace(args.out)
+    if args.command == "acceptance" and args.workspace is not None:
+        root = args.workspace.resolve()   # everything observed comes from the evaluated workspace
 
     from lord.config import load_config
     from lord.index import build_index, ensure_index, load_index
@@ -251,10 +286,19 @@ def run(args: argparse.Namespace, root: Path) -> Report:
             return acceptance.check(config, index, args.test)
         if not args.model:
             return Report(title="acceptance", findings=[Finding(kind="usage", summary="--model is required for record", severity=ERROR, confidence=CONFIRMED)])
-        return acceptance.record(config, index, args.test, args.model, transcript=args.transcript, notes=args.notes, series=args.series)
+        reply = ""
+        if args.reply:
+            try:
+                reply = Path(args.reply).read_text(encoding="utf-8")
+            except OSError as exc:
+                return Report(title="acceptance", findings=[Finding(kind="usage", summary=f"--reply unreadable: {exc}", severity=ERROR, confidence=CONFIRMED)])
+        return acceptance.record(config, index, args.test, args.model, transcript=args.transcript, notes=args.notes, series=args.series, reply=reply)
     if args.command == "verify":
-        from lord.review import verify
+        from lord.review import reconcile_report, verify
 
+        if args.reconcile:
+            text = sys.stdin.read() if args.reconcile == "-" else Path(args.reconcile).read_text(encoding="utf-8")
+            return reconcile_report(root, text)
         return verify(config, index, scope=tuple(args.scope), run=args.run, base=args.base, staged=args.staged, timeout=args.timeout)
     if args.command == "graph":
         from lord.graph import build_graph, file_node, neighborhood, sym_node
@@ -276,6 +320,30 @@ def run(args: argparse.Namespace, root: Path) -> Report:
         report.meta["edges_total"] = len(graph)
         return report
     raise SystemExit(2)  # pragma: no cover
+
+
+def _plugin(args: argparse.Namespace) -> Report:
+    from lord import plugin
+    from lord.report import CONFIRMED, ERROR, OK, Finding
+
+    if args.action == "validate":
+        source, runtime = plugin.source_dirs()
+        errors = plugin.validate_source(source, runtime, forbidden_paths=(str(runtime.parent), runtime.parent.as_posix()))
+        report = Report(title="LORD plugin validate", meta={"source": str(source), "errors": errors})
+        report.add(Finding(kind="source", summary="plugin source valid" if not errors else f"{len(errors)} problem(s)", severity=OK if not errors else ERROR,
+                           confidence=CONFIRMED, evidence=errors[:30] or sorted(plugin.bundle_map(source, runtime))[:12]))
+        return report
+    try:
+        plugins_dir = plugin.resolve_plugins_dir(dest=args.dest, workspace=args.workspace, use_global=args.use_global)
+    except ValueError as exc:
+        return Report(title="LORD plugin", findings=[Finding(kind="usage", summary=str(exc), severity=ERROR, confidence=CONFIRMED)])
+    if args.action == "install":
+        return plugin.install(plugins_dir, dry_run=args.dry_run, cli=not args.no_cli)
+    if args.action == "uninstall":
+        return plugin.uninstall(plugins_dir)
+    if args.action == "rollback":
+        return plugin.rollback(plugins_dir)
+    return plugin.status(plugins_dir)
 
 
 def _norm(path: str) -> str:
@@ -394,7 +462,7 @@ def _record_activity(args: argparse.Namespace, root: Path, report: Report) -> No
 
 def _task(args: argparse.Namespace, root: Path) -> Report:
     from lord.report import CONFIRMED, ERROR, INFO, OK, WARN, Finding
-    from lord.session import clear_task, load_task, open_questions, unconfirmed_material, update_task
+    from lord.session import clear_task, decision_state, load_task, open_questions, settle_gate, unconfirmed_material, update_task
 
     if args.action == "clear":
         cleared = clear_task(root)
@@ -410,6 +478,7 @@ def _task(args: argparse.Namespace, root: Path) -> Report:
             "confirm": {"confirm": args.text},
         }[args.action]
         update_task(root, **kwargs)
+    settle_gate(root)
     task = load_task(root)
     report = Report(title="task frame", meta={"root": str(root), "present": bool(task)})
     if not task:
@@ -417,12 +486,17 @@ def _task(args: argparse.Namespace, root: Path) -> Report:
         return report
     report.add(Finding(kind="request", summary=task.get("request") or "(not stated)", severity=INFO, confidence=CONFIRMED,
                        evidence=[f"intent: {task.get('intent') or '(not stated)'}", f"target: {task.get('target') or '(none)'}"]))
+    state = decision_state(task)
+    report.add(Finding(kind="decision-state", summary={"blocked": "BLOCKED: an open question must be answered by the user before code edits",
+                                                        "awaiting-confirmation": "AWAITING CONFIRMATION: the next code edit asks the user to confirm the material assumption(s)",
+                                                        "clear": "CLEAR: no unresolved material decision"}[state],
+                       severity=OK if state == "clear" else WARN, confidence=CONFIRMED))
     for a in task.get("assumptions", []):
-        label = ("material" if a.get("material") else "cosmetic") + (", confirmed" if a.get("confirmed") else ", unconfirmed")
+        label = ("material" if a.get("material") else "cosmetic") + (f", confirmed ({a.get('source', 'confirmed')})" if a.get("confirmed") else ", unconfirmed")
         report.add(Finding(kind="assumption", summary=f"[{label}] {a['text']}", severity=WARN if (a.get("material") and not a.get("confirmed")) else INFO, confidence=CONFIRMED))
     for q in task.get("questions", []):
         report.add(Finding(kind="question", summary=("[resolved] " if q.get("resolved") else "[OPEN] ") + q["text"], severity=INFO if q.get("resolved") else WARN,
                            confidence=CONFIRMED, evidence=[f"answer: {q['answer']}"] if q.get("answer") else [],
                            consequence="" if q.get("resolved") else "consequential code edits are denied until this is resolved or the user answers"))
-    report.meta.update({"open_questions": open_questions(task), "unconfirmed_material": unconfirmed_material(task)})
+    report.meta.update({"open_questions": open_questions(task), "unconfirmed_material": unconfirmed_material(task), "decision_state": state})
     return report

@@ -108,8 +108,64 @@ def to_rel_posix(path: Path, root: Path) -> str:
 
 
 def state_dir(root: Path, create: bool = False) -> Path:
-    """Location of machine-local derived state (`<root>/.lord`)."""
+    """Location of machine-local derived state (`<root>/.lord`).
+
+    The directory ignores itself (`.lord/.gitignore` = `*`, as pytest does for
+    its cache), so a target repository never has to edit its own .gitignore
+    for LORD and runtime state can never be committed by accident."""
     directory = root / STATE_DIR_NAME
     if create:
         directory.mkdir(parents=True, exist_ok=True)
+    if directory.is_dir():
+        marker = directory / ".gitignore"
+        if not marker.exists():
+            try:
+                marker.write_text("# LORD runtime state (machine-local); never commit.\n*\n", encoding="utf-8")
+            except OSError:
+                pass
     return directory
+
+
+# --- product location ---------------------------------------------------------------
+# The runtime (this package) is found in one of two layouts, never by an
+# absolute path: an installed plugin bundle `<plugin>/runtime/lord/`, or a
+# development checkout `<repo>/lord/` next to the plugin source `<repo>/plugin/`.
+
+PLUGIN_NAME = "lord"
+PLUGIN_MANIFEST = "plugin.json"
+
+
+def runtime_home() -> Path:
+    """The directory that contains the `lord` package being executed."""
+    return Path(__file__).resolve().parent.parent
+
+
+def plugin_root() -> Path | None:
+    """The plugin this runtime belongs to: the installed bundle, or the plugin
+    source of a development checkout. None when neither layout applies."""
+    home = runtime_home()
+    if home.name == "runtime" and (home.parent / PLUGIN_MANIFEST).is_file():
+        return home.parent
+    if (home / "plugin" / PLUGIN_MANIFEST).is_file():
+        return home / "plugin"
+    return None
+
+
+def global_plugins_dir() -> Path | None:
+    """Antigravity's documented user-level plugin directory (read-only here)."""
+    home = _home()
+    return home / ".gemini" / "config" / "plugins" if home is not None else None
+
+
+def product_dirs(root: Path) -> list[Path]:
+    """Directories that provide LORD rules and skills to this workspace: a
+    workspace adapter (`<root>/.agents`) and the plugin this runtime belongs to."""
+    dirs = [root / ".agents"]
+    plugin = plugin_root()
+    if plugin is not None:
+        dirs.append(plugin)
+    seen: list[Path] = []
+    for d in dirs:
+        if d.is_dir() and d.resolve() not in [s.resolve() for s in seen]:
+            seen.append(d)
+    return seen
